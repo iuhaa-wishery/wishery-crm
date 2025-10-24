@@ -5,7 +5,7 @@ import { Calendar } from "lucide-react";
 
 export default function Index({ projects }) {
     return (
-        <UserLayout title="My Projects">
+        <>
             <Head title="My Projects" />
 
             <h1 className="text-2xl font-bold mb-6">My Projects</h1>
@@ -44,8 +44,9 @@ export default function Index({ projects }) {
             ) : (
                 <p className="text-gray-600">No projects assigned to you.</p>
             )}
-        </UserLayout>
+        </>
     );
 }
 
+// ✅ Use UserLayout once only
 Index.layout = (page) => <UserLayout title="My Projects">{page}</UserLayout>;

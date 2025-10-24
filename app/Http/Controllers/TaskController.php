@@ -23,7 +23,7 @@ class TaskController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return Inertia::render('Tasks/Index', [
+        return Inertia::render('User/Tasks/Index', [
             'tasks'   => $tasks,
             'filters' => $request->only(['q', 'sort', 'direction']),
         ]);
