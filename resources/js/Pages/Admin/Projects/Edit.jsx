@@ -93,8 +93,7 @@ export default function EditProject({ project }) {
                 <div className="text-red-600 text-sm">{errors.end_date}</div>
               )}
             </div>
-
-           {/* Buttons */}
+            {/* Buttons */}
           <div className="flex gap-2">
             <button
               type="submit"
@@ -110,3 +109,9 @@ export default function EditProject({ project }) {
               Cancel
             </Link>
           </div>
+          </form> {/* ✅ <-- this was missing */}
+        </div>
+      </div>
+    </>
+  );
+}

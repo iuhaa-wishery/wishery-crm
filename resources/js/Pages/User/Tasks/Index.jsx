@@ -5,9 +5,7 @@ import UserLayout from "@/Layouts/UserLayout";
 export default function Index() {
     const { tasks } = usePage().props;
     const [taskList, setTaskList] = useState(tasks.data);
-    const [openDropdownId, setOpenDropdownId] = useState(null);
 
-    // Admin-style status mapping
     const statusMap = {
         "not started": "To Do",
         "in progress": "In Progress",
@@ -23,30 +21,23 @@ export default function Index() {
     };
 
     const priorityClasses = {
-        "low": "bg-green-100 text-green-700",
-        "medium": "bg-yellow-100 text-yellow-800",
-        "high": "bg-red-100 text-red-700",
+        low: "bg-green-100 text-green-700",
+        medium: "bg-yellow-100 text-yellow-800",
+        high: "bg-red-100 text-red-700",
     };
 
-    const statusOptions = Object.keys(statusMap);
-
-    const handleStatusChange = (taskId, newStatus) => {
-        // Update locally
-        setTaskList(prev =>
-            prev.map(task => (task.id === taskId ? { ...task, status: newStatus } : task))
-        );
-        setOpenDropdownId(null);
-
-        // Update on server
-        router.post(`/tasks/${taskId}/update-status`, { status: newStatus });
-    };
+  const handleStatusChange = (id, status) => {
+    router.put(`/tasks/${id}/status`, { status }, {
+      onSuccess: () => console.log("Task status updated"),
+      onError: (err) => console.error("Error:", err),
+    });
+  };
 
     return (
         <UserLayout title="My Tasks">
             <div className="p-6">
                 <h1 className="text-3xl font-bold mb-6">My Tasks</h1>
 
-                {/* Table wrapper with overflow-y visible to fix dropdown scroll issue */}
                 <div className="bg-white shadow rounded overflow-x-auto overflow-y-visible relative">
                     <table className="w-full border text-base">
                         <thead>
@@ -74,35 +65,16 @@ export default function Index() {
                                                 {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                                             </span>
                                         </td>
-                                        <td className="p-3 border relative">
-                                            {/* Status badge */}
-                                            <div
-                                                className={`inline-block px-3 py-1 text-xs font-semibold rounded-full cursor-pointer ${statusClasses[task.status]}`}
-                                                onClick={() =>
-                                                    setOpenDropdownId(
-                                                        openDropdownId === task.id ? null : task.id
-                                                    )
-                                                }
-                                            >
-                                                {statusMap[task.status]}
-                                            </div>
-
-                                            {/* Dropdown */}
-                                            {openDropdownId === task.id && (
-                                                <div className="absolute mt-1 bg-white border rounded shadow z-10">
-                                                    {statusOptions
-                                                        .filter((s) => s !== task.status)
-                                                        .map((s) => (
-                                                            <div
-                                                                key={s}
-                                                                onClick={() => handleStatusChange(task.id, s)}
-                                                                className={`px-3 py-1 text-xs font-semibold cursor-pointer hover:bg-gray-100 ${statusClasses[s]}`}
-                                                            >
-                                                                {statusMap[s]}
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            )}
+                                        <td className="p-3 border">
+                                             <select
+                value={task.status}
+                onChange={(e) => handleStatusChange(task.id, e.target.value)}
+                className="border rounded p-2"
+              >
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
                                         </td>
                                     </tr>
                                 ))

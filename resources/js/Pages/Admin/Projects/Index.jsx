@@ -1,64 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Edit, Trash2, Calendar } from "lucide-react";
+import { Edit, Trash2, Eye, X } from "lucide-react";
 
-export default function Index({ projects, success }) {
+export default function Index({ projects, users, success }) {
   const [deleteId, setDeleteId] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [editData, setEditData] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(!!success);
+  const [fade, setFade] = useState(false);
 
-  // Create form
-  const {
-    data: createData,
-    setData: setCreateData,
-    post,
-    processing: creating,
-    reset: resetCreate,
-    errors: createErrors,
-  } = useForm({
+  const { data: form, setData, reset, errors } = useForm({
     name: "",
+    description: "",
     status: "not started",
     start_date: "",
     end_date: "",
+    priority: "Medium",
   });
 
-  // Edit form
-  const {
-    data: updateData,
-    setData: setUpdateData,
-    put,
-    processing: updating,
-    reset: resetUpdate,
-    errors: updateErrors,
-  } = useForm({
-    id: "",
-    name: "",
-    status: "not started",
-    start_date: "",
-    end_date: "",
-  });
+  const rows = Array.isArray(projects) ? projects : projects?.data ?? [];
 
-  const handleCreateSubmit = (e) => {
-    e.preventDefault();
-    post(route("admin.projects.store"), {
-      onSuccess: () => {
-        resetCreate();
-        setShowCreate(false);
-      },
-    });
+  useEffect(() => {
+    if (success) {
+      setShowSuccess(true);
+      const timer = setTimeout(() => {
+        setFade(true);
+        setTimeout(() => setShowSuccess(false), 500);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  const openCreateModal = () => {
+    reset();
+    setEditingProject(null);
+    setShowCreate(true);
   };
 
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    if (!updateData.id) return;
-    put(route("admin.projects.update", updateData.id), {
-      onSuccess: () => {
-        resetUpdate();
-        setShowEdit(false);
-      },
+  const openEditModal = (project) => {
+    setEditingProject(project);
+    setData({
+      name: project.name,
+      description: project.description || "",
+      status: project.status || "not started",
+      start_date: project.start_date || "",
+      end_date: project.end_date || "",
+      priority: project.priority || "Medium",
     });
+    setShowEdit(true);
+  };
+
+  const closeModal = () => {
+    reset();
+    setShowCreate(false);
+    setShowEdit(false);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingProject) {
+      router.post(
+        route("admin.projects.update", editingProject.id),
+        { _method: "PUT", ...form },
+        { onSuccess: closeModal, forceFormData: true }
+      );
+    } else {
+      router.post(route("admin.projects.store"), form, {
+        onSuccess: closeModal,
+        forceFormData: true,
+      });
+    }
   };
 
   const handleDelete = (id) => {
@@ -66,159 +79,238 @@ export default function Index({ projects, success }) {
     setDeleteId(null);
   };
 
-  const rows = projects?.data ?? [];
+  const getStatusBadge = (status) => {
+    const s = status?.toLowerCase();
+    if (s === "completed" || s === "finished")
+      return (
+        <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm">
+          Finished
+        </span>
+      );
+    if (s === "in progress")
+      return (
+        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm">
+          In Progress
+        </span>
+      );
+    if (s === "on hold")
+      return (
+        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg text-sm">
+          On Hold
+        </span>
+      );
+    return (
+      <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm">
+        Pending
+      </span>
+    );
+  };
 
   return (
     <AdminLayout>
       <Head title="Projects" />
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Projects</h1>
         <button
-          onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={openCreateModal}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
         >
           + New Project
         </button>
       </div>
 
-      {success && (
-        <div className="mb-4 p-2 bg-green-100 text-green-700 rounded">
-          {success}
+      {/* ✅ Success message */}
+      {showSuccess && (
+        <div
+          className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${
+            fade ? "opacity-0" : "opacity-100"
+          }`}
+        >
+          <span>{success}</span>
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="text-green-700 hover:text-green-900"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      {/* Project Cards */}
-      {rows.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rows.map((project) => (
-            <div
-              key={project.id}
-              className="bg-white shadow rounded-xl p-5 flex flex-col justify-between"
-            >
-              <div>
-                <h2
-                  onClick={() =>
-                    router.get(route("admin.projects.show", project.id))
-                  }
-                  className="text-lg font-bold text-blue-600 cursor-pointer hover:underline"
+      {/* ✅ Projects Table */}
+      <div className="overflow-x-auto bg-white rounded-2xl shadow">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="bg-blue-50 text-gray-700 text-sm uppercase">
+              <th className="p-3 text-left">Project Name</th>
+              <th className="p-3 text-left">Start Date</th>
+              <th className="p-3 text-left">End Date</th>
+              <th className="p-3 text-left">Status</th>
+              <th className="p-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length > 0 ? (
+              rows.map((project) => (
+                <tr
+                  key={project.id}
+                  className="border-t text-gray-700 hover:bg-gray-100 transition"
                 >
-                  {project.name}
-                </h2>
-                <p className="text-sm mt-1 text-gray-500 capitalize">
-                  Status: {project.status}
-                </p>
-                <div className="flex items-center mt-2 text-sm text-gray-600 space-x-3">
-                  <span className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" /> {project.start_date}
-                  </span>
-                  <span className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" /> {project.end_date}
-                  </span>
-                </div>
-              </div>
+                  <td className="p-3 font-semibold text-gray-900 text-[15px] tracking-wide hover:text-blue-600 transition-colors">
+                    {project.name}
+                  </td>
+                  <td className="p-3 text-gray-600">
+                    {project.start_date
+                      ? new Date(project.start_date).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
+                  </td>
+                  <td className="p-3 text-gray-600">
+                    {project.end_date
+                      ? new Date(project.end_date).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
+                  </td>
+                  <td className="p-3">{getStatusBadge(project.status)}</td>
+                  <td className="p-3 flex justify-center gap-3">
+                    <button
+                      onClick={() =>
+                        router.get(route("admin.projects.show", project.id))
+                      }
+                      className="text-blue-600 hover:text-blue-800"
+                      title="View"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(project)}
+                      className="text-gray-600 hover:text-blue-700"
+                      title="Edit"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(project.id)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="6"
+                  className="text-center py-6 text-gray-500 italic"
+                >
+                  No projects found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-              <div className="flex justify-end space-x-3 mt-4">
-                <button
-                  onClick={() => {
-                    setUpdateData({
-                      id: project.id,
-                      name: project.name,
-                      status: project.status,
-                      start_date: project.start_date,
-                      end_date: project.end_date,
-                    });
-                    setShowEdit(true);
-                  }}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <Edit className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setDeleteId(project.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-600">No projects found.</p>
-      )}
+      {/* ✅ Create / Edit Modal */}
+      {(showCreate || showEdit) && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">
+              {editingProject ? "Edit Project" : "Create Project"}
+            </h2>
 
-      {/* Create Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Create Project</h2>
-            <form onSubmit={handleCreateSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Project Name */}
               <div>
-                <label className="block">Name</label>
+                <label className="block font-medium">Project Name</label>
                 <input
                   type="text"
-                  value={createData.name}
-                  onChange={(e) => setCreateData("name", e.target.value)}
+                  value={form.name}
+                  onChange={(e) => setData("name", e.target.value)}
                   className={`w-full border px-3 py-2 rounded ${
-                    createErrors.name ? "border-red-500" : "border-gray-300"
+                    errors.name ? "border-red-500" : "border-gray-300"
                   }`}
                 />
-                {createErrors.name && (
-                  <p className="text-red-500 text-sm">{createErrors.name}</p>
+                {errors.name && (
+                  <p className="text-red-500 text-sm">{errors.name}</p>
                 )}
               </div>
 
+              {/* Description */}
               <div>
-                <label className="block">Status</label>
+                <label className="block font-medium">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setData("description", e.target.value)}
+                  className={`w-full border px-3 py-2 rounded min-h-[100px] ${
+                    errors.description ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter brief project details..."
+                ></textarea>
+                {errors.description && (
+                  <p className="text-red-500 text-sm">{errors.description}</p>
+                )}
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className="block font-medium">Status</label>
                 <select
-                  value={createData.status}
-                  onChange={(e) => setCreateData("status", e.target.value)}
+                  value={form.status}
+                  onChange={(e) => setData("status", e.target.value)}
                   className="w-full border px-3 py-2 rounded"
                 >
                   <option value="not started">Not Started</option>
                   <option value="in progress">In Progress</option>
+                  <option value="on hold">On Hold</option>
                   <option value="completed">Completed</option>
                 </select>
               </div>
 
+              {/* Dates */}
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="block">Start Date</label>
+                  <label className="block font-medium">Start Date</label>
                   <input
                     type="date"
-                    value={createData.start_date}
-                    onChange={(e) =>
-                      setCreateData("start_date", e.target.value)
-                    }
+                    value={form.start_date}
+                    onChange={(e) => setData("start_date", e.target.value)}
                     className="w-full border rounded p-2"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block">End Date</label>
+                  <label className="block font-medium">End Date</label>
                   <input
                     type="date"
-                    value={createData.end_date}
-                    onChange={(e) => setCreateData("end_date", e.target.value)}
+                    value={form.end_date}
+                    onChange={(e) => setData("end_date", e.target.value)}
                     className="w-full border rounded p-2"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2">
+              {/* Buttons */}
+              <div className="flex justify-end space-x-2 mt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded"
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-400 text-white rounded-lg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={creating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
                 >
-                  Save
+                  {editingProject ? "Update" : "Save"}
                 </button>
               </div>
             </form>
@@ -226,88 +318,10 @@ export default function Index({ projects, success }) {
         </div>
       )}
 
-      {/* Edit Modal */}
-      {showEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Edit Project</h2>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div>
-                <label className="block">Name</label>
-                <input
-                  type="text"
-                  value={updateData.name}
-                  onChange={(e) => setUpdateData("name", e.target.value)}
-                  className={`w-full border px-3 py-2 rounded ${
-                    updateErrors.name ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {updateErrors.name && (
-                  <p className="text-red-500 text-sm">{updateErrors.name}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block">Status</label>
-                <select
-                  value={updateData.status}
-                  onChange={(e) => setUpdateData("status", e.target.value)}
-                  className="w-full border px-3 py-2 rounded"
-                >
-                  <option value="not started">Not Started</option>
-                  <option value="in progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block">Start Date</label>
-                  <input
-                    type="date"
-                    value={updateData.start_date}
-                    onChange={(e) =>
-                      setUpdateData("start_date", e.target.value)
-                    }
-                    className="w-full border rounded p-2"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block">End Date</label>
-                  <input
-                    type="date"
-                    value={updateData.end_date}
-                    onChange={(e) => setUpdateData("end_date", e.target.value)}
-                    className="w-full border rounded p-2"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEdit(false)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={updating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded"
-                >
-                  Update
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
+      {/* ✅ Delete Confirmation */}
       {deleteId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded shadow-lg w-full max-w-sm">
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
             <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
             <p className="mb-4">
               Are you sure you want to delete this project?
@@ -315,13 +329,13 @@ export default function Index({ projects, success }) {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+                className="px-4 py-2 bg-gray-400 text-white rounded-lg"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteId)}
-                className="px-4 py-2 bg-red-600 text-white rounded"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg"
               >
                 Delete
               </button>

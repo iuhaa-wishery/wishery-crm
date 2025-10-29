@@ -68,25 +68,30 @@ class ProjectController extends Controller
     }
 
     public function update(Request $request, Project $project)
-	{
-	    $request->validate([
-	        'name' => 'required|string|max:255',
-	        'description' => 'nullable|string',
-	        'status' => 'required|string',
-	        'start_date' => 'required|date',
-	        'end_date' => 'required|date|after_or_equal:start_date',
-	    ]);
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|string',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
 
-	    $project->update($request->all());
+        $project->update($request->only([
+            'name',
+            'description',
+            'status',
+            'start_date',
+            'end_date',
+        ]));
 
-	    if ($request->inertia()) {
-	        return back()->with('success', 'Project updated successfully!');
-	    }
+        if ($request->inertia()) {
+            return back()->with('success', 'Project updated successfully!');
+        }
 
-	    return redirect()->route('admin.projects.index')
-	        ->with('success', 'Project updated successfully!');
-	}
-
+        return redirect()->route('admin.projects.index')
+            ->with('success', 'Project updated successfully!');
+    }
 
     public function destroy(Project $project)
     {
