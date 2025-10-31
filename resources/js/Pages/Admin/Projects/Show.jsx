@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { usePage, router } from "@inertiajs/react";
+import axios from 'axios'; // ✅ IMPORT AXIOS FOR DIRECT API CALL
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Edit, Trash2, Calendar, X } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"; 
+
+// Helper function to format date to YYYY-MM-DD for date input
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  return dateString.split("T")[0].split(" ")[0];
+};
 
 export default function Show() {
   const { project, tasks: initialTasks, users } = usePage().props;
@@ -14,6 +22,7 @@ export default function Show() {
   const [fade, setFade] = useState(false);
   const [form, setForm] = useState({
     name: "",
+    description: "",
     assignee_id: "",
     start_date: "",
     end_date: "",
@@ -37,8 +46,10 @@ export default function Show() {
     completed: "bg-gray-200",
   };
 
-  useEffect(() => setTasks(initialTasks), [initialTasks]);
+  // Synchronize local tasks state when initialTasks prop changes
+  useEffect(() => setTasks(initialTasks || []), [initialTasks]);
 
+  // Handle success message fading
   useEffect(() => {
     if (showSuccess) {
       const timer = setTimeout(() => {
@@ -54,9 +65,10 @@ export default function Show() {
       setEditingTask(task);
       setForm({
         name: task.name || "",
+        description: task.description || "",
         assignee_id: task.assignee_id || "",
-        start_date: task.start_date || "",
-        end_date: task.end_date || "",
+        start_date: formatDate(task.start_date) || "",
+        end_date: formatDate(task.end_date) || "",
         status: task.status || "not started",
         priority: task.priority || "medium",
       });
@@ -64,6 +76,7 @@ export default function Show() {
       setEditingTask(null);
       setForm({
         name: "",
+        description: "",
         assignee_id: "",
         start_date: "",
         end_date: "",
@@ -89,6 +102,7 @@ export default function Show() {
     if (!form.end_date) newErrors.end_date = "End date is required.";
     if (form.start_date && form.end_date && form.end_date < form.start_date)
       newErrors.end_date = "End date cannot be before start date.";
+    if (!form.assignee_id) newErrors.assignee_id = "Assignee is required.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -102,13 +116,15 @@ export default function Show() {
       : route("admin.tasks.store");
 
     const payload = editingTask
-      ? { _method: "PUT", ...form }
+      ? { _method: "PUT", project_id: project.id, ...form }
       : { ...form, project_id: project.id };
 
     router.post(routeName, payload, {
+      preserveScroll: true,
       onSuccess: (page) => {
-        setTasks(page.props.tasks || []);
+        if (page.props?.tasks) setTasks(page.props.tasks);
         setShowSuccess(true);
+        setFade(false); 
         closeModal();
       },
       onError: (err) => setErrors(err),
@@ -116,36 +132,38 @@ export default function Show() {
   };
 
   const handleDelete = () => {
-    router.post(
-      route("admin.tasks.destroy", deleteTaskId),
-      { _method: "DELETE" },
-      {
-        onSuccess: (page) => {
-          setTasks(page.props.tasks || []);
-          setShowSuccess(true);
-        },
-      }
-    );
+    router.delete(route("admin.tasks.destroy", deleteTaskId), {
+      preserveScroll: true,
+      onSuccess: (page) => {
+        if (page.props?.tasks) setTasks(page.props.tasks);
+        setShowSuccess(true);
+        setFade(false); 
+      },
+    });
     setDeleteTaskId(null);
   };
 
   const grouped = statusOrder.reduce((acc, key) => {
-    acc[key] = tasks.filter((t) => (t.status || "").toLowerCase() === key);
+    acc[key] = tasks.filter((t) => (t.status || "").toLowerCase() === key).sort((a, b) => a.id - b.id);
     return acc;
   }, {});
 
   const getDaysLeft = (endDate) => {
     if (!endDate) return "";
     const now = new Date();
-    const end = new Date(endDate);
-    const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return <span className="text-red-600">Overdue</span>;
+    const end = new Date(formatDate(endDate));
+    now.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return <span className="text-red-600 font-bold">Overdue</span>;
     if (diffDays === 0)
-      return <span className="text-yellow-600">Due today</span>;
-    return <span className="text-blue-700">{diffDays} days left</span>;
+      return <span className="text-yellow-600 font-bold">Due today</span>;
+    return <span className="text-blue-700 font-bold">{diffDays} days left</span>;
   };
 
-  // ✅ Correct avatar getter (matches your working users table)
   const getAvatarUrl = (task) => {
     const user = users?.find((u) => u.id === task.assignee_id);
     if (user?.image_url) {
@@ -153,9 +171,58 @@ export default function Show() {
         ? user.image_url
         : `/storage/${user.image_url}`;
     }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "U")}`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user?.name || "U"
+    )}&background=random&color=fff`;
   };
-  
+
+
+  // 💡 Drag and Drop Handler - FIX: Using Axios to silence the Inertia warning
+  const onDragEnd = (result) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+      return;
+    }
+
+    const sourceStatus = source.droppableId;
+    const destinationStatus = destination.droppableId;
+    const taskId = parseInt(draggableId.split('-')[1]);
+    const draggedTask = tasks.find(t => t.id === taskId);
+    
+    if (!draggedTask) return;
+
+
+    // 1. Optimistic UI Update (Save the original state for rollback)
+    const originalTasks = [...tasks];
+    const newTasks = tasks.map(task => 
+        task.id === taskId ? { ...task, status: destinationStatus } : task
+    );
+    setTasks(newTasks);
+
+
+    // 2. Persist Change to the Backend using Axios
+    if (sourceStatus !== destinationStatus) {
+      
+      // Use axios.put to make a direct HTTP request, avoiding Inertia routing and the JSON response warning
+      axios.put(route("admin.tasks.status", taskId), { 
+        status: destinationStatus
+      })
+      .then(response => {
+        // Success: Show the success message
+        setShowSuccess(true);
+        setFade(false);
+      })
+      .catch(error => {
+        // Error: Revert the UI state
+        setTasks(originalTasks); 
+        alert("Failed to update task status. Please check server logs.");
+        console.error("Status update failed:", error);
+      });
+    } 
+  };
+
+
   return (
     <AdminLayout>
       <div className="p-6">
@@ -178,9 +245,9 @@ export default function Show() {
               fade ? "opacity-0" : "opacity-100"
             }`}
           >
-            <span>Task updated successfully!</span>
+            <span>Task status updated successfully!</span>
             <button
-              onClick={() => setShowSuccess(false)}
+              onClick={() => { setShowSuccess(false); setFade(false); }}
               className="text-green-700 hover:text-green-900"
             >
               <X className="w-4 h-4" />
@@ -188,192 +255,291 @@ export default function Show() {
           </div>
         )}
 
-        {/* ✅ Horizontal Scroll Columns */}
-        <div className="overflow-x-auto pb-4">
-          <div className="flex gap-6 min-w-max">
-            {statusOrder.map((statusKey) => (
-              <div
-                key={statusKey}
-                className="flex-shrink-0 w-[300px] bg-white rounded-2xl shadow p-5"
-              >
-                <h2 className="text-xl font-semibold mb-4">
-                  {columns[statusKey]}
-                </h2>
+        {/* ✅ Kanban Columns - Wrapped in DragDropContext */}
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-6 min-w-max">
+              {statusOrder.map((statusKey) => (
+                // 💡 Droppable Context for each Column
+                <Droppable droppableId={statusKey} key={statusKey}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${
+                        snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
+                      }`}
+                    >
+                      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                        {columns[statusKey]} ({grouped[statusKey].length})
+                      </h2>
 
-                <div className="space-y-4">
-                  {grouped[statusKey].length > 0 ? (
-                    grouped[statusKey].map((task) => (
-                      <div
-                        key={task.id}
-                        className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition ${bgByStatus[statusKey]}`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-gray-800">
-                            {task.name}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => openModal(task)}
-                              className="text-gray-600 hover:text-blue-700"
+                      <div className="space-y-4 min-h-[50px]">
+                        {grouped[statusKey].length > 0 ? (
+                          grouped[statusKey].map((task, index) => (
+                            // 💡 Draggable Component for each Task
+                            <Draggable
+                              key={task.id}
+                              draggableId={`task-${task.id}`}
+                              index={index}
                             >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setDeleteTaskId(task.id)}
-                              className="text-gray-600 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer ${bgByStatus[statusKey]} ${
+                                    snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <h3 className="font-semibold text-gray-800">
+                                      {task.name}
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => openModal(task)}
+                                        className="text-gray-600 hover:text-blue-700 p-1 rounded-full hover:bg-white/50"
+                                        title="Edit Task"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => setDeleteTaskId(task.id)}
+                                        className="text-gray-600 hover:text-red-600 p-1 rounded-full hover:bg-white/50"
+                                        title="Delete Task"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
 
-                        {/* Dates */}
-                        <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>{task.start_date || "-"}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>{task.end_date || "-"}</span>
-                          </div>
-                        </div>
+                                  <p className="text-sm text-gray-700 mt-2 line-clamp-2">
+                                    {task.description || "No description provided."}
+                                  </p>
 
-                        <div className="mt-2 text-sm font-medium">
-                          {getDaysLeft(task.end_date)}
-                        </div>
+                                  <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
+                                    <div className="flex items-center">
+                                      <Calendar className="w-4 h-4 mr-1" />
+                                      <span>{formatDate(task.start_date) || "-"}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Calendar className="w-4 h-4 mr-1" />
+                                      <span>{formatDate(task.end_date) || "-"}</span>
+                                    </div>
+                                  </div>
 
-                        {/* ✅ Avatar + Priority */}
-                        <div className="mt-3 flex items-center justify-between">
-                          <img
-                            src={getAvatarUrl(task)}
-                            alt="avatar"
-                            className="w-8 h-8 rounded-full border border-gray-300 object-cover"
-                            onError={(e) => {
-                              e.target.src =
-                                "https://ui-avatars.com/api/?name=User";
-                            }}
-                          />
-                          <span
-                            className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-                              task.priority === "high"
-                                ? "bg-red-200 text-red-800"
-                                : task.priority === "medium"
-                                ? "bg-yellow-200 text-yellow-800"
-                                : "bg-green-200 text-green-800"
-                            }`}
-                          >
-                            {task.priority.charAt(0).toUpperCase() +
-                              task.priority.slice(1)}
-                          </span>
-                        </div>
+                                  <div className="mt-2 text-sm font-medium">
+                                    {getDaysLeft(task.end_date)}
+                                  </div>
+
+                                  <div className="mt-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <img
+                                        src={getAvatarUrl(task)}
+                                        alt="avatar"
+                                        className="w-8 h-8 rounded-full border border-gray-300 object-cover"
+                                      />
+                                      <span className="text-sm text-gray-700">
+                                        {users?.find(u => u.id === task.assignee_id)?.name || "Unassigned"}
+                                      </span>
+                                    </div>
+                                    <span
+                                      className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                                        task.priority === "high"
+                                          ? "bg-red-200 text-red-800"
+                                          : task.priority === "medium"
+                                          ? "bg-yellow-200 text-yellow-800"
+                                          : "bg-green-200 text-green-800"
+                                      }`}
+                                    >
+                                      {task.priority.charAt(0).toUpperCase() +
+                                        task.priority.slice(1)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          <p className="text-gray-400 text-sm p-4 border border-dashed rounded-xl text-center">
+                            No tasks in this column.
+                          </p>
+                        )}
+                        {provided.placeholder}
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-400 text-sm">No tasks</p>
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
+                </Droppable>
+              ))}
+            </div>
           </div>
-        </div>
+        </DragDropContext>
 
-        {/* ✅ Create / Edit Modal */}
+        {/* ✅ Add/Edit Modal */}
         {isOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">
-                {editingTask ? "Edit Task" : "Add Task"}
-              </h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-8 z-50 overflow-y-auto">
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl mt-10">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">
+                  {editingTask ? "Edit Task" : "Add Task"}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-800"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block font-medium">Task Name</label>
+                  <label className="block font-medium mb-1 text-gray-700">Task Name</label>
                   <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded ${
+                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.name ? "border-red-500" : "border-gray-300"
                     }`}
+                    placeholder="e.g. Implement user authentication"
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm">{errors.name}</p>
+                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block font-medium">Assignee</label>
-                  <select
-                    name="assignee_id"
-                    value={form.assignee_id}
+                  <label className="block font-medium mb-1 text-gray-700">Description</label>
+                  <textarea
+                    name="description"
+                    value={form.description || ""}
                     onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded"
-                  >
-                    <option value="">Select Assignee</option>
-                    {users?.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
+                    className={`w-full border px-3 py-2 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.description
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    rows="4"
+                    placeholder="Enter detailed task description..."
+                  />
+                  {errors.description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.description}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <label className="block font-medium">Start Date</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-medium mb-1 text-gray-700">Assignee</label>
+                    <select
+                      name="assignee_id"
+                      value={form.assignee_id}
+                      onChange={handleChange}
+                      className={`w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.assignee_id
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      <option value="">Select Assignee</option>
+                      {users?.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.assignee_id && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.assignee_id}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-1 text-gray-700">Status</label>
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={handleChange}
+                      className="w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                    >
+                      {statusOrder.map((status) => (
+                        <option key={status} value={status}>
+                          {columns[status]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-medium mb-1 text-gray-700">Start Date</label>
                     <input
                       type="date"
                       name="start_date"
                       value={form.start_date}
                       onChange={handleChange}
-                      className={`w-full border rounded p-2 ${
-                        errors.start_date ? "border-red-500" : "border-gray-300"
+                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.start_date
+                          ? "border-red-500"
+                          : "border-gray-300"
                       }`}
                     />
+                    {errors.start_date && (
+                        <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <label className="block font-medium">End Date</label>
+                  <div>
+                    <label className="block font-medium mb-1 text-gray-700">End Date</label>
                     <input
                       type="date"
                       name="end_date"
                       value={form.end_date}
                       onChange={handleChange}
-                      className={`w-full border rounded p-2 ${
+                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.end_date ? "border-red-500" : "border-gray-300"
                       }`}
                     />
+                    {(errors.end_date && errors.end_date !== "End date cannot be before start date.") && (
+                        <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
+                    )}
+                    {(errors.end_date && errors.end_date === "End date cannot be before start date.") && (
+                        <p className="text-red-500 text-sm mt-1">Date must be on or after start date.</p>
+                    )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-medium">Priority</label>
+                  <label className="block font-medium mb-1 text-gray-700">Priority</label>
                   <select
                     name="priority"
                     value={form.priority}
                     onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded"
+                    className="w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
                     <option value="high">High</option>
                   </select>
                 </div>
-
-                <div className="flex justify-end space-x-2">
+                
+                <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="px-4 py-2 bg-gray-400 text-white rounded-lg"
+                    className="px-5 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md font-medium"
                   >
-                    {editingTask ? "Update" : "Save"}
+                    {editingTask ? "Update Task" : "Save Task"}
                   </button>
                 </div>
               </form>
@@ -383,20 +549,22 @@ export default function Show() {
 
         {/* ✅ Delete Confirmation */}
         {deleteTaskId && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
-              <h2 className="text-lg font-bold mb-4">Confirm Delete</h2>
-              <p className="mb-4">Are you sure you want to delete this task?</p>
-              <div className="flex justify-end space-x-2">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4 text-gray-800">Confirm Deletion</h2>
+              <p className="mb-6 text-gray-700">
+                Are you sure you want to delete this task? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={() => setDeleteTaskId(null)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded-lg"
+                  className="px-5 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                  className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md font-medium"
                 >
                   Delete
                 </button>

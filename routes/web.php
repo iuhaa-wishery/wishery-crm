@@ -51,7 +51,6 @@ Route::middleware(['auth', 'is_admin'])
 
         Route::resource('tasks', AdminTaskController::class);
 
-        // ✅ Add this new route
         Route::put('/tasks/{id}/status', [AdminTaskController::class, 'updateStatus'])
             ->name('tasks.status');
     });
