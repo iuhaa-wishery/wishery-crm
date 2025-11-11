@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePage, router } from "@inertiajs/react";
-import axios from 'axios'; // ✅ IMPORT AXIOS FOR DIRECT API CALL
+import axios from 'axios';
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Edit, Trash2, Calendar, X } from "lucide-react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"; 
+import { Edit, Trash2, Calendar, X, ChevronDown } from "lucide-react"; // Added ChevronDown
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 // Helper function to format date to YYYY-MM-DD for date input
 const formatDate = (dateString) => {
@@ -14,16 +14,23 @@ const formatDate = (dateString) => {
 export default function Show() {
   const { project, tasks: initialTasks, users } = usePage().props;
 
+  // Ref for the custom assignee dropdown to handle outside clicks
+  const dropdownRef = useRef(null);
+
   const [tasks, setTasks] = useState(initialTasks || []);
   const [isOpen, setIsOpen] = useState(false);
   const [deleteTaskId, setDeleteTaskId] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [fade, setFade] = useState(false);
+  
+  // 💡 NEW STATE for dropdown visibility
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false); 
+
   const [form, setForm] = useState({
     name: "",
     description: "",
-    assignee_id: "",
+    assignee_ids: [],
     start_date: "",
     end_date: "",
     status: "not started",
@@ -60,13 +67,43 @@ export default function Show() {
     }
   }, [showSuccess]);
 
+  // Handle click outside to close the dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsAssigneeDropdownOpen(false);
+      }
+    }
+    // Only add listener if the modal is open
+    if (isOpen) {
+        document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+  
+  // 💡 Function to toggle the custom dropdown
+  const toggleAssigneeDropdown = () => {
+    setIsAssigneeDropdownOpen(prev => !prev);
+  }
+
   const openModal = (task = null) => {
+    // Reset dropdown state
+    setIsAssigneeDropdownOpen(false); 
+
     if (task) {
       setEditingTask(task);
+      
+      // 💡 FIX 1A: Extract IDs from the 'assignees' relationship array
+      const currentAssigneeIds = Array.isArray(task.assignees)
+          ? task.assignees.map(a => String(a.id)) // Map the User objects to string IDs
+          : [];
+      
       setForm({
         name: task.name || "",
         description: task.description || "",
-        assignee_id: task.assignee_id || "",
+        assignee_ids: currentAssigneeIds, // <-- Now uses the mapped IDs
         start_date: formatDate(task.start_date) || "",
         end_date: formatDate(task.end_date) || "",
         status: task.status || "not started",
@@ -77,7 +114,7 @@ export default function Show() {
       setForm({
         name: "",
         description: "",
-        assignee_id: "",
+        assignee_ids: [],
         start_date: "",
         end_date: "",
         status: "not started",
@@ -94,6 +131,18 @@ export default function Show() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+  
+  // Handler for multi-select checkboxes (used inside the dropdown)
+  const handleAssigneeChange = (e) => {
+    const { value, checked } = e.target;
+    setForm((prev) => {
+      const newAssigneeIds = checked
+        ? [...prev.assignee_ids, value]
+        : prev.assignee_ids.filter((id) => id !== value);
+      
+      return { ...prev, assignee_ids: newAssigneeIds };
+    });
+  };
 
   const validate = () => {
     const newErrors = {};
@@ -102,7 +151,9 @@ export default function Show() {
     if (!form.end_date) newErrors.end_date = "End date is required.";
     if (form.start_date && form.end_date && form.end_date < form.start_date)
       newErrors.end_date = "End date cannot be before start date.";
-    if (!form.assignee_id) newErrors.assignee_id = "Assignee is required.";
+    
+    if (form.assignee_ids.length === 0) newErrors.assignee_ids = "At least one Assignee is required.";
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -163,21 +214,29 @@ export default function Show() {
       return <span className="text-yellow-600 font-bold">Due today</span>;
     return <span className="text-blue-700 font-bold">{diffDays} days left</span>;
   };
-
-  const getAvatarUrl = (task) => {
-    const user = users?.find((u) => u.id === task.assignee_id);
-    if (user?.image_url) {
-      return user.image_url.startsWith("http")
-        ? user.image_url
-        : `/storage/${user.image_url}`;
+  
+  const getAssigneeUsers = (task) => {
+    if (Array.isArray(task.assignees) && task.assignees.length > 0) {
+        return task.assignees; 
     }
+    return [];
+  };
+
+  const getAvatarUrl = (user) => {
+    const basePath = import.meta.env.VITE_BASE_URL;
+
+    if (user?.image) {
+      return user.image.startsWith("http")
+        ? user.image
+        : `${basePath}/storage/${user.image}`;
+    }
+
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(
       user?.name || "U"
     )}&background=random&color=fff`;
   };
 
-
-  // 💡 Drag and Drop Handler - FIX: Using Axios to silence the Inertia warning
+  // Drag and Drop Handler remains unchanged
   const onDragEnd = (result) => {
     const { destination, source, draggableId } = result;
 
@@ -192,7 +251,6 @@ export default function Show() {
     
     if (!draggedTask) return;
 
-
     // 1. Optimistic UI Update (Save the original state for rollback)
     const originalTasks = [...tasks];
     const newTasks = tasks.map(task => 
@@ -200,27 +258,37 @@ export default function Show() {
     );
     setTasks(newTasks);
 
-
     // 2. Persist Change to the Backend using Axios
     if (sourceStatus !== destinationStatus) {
-      
-      // Use axios.put to make a direct HTTP request, avoiding Inertia routing and the JSON response warning
       axios.put(route("admin.tasks.status", taskId), { 
         status: destinationStatus
       })
       .then(response => {
-        // Success: Show the success message
         setShowSuccess(true);
         setFade(false);
       })
       .catch(error => {
-        // Error: Revert the UI state
         setTasks(originalTasks); 
         alert("Failed to update task status. Please check server logs.");
         console.error("Status update failed:", error);
       });
     } 
   };
+  
+  // Helper to get selected user names for display in the dropdown header
+  const getSelectedAssigneeNames = () => {
+      const selectedUsers = users?.filter(u => form.assignee_ids.includes(String(u.id)));
+      if (!selectedUsers || selectedUsers.length === 0) {
+          return "Select Assignee(s)";
+      }
+      
+      const names = selectedUsers.map(u => u.name);
+      
+      if (names.length > 2) {
+          return `${names[0]}, ${names[1]} (+${names.length - 2} more)`;
+      }
+      return names.join(', ');
+  }
 
 
   return (
@@ -255,12 +323,11 @@ export default function Show() {
           </div>
         )}
 
-        {/* ✅ Kanban Columns - Wrapped in DragDropContext */}
+        {/* Kanban Context (unchanged) */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="overflow-x-auto pb-4">
             <div className="flex gap-6 min-w-max">
               {statusOrder.map((statusKey) => (
-                // 💡 Droppable Context for each Column
                 <Droppable droppableId={statusKey} key={statusKey}>
                   {(provided, snapshot) => (
                     <div
@@ -277,7 +344,6 @@ export default function Show() {
                       <div className="space-y-4 min-h-[50px]">
                         {grouped[statusKey].length > 0 ? (
                           grouped[statusKey].map((task, index) => (
-                            // 💡 Draggable Component for each Task
                             <Draggable
                               key={task.id}
                               draggableId={`task-${task.id}`}
@@ -334,16 +400,29 @@ export default function Show() {
                                   </div>
 
                                   <div className="mt-3 flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <img
-                                        src={getAvatarUrl(task)}
-                                        alt="avatar"
-                                        className="w-8 h-8 rounded-full border border-gray-300 object-cover"
-                                      />
-                                      <span className="text-sm text-gray-700">
-                                        {users?.find(u => u.id === task.assignee_id)?.name || "Unassigned"}
-                                      </span>
+                                    {/* Display multiple assignees/avatars */}
+                                    <div className="flex items-center">
+                                        <div className="flex -space-x-2 overflow-hidden">
+                                        {getAssigneeUsers(task).slice(0, 3).map((user) => (
+                                            <img
+                                                key={user.id}
+                                                src={getAvatarUrl(user)}
+                                                alt={user.name}
+                                                className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-md transition hover:z-10"
+                                                title={user.name}
+                                            />
+                                        ))}
+                                        {getAssigneeUsers(task).length > 3 && (
+                                            <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-400 flex items-center justify-center text-xs text-white shadow-md">
+                                                +{getAssigneeUsers(task).length - 3}
+                                            </div>
+                                        )}
+                                        {getAssigneeUsers(task).length === 0 && (
+                                            <span className="text-sm text-gray-500 italic">Unassigned</span>
+                                        )}
+                                        </div>
                                     </div>
+                                    
                                     <span
                                       className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
                                         task.priority === "high"
@@ -433,27 +512,64 @@ export default function Show() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-medium mb-1 text-gray-700">Assignee</label>
-                    <select
-                      name="assignee_id"
-                      value={form.assignee_id}
-                      onChange={handleChange}
-                      className={`w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.assignee_id
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      <option value="">Select Assignee</option>
-                      {users?.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.assignee_id && (
+                    <label className="block font-medium mb-1 text-gray-700">Assignees</label>
+                    {/* 💡 CUSTOM MULTI-SELECT DROPDOWN */}
+                    <div ref={dropdownRef} className="relative">
+                        <button
+                            type="button"
+                            onClick={toggleAssigneeDropdown}
+                            className={`w-full flex justify-between items-center bg-white px-3 py-2 text-left border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                errors.assignee_ids ? "border-red-500" : "border-gray-300"
+                            }`}
+                        >
+                            <span className="truncate pr-4 text-gray-700">
+                                {getSelectedAssigneeNames()}
+                            </span>
+                            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
+                                isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'
+                            }`} />
+                        </button>
+                        
+                        {isAssigneeDropdownOpen && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                {users?.map((user) => (
+                                    <div 
+                                        key={user.id} 
+                                        className="flex items-center p-2 hover:bg-gray-50 transition cursor-pointer"
+                                        onClick={() => { /* clicking div toggles checkbox */
+                                            const syntheticEvent = { target: { value: String(user.id), checked: !form.assignee_ids.includes(String(user.id)) } };
+                                            handleAssigneeChange(syntheticEvent);
+                                        }}
+                                    >
+                                        <input
+                                          id={`user-dropdown-${user.id}`}
+                                          type="checkbox"
+                                          name="assignee_ids"
+                                          value={String(user.id)}
+                                          // 💡 FIX 2: Ensure ID comparison is consistent (String(user.id) vs form.assignee_ids items which are strings)
+                                          checked={form.assignee_ids.includes(String(user.id))} 
+                                          onChange={handleAssigneeChange}
+                                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                          onClick={(e) => e.stopPropagation()} 
+                                      />                                        <label
+                                            htmlFor={`user-dropdown-${user.id}`}
+                                            className="ml-2 text-sm font-medium text-gray-700 flex items-center flex-grow cursor-pointer"
+                                        >
+                                            <img
+                                                src={getAvatarUrl(user)}
+                                                alt="avatar"
+                                                className="w-6 h-6 rounded-full border mr-2 object-cover"
+                                            />
+                                            {user.name}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {errors.assignee_ids && (
                       <p className="text-red-500 text-sm mt-1">
-                        {errors.assignee_id}
+                        {errors.assignee_ids}
                       </p>
                     )}
                   </div>
@@ -547,7 +663,7 @@ export default function Show() {
           </div>
         )}
 
-        {/* ✅ Delete Confirmation */}
+        {/* Delete Confirmation (unchanged) */}
         {deleteTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm">

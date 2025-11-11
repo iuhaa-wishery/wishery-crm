@@ -27,7 +27,12 @@ Route::middleware(['auth'])->get('/dashboard', function () {
 // User routes (normal users)
 Route::middleware(['auth'])->group(function () {
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
-    Route::put('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
+    
+    // REVERTED TO STANDARD: This must be PUT as per the RESTful intention. 
+    // Inertia's router.put() handles the underlying POST/spoofing correctly.
+    Route::put('/tasks/{task}/status', [TaskController::class, 'updateStatus'])
+    ->name('tasks.updateStatus');
+
     Route::get('/projects', [UserProjectController::class, 'index'])->name('projects.index');
 
     // ✅ User Profile

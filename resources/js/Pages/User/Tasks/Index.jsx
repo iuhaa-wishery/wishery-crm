@@ -1,28 +1,40 @@
 import React, { useState, useEffect } from "react";
+// Import 'route' from the global window object or ensure it's accessible via window
+const route = window.route; 
 import { usePage, router } from "@inertiajs/react";
-import axios from 'axios';
 import UserLayout from "@/Layouts/UserLayout";
 import { Edit, Calendar, X } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-export default function Index() {
-    const { tasks } = usePage().props;
+// Helper: format date string to YYYY-MM-DD (works with ISO or plain date strings)
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+        const d = new Date(dateString);
+        // Fallback for non-ISO dates, ensuring we don't return "NaN"
+        if (isNaN(d.getTime())) return dateString.split("T")[0] || dateString;
+        return d.toISOString().split("T")[0];
+    } catch (e) {
+        return dateString;
+    }
+};
 
-    // Initialize task list, handling pagination structure if present
-    const [taskList, setTaskList] = useState(
-        Array.isArray(tasks)
-            ? tasks
-            : Array.isArray(tasks?.data)
-            ? tasks.data
-            : []
-    );
+export default function UserTasks() {
+    const { tasks, users } = usePage().props;
 
+    // Normalize incoming tasks (support array, paginated object, or undefined)
+    const initialTasks = Array.isArray(tasks)
+        ? tasks
+        : Array.isArray(tasks?.data)
+        ? tasks.data
+        : [];
+
+    const [taskList, setTaskList] = useState(initialTasks);
     const [selectedTask, setSelectedTask] = useState(null);
     const [newStatus, setNewStatus] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
     const [fade, setFade] = useState(false);
 
-    // Synchronize local tasks state when tasks prop changes
     useEffect(() => {
         setTaskList(
             Array.isArray(tasks)
@@ -33,7 +45,6 @@ export default function Index() {
         );
     }, [tasks]);
 
-    // Handle success message fading
     useEffect(() => {
         if (showSuccess) {
             const timer = setTimeout(() => {
@@ -43,7 +54,6 @@ export default function Index() {
             return () => clearTimeout(timer);
         }
     }, [showSuccess]);
-
 
     const statusOrder = ["not started", "in progress", "on hold", "completed"];
     const columns = {
@@ -59,85 +69,121 @@ export default function Index() {
         "on hold": "bg-orange-100",
         completed: "bg-gray-200",
     };
+    const priorityColors = {
+        'High': 'text-red-600',
+        'Medium': 'text-yellow-600',
+        'Low': 'text-green-600',
+    };
 
-    const handleStatusUpdate = (e) => {
-        e.preventDefault();
-        if (!selectedTask || newStatus === selectedTask.status) {
-            setSelectedTask(null);
-            return;
-        }
-
-        const originalTask = selectedTask;
-        const originalStatus = selectedTask.status;
-
-        // 1. Optimistic UI Update in Modal
-        setTaskList(prevList => prevList.map(t => 
-            t.id === originalTask.id ? { ...t, status: newStatus } : t
-        ));
-        setSelectedTask(null); // Close modal immediately
-
-        // ✅ FIX APPLIED HERE: Manually construct the URL path to bypass Ziggy route context issues
-        const updateUrl = `/user/tasks/${originalTask.id}/status`;
-        
-        axios.put(
-            updateUrl, 
-            { status: newStatus }
-        )
-        .then(response => {
-            // Success: Display confirmation
-            setShowSuccess(true);
-            setFade(false);
-        })
-        .catch(error => {
-            // Error: Revert the UI state
-            alert("Failed to update status. Please try again.");
-            console.error("Update failed:", error);
-            setTaskList(prevList => prevList.map(t => 
-                t.id === originalTask.id ? { ...t, status: originalStatus } : t
-            ));
-        });
+    // Robust parse for draggableId - ensures we get a numeric ID
+    const parseDraggableId = (draggableId) => {
+        if (!draggableId) return null;
+        // Handles both 'task-123' and '123'
+        const maybeId = String(draggableId).split("-").pop();
+        const n = Number(maybeId);
+        return Number.isNaN(n) ? null : n;
     };
 
     const onDragEnd = (result) => {
         const { destination, source, draggableId } = result;
-
-        if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
+        if (
+            !destination ||
+            (source.droppableId === destination.droppableId && source.index === destination.index)
+        ) {
             return;
         }
 
         const sourceStatus = source.droppableId;
         const destinationStatus = destination.droppableId;
-        const taskId = parseInt(draggableId.split('-')[1]);
-        const draggedTask = taskList.find(t => t.id === taskId);
         
+        const taskId = parseDraggableId(draggableId);
+        
+        // CRITICAL CHECK: Ensure taskId is valid before proceeding
+        if (!taskId) {
+            console.error("Could not parse valid taskId from draggableId:", draggableId);
+            return;
+        }
+
+        const draggedTask = taskList.find((t) => Number(t.id) === taskId);
         if (!draggedTask || sourceStatus === destinationStatus) return;
 
-        // 1. Optimistic UI Update
+        // Optimistic update
         const originalTaskList = [...taskList];
-        const newTaskList = taskList.map(task => 
-            task.id === taskId ? { ...task, status: destinationStatus } : task
+        const newTaskList = taskList.map((task) =>
+            Number(task.id) === taskId ? { ...task, status: destinationStatus } : task
         );
         setTaskList(newTaskList);
 
-        // 2. Persist Change to the Backend using Axios
-        // ✅ FIX APPLIED HERE: Manually construct the URL path to bypass Ziggy route context issues
-        const updateUrl = `/user/tasks/${taskId}/status`;
+        // 🎯 FIX: Use the route() helper to generate the URL
+        const updateUrl = route('tasks.updateStatus', taskId); 
 
-        axios.put(updateUrl, { 
-            status: destinationStatus
-        })
-        .then(response => {
-            // Success: Display success message
-            setShowSuccess(true);
-            setFade(false);
-        })
-        .catch(error => {
-            // Error: Revert the UI state
-            setTaskList(originalTaskList); 
-            alert("Failed to update task status. Please try again.");
-            console.error("Status update failed:", error);
-        });
+        // Using POST with method spoofing
+        router.post(
+            updateUrl,
+            { 
+                status: destinationStatus,
+                _method: 'put', 
+            },
+            {
+                // Inertia options:
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setShowSuccess(true);
+                    setFade(false);
+                },
+                onError: (errors) => {
+                    console.error("Status update failed:", errors);
+                    setTaskList(originalTaskList); // Revert optimistic update
+                    alert("Failed to update task status. Please try again.");
+                },
+            }
+        );
     };
+
+    const handleModalStatusUpdate = (e) => {
+        e.preventDefault();
+        
+        if (!selectedTask) return;
+
+        const taskId = selectedTask.id;
+        const statusToUpdate = newStatus;
+
+        // Optimistic update for the modal change
+        const originalTaskList = [...taskList];
+        const newTaskList = taskList.map((task) =>
+            Number(task.id) === taskId ? { ...task, status: statusToUpdate } : task
+        );
+        setTaskList(newTaskList);
+        setSelectedTask(null); // Close modal
+        
+        // 🎯 FIX: Use the route() helper to generate the URL
+        const updateUrl = route('tasks.updateStatus', taskId);
+
+        // Using POST with method spoofing
+        router.post(
+            updateUrl,
+            { 
+                status: statusToUpdate,
+                _method: 'put',
+            },
+            {
+                // Inertia options:
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setShowSuccess(true);
+                    setFade(false);
+                },
+                onError: (errors) => {
+                    console.error("Status update failed:", errors);
+                    setTaskList(originalTaskList); // Revert optimistic update
+                    alert("Failed to update task status in modal. Please try again.");
+                },
+            }
+        );
+    };
+
 
     const getDaysLeft = (endDate) => {
         if (!endDate) return "";
@@ -148,20 +194,16 @@ export default function Index() {
 
         const diffTime = end.getTime() - now.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays < 0)
-            return <span className="text-red-600 text-sm font-medium">Overdue</span>;
-        if (diffDays === 0)
-            return <span className="text-yellow-600 text-sm font-medium">Due today</span>;
-        return (
-            <span className="text-blue-700 text-sm font-medium">{diffDays} days left</span>
-        );
+
+        if (diffDays < 0) return <span className="text-red-600 text-sm font-medium">Overdue</span>;
+        if (diffDays === 0) return <span className="text-yellow-600 text-sm font-medium">Due today</span>;
+        return <span className="text-blue-700 text-sm font-medium">{diffDays} days left</span>;
     };
 
     const grouped = statusOrder.reduce((acc, key) => {
-        acc[key] = taskList.filter(
-            (t) => (t.status || "").toLowerCase() === key
-        ).sort((a, b) => a.id - b.id);
+        acc[key] = taskList
+            .filter((t) => (t.status || "").toLowerCase() === key)
+            .sort((a, b) => Number(a.id) - Number(b.id));
         return acc;
     }, {});
 
@@ -170,7 +212,6 @@ export default function Index() {
             <div className="p-6">
                 <h1 className="text-3xl font-bold mb-6 text-gray-800">My Tasks</h1>
 
-                {/* Success Message */}
                 {showSuccess && (
                     <div
                         className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${
@@ -179,15 +220,17 @@ export default function Index() {
                     >
                         <span>Task status updated successfully!</span>
                         <button
-                            onClick={() => { setShowSuccess(false); setFade(false); }}
+                            onClick={() => {
+                                setShowSuccess(false);
+                                setFade(false);
+                            }}
                             className="text-green-700 hover:text-green-900"
                         >
                             <X className="w-4 h-4" />
                         </button>
                     </div>
                 )}
-                
-                {/* Kanban board scrolls horizontally only */}
+
                 <DragDropContext onDragEnd={onDragEnd}>
                     <div className="kanban-scroll-area">
                         <div className="flex gap-6 min-w-max">
@@ -197,7 +240,6 @@ export default function Index() {
                                         <div
                                             ref={provided.innerRef}
                                             {...provided.droppableProps}
-                                            key={statusKey}
                                             className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${
                                                 snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
                                             }`}
@@ -209,29 +251,25 @@ export default function Index() {
                                             <div className="space-y-4 min-h-[50px]">
                                                 {grouped[statusKey].length > 0 ? (
                                                     grouped[statusKey].map((task, index) => (
-                                                        <Draggable
-                                                            key={task.id}
-                                                            draggableId={`task-${task.id}`}
-                                                            index={index}
-                                                        >
+                                                        <Draggable key={task.id} draggableId={`task-${task.id}`} index={index}>
                                                             {(provided, snapshot) => (
                                                                 <div
                                                                     ref={provided.innerRef}
                                                                     {...provided.draggableProps}
                                                                     {...provided.dragHandleProps}
+                                                                    style={{
+                                                                        ...provided.draggableProps.style,
+                                                                    }}
                                                                     className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-grab ${bgByStatus[statusKey]} ${
-                                                                        snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''
+                                                                        snapshot.isDragging ? "shadow-xl ring-2 ring-blue-500" : ""
                                                                     }`}
                                                                 >
-                                                                    {/* Task Header */}
                                                                     <div className="flex justify-between items-start">
-                                                                        <h3 className="font-semibold text-gray-800">
-                                                                            {task.name || "Untitled Task"}
-                                                                        </h3>
+                                                                        <h3 className="font-semibold text-gray-800">{task.name || "Untitled Task"}</h3>
                                                                         <button
                                                                             onClick={() => {
                                                                                 setSelectedTask(task);
-                                                                                setNewStatus(task.status);
+                                                                                setNewStatus(task.status || "not started");
                                                                             }}
                                                                             className="text-gray-500 hover:text-blue-600"
                                                                             title="Edit Status"
@@ -240,30 +278,28 @@ export default function Index() {
                                                                         </button>
                                                                     </div>
 
-                                                                    {/* Dates */}
+                                                                    <p className="text-sm text-gray-700 mt-2 line-clamp-2">{task.description || "No description provided."}</p>
+
                                                                     <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
                                                                         <div className="flex items-center gap-2">
                                                                             <Calendar className="w-4 h-4" />
-                                                                            <span>{task.start_date || "-"}</span>
+                                                                            <span>{formatDate(task.start_date) || "-"}</span>
                                                                         </div>
                                                                         <div className="flex items-center gap-2">
                                                                             <Calendar className="w-4 h-4" />
-                                                                            <span>{task.end_date || "-"}</span>
+                                                                            <span>{formatDate(task.end_date) || "-"}</span>
                                                                         </div>
                                                                     </div>
 
-                                                                    <div className="mt-2">
-                                                                        {getDaysLeft(task.end_date)}
-                                                                    </div>
+                                                                    <div className="mt-2">{getDaysLeft(task.end_date)}</div>
                                                                 </div>
                                                             )}
                                                         </Draggable>
                                                     ))
                                                 ) : (
-                                                    <p className="text-gray-400 text-sm p-4 border border-dashed rounded-xl text-center">
-                                                        No tasks
-                                                    </p>
+                                                    <p className="text-gray-400 text-sm p-4 border border-dashed rounded-xl text-center">No tasks</p>
                                                 )}
+
                                                 {provided.placeholder}
                                             </div>
                                         </div>
@@ -274,111 +310,132 @@ export default function Index() {
                     </div>
                 </DragDropContext>
             </div>
-
-            {/* Updated Popup Modal (Admin/System Style) */}
-            {selectedTask && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div 
-                        // Updated style: Larger max-w-lg, elevated shadow-2xl, and clean white background
-                        className="bg-white rounded-xl p-8 w-full max-w-lg shadow-2xl relative transform transition-all duration-300 scale-100 opacity-100"
+             {selectedTask && (
+              <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col overflow-hidden border-t-4 border-blue-600">
+                  {/* Header */}
+                  <div className="flex justify-between items-center px-6 py-4 border-b">
+                    <h2 className="text-2xl font-bold text-gray-800 flex-1">
+                      {selectedTask.name || "Task Details"}
+                    </h2>
+                    <span className="text-sm font-medium text-blue-600 ml-3 whitespace-nowrap">
+                      {(() => {
+                        const now = new Date();
+                        const end = new Date(selectedTask.end_date);
+                        now.setHours(0, 0, 0, 0);
+                        end.setHours(0, 0, 0, 0);
+                        const diffDays = Math.ceil(
+                          (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+                        if (diffDays < 0) return "Overdue";
+                        if (diffDays === 0) return "Due today";
+                        return `${diffDays} days remaining`;
+                      })()}
+                    </span>
+                    <button
+                      onClick={() => setSelectedTask(null)}
+                      className="ml-4 text-gray-400 hover:text-red-500 transition"
+                      title="Close"
                     >
-                        <button
-                            onClick={() => setSelectedTask(null)}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-colors"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
+                      <X size={22} />
+                    </button>
+                  </div>
 
-                        <h2 className="text-3xl font-extrabold mb-6 text-gray-800 border-b pb-2">
-                            Update Task Status
-                        </h2>
+                  {/* Scrollable Body */}
+                  <form onSubmit={handleModalStatusUpdate} className="flex flex-col flex-1">
+                    <div className="p-6 overflow-y-auto flex-1">
+                      <div className="space-y-6">
+                        {/* Description Scrollable */}
+                        <div>
+                          <label className="block text-gray-600 mb-1 font-semibold">
+                            Description
+                          </label>
+                          <div className="bg-gray-50 p-3 rounded-lg border max-h-40 overflow-y-auto text-sm whitespace-pre-wrap">
+                            {selectedTask.description || "No description provided."}
+                          </div>
+                        </div>
 
-                        <form onSubmit={handleStatusUpdate} className="space-y-5">
-                            <div>
-                                <label className="block text-gray-700 mb-1 font-semibold text-lg">
-                                    Task Title
-                                </label>
-                                <input
-                                    type="text"
-                                    value={selectedTask.name || ""}
-                                    disabled
-                                    className="w-full border-2 border-gray-200 rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-600"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-700 mb-1 font-semibold text-lg">
-                                    Description
-                                </label>
-                                <textarea
-                                    value={selectedTask.description || "No description provided"}
-                                    disabled
-                                    className="w-full border-2 border-gray-200 rounded-lg p-3 bg-gray-50 cursor-not-allowed text-gray-600"
-                                    rows="4"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-gray-700 mb-2 font-semibold text-lg">
-                                    Change Status
-                                </label>
-                                <select
-                                    value={newStatus}
-                                    onChange={(e) => setNewStatus(e.target.value)}
-                                    className="w-full border-2 border-blue-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm"
-                                >
-                                    <option value="not started">Not Started</option>
-                                    <option value="in progress">In Progress</option>
-                                    <option value="on hold">On Hold</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                            
-                            {/* Read-only Date Info */}
-                            <div className="flex justify-between gap-6 text-sm pt-2 border-t mt-4">
-                                <div className="flex-1">
-                                    <label className="block text-gray-600 mb-1 font-medium">Start Date</label>
-                                    <p className="text-gray-800 bg-gray-50 p-2 rounded-md">{selectedTask.start_date || "-"}</p>
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-gray-600 mb-1 font-medium">End Date</label>
-                                    <p className="text-gray-800 bg-gray-50 p-2 rounded-md">{selectedTask.end_date || "-"}</p>
-                                </div>
-                            </div>
-
-
-                            <button
-                                type="submit"
-                                className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-bold text-lg shadow-md hover:shadow-lg"
+                        {/* Priority, Dates, Status */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <label className="block text-gray-600 mb-1 font-semibold">
+                              Priority
+                            </label>
+                            <p
+                              className={`font-bold p-3 rounded-lg border bg-gray-50 ${
+                                priorityColors[selectedTask.priority] || "text-gray-600"
+                              }`}
                             >
-                                Update Status
-                            </button>
-                        </form>
+                              {selectedTask.priority || "N/A"}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-gray-600 mb-1 font-semibold">
+                              Start Date
+                            </label>
+                            <p className="font-medium p-3 rounded-lg border bg-gray-50">
+                              {formatDate(selectedTask.start_date)}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-gray-600 mb-1 font-semibold">
+                              End Date
+                            </label>
+                            <p className="font-medium p-3 rounded-lg border bg-gray-50">
+                              {formatDate(selectedTask.end_date)}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-gray-600 mb-1 font-semibold">
+                              Status
+                            </label>
+                            <select
+                              value={newStatus}
+                              onChange={(e) => setNewStatus(e.target.value)}
+                              className="w-full p-3 rounded-lg border-2 border-blue-300 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium bg-gray-50"
+                            >
+                              <option value="not started">To Do</option>
+                              <option value="in progress">In Progress</option>
+                              <option value="on hold">On Hold</option>
+                              <option value="completed">Completed</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                </div>
-            )}
 
-            {/* Style Fix for Horizontal Scrolling */}
+                    {/* Footer (Buttons only) */}
+                    <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTask(null)}
+                        className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                      >
+                        Close
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition"
+                      >
+                        Update Status
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
             <style>{`
                 .kanban-scroll-area {
                     overflow-x: auto;
                     overflow-y: hidden;
                     width: 100%;
                     padding-bottom: 1rem;
-                    /* Customize scrollbar appearance */
                     scrollbar-width: thin;
                     scrollbar-color: #9ca3af transparent;
                 }
-                .kanban-scroll-area::-webkit-scrollbar {
-                    height: 8px;
-                }
-                .kanban-scroll-area::-webkit-scrollbar-thumb {
-                    background: #d1d5db;
-                    border-radius: 4px;
-                }
-                .kanban-scroll-area::-webkit-scrollbar-track {
-                    background: transparent;
-                }
+                .kanban-scroll-area::-webkit-scrollbar { height: 8px; }
+                .kanban-scroll-area::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+                .kanban-scroll-area::-webkit-scrollbar-track { background: transparent; }
             `}</style>
         </UserLayout>
     );

@@ -48,4 +48,9 @@ class User extends Authenticatable
             'is_active' => 'boolean',
         ];
     }
+
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'task_user')->withTimestamps();
+    }
 }

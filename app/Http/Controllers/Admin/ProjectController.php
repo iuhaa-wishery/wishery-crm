@@ -12,32 +12,31 @@ use Inertia\Inertia;
 class ProjectController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Project::query();
+    {
+        $query = Project::query();
 
-    if ($search = $request->input('search')) {
-        $query->where('name', 'like', "%{$search}%");
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $sort = $request->input('sort', 'name');
+        $direction = $request->input('direction', 'asc');
+
+        // whitelist columns to avoid SQL injection
+        $allowed = ['id', 'name', 'status', 'start_date', 'end_date'];
+        if (!in_array($sort, $allowed)) {
+            $sort = 'name';
+        }
+
+        $perPage = (int) $request->input('perPage', 10);
+        $projects = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
+
+        return Inertia::render('Admin/Projects/Index', [
+            'projects' => $projects,
+            'filters' => $request->only(['search', 'perPage', 'sort', 'direction']),
+            'success' => session('success'),
+        ]);
     }
-
-    $sort = $request->input('sort', 'name');
-    $direction = $request->input('direction', 'asc');
-
-    // whitelist columns to avoid SQL injection
-    $allowed = ['id','name','status','start_date','end_date'];
-    if (! in_array($sort, $allowed)) {
-        $sort = 'name';
-    }
-
-    $perPage = (int) $request->input('perPage', 10);
-    $projects = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
-
-    return Inertia::render('Admin/Projects/Index', [
-        'projects' => $projects,
-        'filters' => $request->only(['search','perPage','sort','direction']),
-        'success' => session('success'),
-    ]);
-}
-
 
     public function create()
     {
@@ -103,7 +102,8 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $tasks = Task::with('assignee')
+        // ✅ Updated: use 'assignees' instead of old 'assignee'
+        $tasks = Task::with(['assignees'])
             ->where('project_id', $project->id)
             ->get();
 
@@ -117,17 +117,17 @@ class ProjectController extends Controller
     }
 
     public function reorder(Request $request, Project $project)
-	{
-	    foreach ($request->all() as $status => $taskIds) {
-	        foreach ($taskIds as $index => $taskId) {
-	            Task::where('id', $taskId)
-	                ->where('project_id', $project->id)
-	                ->update([
-	                    'status' => $status,
-	                ]);
-	        }
-	    }
+    {
+        foreach ($request->all() as $status => $taskIds) {
+            foreach ($taskIds as $index => $taskId) {
+                Task::where('id', $taskId)
+                    ->where('project_id', $project->id)
+                    ->update([
+                        'status' => $status,
+                    ]);
+            }
+        }
 
-	    return back()->with('success', 'Tasks reordered successfully!');
-	}
+        return back()->with('success', 'Tasks reordered successfully!');
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/Task.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,21 +14,20 @@ class Task extends Model
         'name',
         'description',
         'project_id',
-        'assignee_id',
         'start_date',
         'end_date',
         'status',
         'priority',
     ];
 
-    // Relationships
     public function project()
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function assignee()
+    // Many-to-many relation for multiple assignees
+    public function assignees()
     {
-        return $this->belongsTo(User::class, 'assignee_id');
+        return $this->belongsToMany(User::class, 'task_user');
     }
 }

@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
             'auth' => function () {
                 return [
                     'user' => auth()->user(),
+                    'appUrl' => config('app.url'),
                 ];
             },
         ]);
