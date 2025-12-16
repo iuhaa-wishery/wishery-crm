@@ -94,6 +94,7 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        \Illuminate\Support\Facades\Log::info('AdminProjectController::destroy called', ['project_id' => $project->id]);
         $project->delete();
 
         return redirect()->route('admin.projects.index')
@@ -107,12 +108,17 @@ class ProjectController extends Controller
             ->where('project_id', $project->id)
             ->get();
 
-        $users = User::all();
+        $users = User::where('role', 'user')->get()->map(function ($user) {
+            $user->image_url = $user->image
+                ? asset('storage/' . $user->image)
+                : null;
+            return $user;
+        });
 
         return Inertia::render('Admin/Projects/Show', [
             'project' => $project,
-            'tasks'   => $tasks,
-            'users'   => $users,
+            'tasks' => $tasks,
+            'users' => $users,
         ]);
     }
 

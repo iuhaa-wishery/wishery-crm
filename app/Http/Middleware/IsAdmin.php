@@ -8,15 +8,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IsAdmin
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
-    public function handle($request, Closure $next) {
-      if (!auth()->check() || auth()->user()->role !== 'admin') {
-        abort(403);
-      }
-      return $next($request);
+  /**
+   * Handle an incoming request.
+   *
+   * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+   */
+  public function handle($request, Closure $next)
+  {
+    if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'manager'])) {
+      abort(403);
     }
+    return $next($request);
+  }
 }

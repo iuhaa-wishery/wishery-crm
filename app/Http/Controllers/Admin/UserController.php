@@ -10,11 +10,21 @@ use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (auth()->check() && auth()->user()->role !== 'admin') {
+                abort(403, 'Unauthorized action.');
+            }
+            return $next($request);
+        });
+    }
+
     public function index()
     {
-        $users = User::where('role', 'user')->get()->map(function ($user) {
-            $user->image_url = $user->image 
-                ? asset('storage/' . $user->image) 
+        $users = User::whereIn('role', ['user', 'manager'])->get()->map(function ($user) {
+            $user->image_url = $user->image
+                ? asset('storage/' . $user->image)
                 : null;
             return $user;
         });
@@ -27,10 +37,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'role' => 'required|in:user,manager',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
@@ -38,7 +49,7 @@ class UserController extends Controller
         }
 
         $validated['password'] = Hash::make($validated['password']);
-        $validated['role'] = 'user';
+        // Role is now validated and included in $validated
 
         User::create($validated);
 
@@ -48,10 +59,11 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'role' => 'required|in:user,manager',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
@@ -90,6 +102,6 @@ class UserController extends Controller
         $user->is_active = !$user->is_active;
         $user->save();
 
-        return back()->with('success', 'User status updated.');
+        return response()->json(['message' => 'User status updated.']);
     }
 }

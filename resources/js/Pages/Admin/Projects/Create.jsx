@@ -12,7 +12,12 @@ export default function CreateProject() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    post("/admin/projects");
+    post(route("admin.projects.store"), {
+      preserveScroll: true,
+      onError: (errors) => {
+        console.log("Validation errors:", errors);
+      },
+    });
   };
 
   return (

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { usePage, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Edit, Trash2 } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function Index() {
   const { users } = usePage().props;
@@ -26,6 +28,7 @@ export default function Index() {
         email: user.email || "",
         password: "",
         password_confirmation: "",
+        role: user.role || "user",
         image: null,
       });
     } else {
@@ -35,6 +38,7 @@ export default function Index() {
         email: "",
         password: "",
         password_confirmation: "",
+        role: "user",
         image: null,
       });
     }
@@ -125,10 +129,17 @@ export default function Index() {
 
   // Toggle active/inactive
   const handleToggle = (id) => {
-    router.patch(route("admin.users.toggle", { user: id }), {}, {
-      preserveScroll: true,
-      preserveState: true,
-    });
+    const url = route("admin.users.toggle", { user: id });
+
+    axios.patch(url)
+      .then(() => {
+        router.reload({ only: ['users'] });
+        toast.success("User status updated successfully!");
+      })
+      .catch(error => {
+        console.error("Error toggling user status:", error);
+        toast.error("Failed to update user status.");
+      });
   };
 
   return (
@@ -152,6 +163,7 @@ export default function Index() {
               <th className="p-2">Image</th>
               <th className="p-2">Name</th>
               <th className="p-2">Email</th>
+              <th className="p-2">Role</th>
               <th className="p-2">Status</th>
               <th className="p-2">Actions</th>
             </tr>
@@ -173,6 +185,7 @@ export default function Index() {
                 </td>
                 <td className="p-2">{user.name}</td>
                 <td className="p-2">{user.email}</td>
+                <td className="p-2 capitalize">{user.role}</td>
                 <td className="p-2">
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -198,7 +211,7 @@ export default function Index() {
                   {/* Delete button */}
                   <button
                     onClick={() => confirmDelete(user.id)}
-                          className="text-red-600 hover:text-red-800"
+                    className="text-red-600 hover:text-red-800"
                     title="Delete"
                   >
                     <Trash2 size={18} />
@@ -225,9 +238,8 @@ export default function Index() {
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full border px-3 py-2 rounded ${errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.name && (
                     <p className="text-red-500 text-sm">{errors.name}</p>
@@ -243,9 +255,8 @@ export default function Index() {
                     value={form.email}
                     onChange={handleChange}
                     disabled={!!editingUser}
-                    className={`w-full border px-3 py-2 rounded ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    } ${editingUser ? "bg-gray-100 cursor-not-allowed" : ""}`}
+                    className={`w-full border px-3 py-2 rounded ${errors.email ? "border-red-500" : "border-gray-300"
+                      } ${editingUser ? "bg-gray-100 cursor-not-allowed" : ""}`}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-sm">{errors.email}</p>
@@ -260,9 +271,8 @@ export default function Index() {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded ${
-                      errors.password ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full border px-3 py-2 rounded ${errors.password ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder={editingUser ? "Leave blank to keep current" : ""}
                   />
                   {errors.password && (
@@ -278,17 +288,30 @@ export default function Index() {
                     name="password_confirmation"
                     value={form.password_confirmation}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded ${
-                      errors.password_confirmation
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border px-3 py-2 rounded ${errors.password_confirmation
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   {errors.password_confirmation && (
                     <p className="text-red-500 text-sm">
                       {errors.password_confirmation}
                     </p>
                   )}
+                </div>
+
+                {/* Role */}
+                <div>
+                  <label className="block">Role</label>
+                  <select
+                    name="role"
+                    value={form.role}
+                    onChange={handleChange}
+                    className="w-full border px-3 py-2 rounded border-gray-300"
+                  >
+                    <option value="user">User</option>
+                    <option value="manager">Manager</option>
+                  </select>
                 </div>
 
                 {/* Image */}

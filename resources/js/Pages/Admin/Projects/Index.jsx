@@ -11,7 +11,7 @@ export default function Index({ projects, users, success }) {
   const [showSuccess, setShowSuccess] = useState(!!success);
   const [fade, setFade] = useState(false);
 
-  const { data: form, setData, reset, errors } = useForm({
+  const { data: form, setData, post, put, reset, errors, clearErrors } = useForm({
     name: "",
     description: "",
     status: "not started",
@@ -54,6 +54,7 @@ export default function Index({ projects, users, success }) {
 
   const closeModal = () => {
     reset();
+    clearErrors();
     setShowCreate(false);
     setShowEdit(false);
   };
@@ -61,15 +62,24 @@ export default function Index({ projects, users, success }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editingProject) {
-      router.post(
-        route("admin.projects.update", editingProject.id),
-        { _method: "PUT", ...form },
-        { onSuccess: closeModal, forceFormData: true }
-      );
+      put(route("admin.projects.update", editingProject.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeModal();
+        },
+        onError: (errors) => {
+          console.log("Validation errors:", errors);
+        },
+      });
     } else {
-      router.post(route("admin.projects.store"), form, {
-        onSuccess: closeModal,
-        forceFormData: true,
+      post(route("admin.projects.store"), {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeModal();
+        },
+        onError: (errors) => {
+          console.log("Validation errors:", errors);
+        },
       });
     }
   };
@@ -123,9 +133,8 @@ export default function Index({ projects, users, success }) {
       {/* ✅ Success message */}
       {showSuccess && (
         <div
-          className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${
-            fade ? "opacity-0" : "opacity-100"
-          }`}
+          className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${fade ? "opacity-0" : "opacity-100"
+            }`}
         >
           <span>{success}</span>
           <button
@@ -162,19 +171,19 @@ export default function Index({ projects, users, success }) {
                   <td className="p-3 text-gray-600">
                     {project.start_date
                       ? new Date(project.start_date).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
                       : "-"}
                   </td>
                   <td className="p-3 text-gray-600">
                     {project.end_date
                       ? new Date(project.end_date).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
                       : "-"}
                   </td>
                   <td className="p-3">{getStatusBadge(project.status)}</td>
@@ -235,9 +244,8 @@ export default function Index({ projects, users, success }) {
                   type="text"
                   value={form.name}
                   onChange={(e) => setData("name", e.target.value)}
-                  className={`w-full border px-3 py-2 rounded ${
-                    errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full border px-3 py-2 rounded ${errors.name ? "border-red-500" : "border-gray-300"
+                    }`}
                 />
                 {errors.name && (
                   <p className="text-red-500 text-sm">{errors.name}</p>
@@ -250,9 +258,8 @@ export default function Index({ projects, users, success }) {
                 <textarea
                   value={form.description}
                   onChange={(e) => setData("description", e.target.value)}
-                  className={`w-full border px-3 py-2 rounded min-h-[100px] ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-full border px-3 py-2 rounded min-h-[100px] ${errors.description ? "border-red-500" : "border-gray-300"
+                    }`}
                   placeholder="Enter brief project details..."
                 ></textarea>
                 {errors.description && (
@@ -283,8 +290,12 @@ export default function Index({ projects, users, success }) {
                     type="date"
                     value={form.start_date}
                     onChange={(e) => setData("start_date", e.target.value)}
-                    className="w-full border rounded p-2"
+                    className={`w-full border rounded p-2 ${errors.start_date ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
+                  {errors.start_date && (
+                    <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
+                  )}
                 </div>
                 <div className="flex-1">
                   <label className="block font-medium">End Date</label>
@@ -292,8 +303,12 @@ export default function Index({ projects, users, success }) {
                     type="date"
                     value={form.end_date}
                     onChange={(e) => setData("end_date", e.target.value)}
-                    className="w-full border rounded p-2"
+                    className={`w-full border rounded p-2 ${errors.end_date ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
+                  {errors.end_date && (
+                    <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
+                  )}
                 </div>
               </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { toast } from "react-hot-toast";
 import { usePage, router } from "@inertiajs/react";
 import axios from 'axios';
 import AdminLayout from "@/Layouts/AdminLayout";
@@ -23,9 +24,9 @@ export default function Show() {
   const [editingTask, setEditingTask] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [fade, setFade] = useState(false);
-  
+
   // 💡 NEW STATE for dropdown visibility
-  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false); 
+  const [isAssigneeDropdownOpen, setIsAssigneeDropdownOpen] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -76,13 +77,13 @@ export default function Show() {
     }
     // Only add listener if the modal is open
     if (isOpen) {
-        document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen]);
-  
+
   // 💡 Function to toggle the custom dropdown
   const toggleAssigneeDropdown = () => {
     setIsAssigneeDropdownOpen(prev => !prev);
@@ -90,16 +91,16 @@ export default function Show() {
 
   const openModal = (task = null) => {
     // Reset dropdown state
-    setIsAssigneeDropdownOpen(false); 
+    setIsAssigneeDropdownOpen(false);
 
     if (task) {
       setEditingTask(task);
-      
+
       // 💡 FIX 1A: Extract IDs from the 'assignees' relationship array
       const currentAssigneeIds = Array.isArray(task.assignees)
-          ? task.assignees.map(a => String(a.id)) // Map the User objects to string IDs
-          : [];
-      
+        ? task.assignees.map(a => String(a.id)) // Map the User objects to string IDs
+        : [];
+
       setForm({
         name: task.name || "",
         description: task.description || "",
@@ -131,7 +132,7 @@ export default function Show() {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   // Handler for multi-select checkboxes (used inside the dropdown)
   const handleAssigneeChange = (e) => {
     const { value, checked } = e.target;
@@ -139,7 +140,7 @@ export default function Show() {
       const newAssigneeIds = checked
         ? [...prev.assignee_ids, value]
         : prev.assignee_ids.filter((id) => id !== value);
-      
+
       return { ...prev, assignee_ids: newAssigneeIds };
     });
   };
@@ -151,9 +152,9 @@ export default function Show() {
     if (!form.end_date) newErrors.end_date = "End date is required.";
     if (form.start_date && form.end_date && form.end_date < form.start_date)
       newErrors.end_date = "End date cannot be before start date.";
-    
+
     if (form.assignee_ids.length === 0) newErrors.assignee_ids = "At least one Assignee is required.";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -175,23 +176,34 @@ export default function Show() {
       onSuccess: (page) => {
         if (page.props?.tasks) setTasks(page.props.tasks);
         setShowSuccess(true);
-        setFade(false); 
+        setFade(false);
         closeModal();
       },
-      onError: (err) => setErrors(err),
     });
   };
 
-  const handleDelete = () => {
-    router.delete(route("admin.tasks.destroy", deleteTaskId), {
+  const handleDelete = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!deleteTaskId) return;
+
+    const url = route("admin.tasks.destroy", deleteTaskId);
+
+    router.delete(url, {
       preserveScroll: true,
-      onSuccess: (page) => {
-        if (page.props?.tasks) setTasks(page.props.tasks);
-        setShowSuccess(true);
-        setFade(false); 
+      onSuccess: () => {
+        // Modal closing handled by onFinish
+      },
+      onError: (errors) => {
+        console.error("Delete failed:", errors);
+        alert("Failed to delete task. Please try again.");
+      },
+      onFinish: () => {
+        setDeleteTaskId(null);
       },
     });
-    setDeleteTaskId(null);
   };
 
   const grouped = statusOrder.reduce((acc, key) => {
@@ -208,16 +220,16 @@ export default function Show() {
 
     const diffTime = end.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return <span className="text-red-600 font-bold">Overdue</span>;
     if (diffDays === 0)
       return <span className="text-yellow-600 font-bold">Due today</span>;
     return <span className="text-blue-700 font-bold">{diffDays} days left</span>;
   };
-  
+
   const getAssigneeUsers = (task) => {
     if (Array.isArray(task.assignees) && task.assignees.length > 0) {
-        return task.assignees; 
+      return task.assignees;
     }
     return [];
   };
@@ -248,46 +260,46 @@ export default function Show() {
     const destinationStatus = destination.droppableId;
     const taskId = parseInt(draggableId.split('-')[1]);
     const draggedTask = tasks.find(t => t.id === taskId);
-    
+
     if (!draggedTask) return;
 
     // 1. Optimistic UI Update (Save the original state for rollback)
     const originalTasks = [...tasks];
-    const newTasks = tasks.map(task => 
-        task.id === taskId ? { ...task, status: destinationStatus } : task
+    const newTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, status: destinationStatus } : task
     );
     setTasks(newTasks);
 
     // 2. Persist Change to the Backend using Axios
     if (sourceStatus !== destinationStatus) {
-      axios.put(route("admin.tasks.status", taskId), { 
+      axios.put(route("admin.tasks.status", taskId), {
         status: destinationStatus
       })
-      .then(response => {
-        setShowSuccess(true);
-        setFade(false);
-      })
-      .catch(error => {
-        setTasks(originalTasks); 
-        alert("Failed to update task status. Please check server logs.");
-        console.error("Status update failed:", error);
-      });
-    } 
+        .then(response => {
+          setShowSuccess(true);
+          setFade(false);
+        })
+        .catch(error => {
+          setTasks(originalTasks);
+          alert("Failed to update task status. Please check server logs.");
+          console.error("Status update failed:", error);
+        });
+    }
   };
-  
+
   // Helper to get selected user names for display in the dropdown header
   const getSelectedAssigneeNames = () => {
-      const selectedUsers = users?.filter(u => form.assignee_ids.includes(String(u.id)));
-      if (!selectedUsers || selectedUsers.length === 0) {
-          return "Select Assignee(s)";
-      }
-      
-      const names = selectedUsers.map(u => u.name);
-      
-      if (names.length > 2) {
-          return `${names[0]}, ${names[1]} (+${names.length - 2} more)`;
-      }
-      return names.join(', ');
+    const selectedUsers = users?.filter(u => form.assignee_ids.includes(String(u.id)));
+    if (!selectedUsers || selectedUsers.length === 0) {
+      return "Select Assignee(s)";
+    }
+
+    const names = selectedUsers.map(u => u.name);
+
+    if (names.length > 2) {
+      return `${names[0]}, ${names[1]} (+${names.length - 2} more)`;
+    }
+    return names.join(', ');
   }
 
 
@@ -309,9 +321,8 @@ export default function Show() {
         {/* ✅ Success Message */}
         {showSuccess && (
           <div
-            className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${
-              fade ? "opacity-0" : "opacity-100"
-            }`}
+            className={`mb-4 flex justify-between items-center bg-green-100 text-green-700 px-4 py-2 rounded-lg border border-green-400 transition-opacity duration-500 ${fade ? "opacity-0" : "opacity-100"
+              }`}
           >
             <span>Task status updated successfully!</span>
             <button
@@ -333,9 +344,8 @@ export default function Show() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${
-                        snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
-                      }`}
+                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
+                        }`}
                     >
                       <h2 className="text-xl font-semibold mb-4 text-gray-800">
                         {columns[statusKey]} ({grouped[statusKey].length})
@@ -354,9 +364,8 @@ export default function Show() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer ${bgByStatus[statusKey]} ${
-                                    snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''
-                                  }`}
+                                  className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer ${bgByStatus[statusKey]} ${snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''
+                                    }`}
                                 >
                                   <div className="flex justify-between items-start">
                                     <h3 className="font-semibold text-gray-800">
@@ -402,35 +411,34 @@ export default function Show() {
                                   <div className="mt-3 flex items-center justify-between">
                                     {/* Display multiple assignees/avatars */}
                                     <div className="flex items-center">
-                                        <div className="flex -space-x-2 overflow-hidden">
+                                      <div className="flex -space-x-2 overflow-hidden">
                                         {getAssigneeUsers(task).slice(0, 3).map((user) => (
-                                            <img
-                                                key={user.id}
-                                                src={getAvatarUrl(user)}
-                                                alt={user.name}
-                                                className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-md transition hover:z-10"
-                                                title={user.name}
-                                            />
+                                          <img
+                                            key={user.id}
+                                            src={getAvatarUrl(user)}
+                                            alt={user.name}
+                                            className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-md transition hover:z-10"
+                                            title={user.name}
+                                          />
                                         ))}
                                         {getAssigneeUsers(task).length > 3 && (
-                                            <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-400 flex items-center justify-center text-xs text-white shadow-md">
-                                                +{getAssigneeUsers(task).length - 3}
-                                            </div>
+                                          <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-400 flex items-center justify-center text-xs text-white shadow-md">
+                                            +{getAssigneeUsers(task).length - 3}
+                                          </div>
                                         )}
                                         {getAssigneeUsers(task).length === 0 && (
-                                            <span className="text-sm text-gray-500 italic">Unassigned</span>
+                                          <span className="text-sm text-gray-500 italic">Unassigned</span>
                                         )}
-                                        </div>
+                                      </div>
                                     </div>
-                                    
+
                                     <span
-                                      className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-                                        task.priority === "high"
-                                          ? "bg-red-200 text-red-800"
-                                          : task.priority === "medium"
+                                      className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${task.priority === "high"
+                                        ? "bg-red-200 text-red-800"
+                                        : task.priority === "medium"
                                           ? "bg-yellow-200 text-yellow-800"
                                           : "bg-green-200 text-green-800"
-                                      }`}
+                                        }`}
                                     >
                                       {task.priority.charAt(0).toUpperCase() +
                                         task.priority.slice(1)}
@@ -479,9 +487,8 @@ export default function Show() {
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                     placeholder="e.g. Implement user authentication"
                   />
                   {errors.name && (
@@ -495,11 +502,10 @@ export default function Show() {
                     name="description"
                     value={form.description || ""}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.description
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border px-3 py-2 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.description
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                     rows="4"
                     placeholder="Enter detailed task description..."
                   />
@@ -515,57 +521,55 @@ export default function Show() {
                     <label className="block font-medium mb-1 text-gray-700">Assignees</label>
                     {/* 💡 CUSTOM MULTI-SELECT DROPDOWN */}
                     <div ref={dropdownRef} className="relative">
-                        <button
-                            type="button"
-                            onClick={toggleAssigneeDropdown}
-                            className={`w-full flex justify-between items-center bg-white px-3 py-2 text-left border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                errors.assignee_ids ? "border-red-500" : "border-gray-300"
-                            }`}
-                        >
-                            <span className="truncate pr-4 text-gray-700">
-                                {getSelectedAssigneeNames()}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                                isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'
-                            }`} />
-                        </button>
-                        
-                        {isAssigneeDropdownOpen && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                                {users?.map((user) => (
-                                    <div 
-                                        key={user.id} 
-                                        className="flex items-center p-2 hover:bg-gray-50 transition cursor-pointer"
-                                        onClick={() => { /* clicking div toggles checkbox */
-                                            const syntheticEvent = { target: { value: String(user.id), checked: !form.assignee_ids.includes(String(user.id)) } };
-                                            handleAssigneeChange(syntheticEvent);
-                                        }}
-                                    >
-                                        <input
-                                          id={`user-dropdown-${user.id}`}
-                                          type="checkbox"
-                                          name="assignee_ids"
-                                          value={String(user.id)}
-                                          // 💡 FIX 2: Ensure ID comparison is consistent (String(user.id) vs form.assignee_ids items which are strings)
-                                          checked={form.assignee_ids.includes(String(user.id))} 
-                                          onChange={handleAssigneeChange}
-                                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                          onClick={(e) => e.stopPropagation()} 
-                                      />                                        <label
-                                            htmlFor={`user-dropdown-${user.id}`}
-                                            className="ml-2 text-sm font-medium text-gray-700 flex items-center flex-grow cursor-pointer"
-                                        >
-                                            <img
-                                                src={getAvatarUrl(user)}
-                                                alt="avatar"
-                                                className="w-6 h-6 rounded-full border mr-2 object-cover"
-                                            />
-                                            {user.name}
-                                        </label>
-                                    </div>
-                                ))}
+                      <button
+                        type="button"
+                        onClick={toggleAssigneeDropdown}
+                        className={`w-full flex justify-between items-center bg-white px-3 py-2 text-left border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.assignee_ids ? "border-red-500" : "border-gray-300"
+                          }`}
+                      >
+                        <span className="truncate pr-4 text-gray-700">
+                          {getSelectedAssigneeNames()}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'
+                          }`} />
+                      </button>
+
+                      {isAssigneeDropdownOpen && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                          {users?.map((user) => (
+                            <div
+                              key={user.id}
+                              className="flex items-center p-2 hover:bg-gray-50 transition cursor-pointer"
+                              onClick={() => { /* clicking div toggles checkbox */
+                                const syntheticEvent = { target: { value: String(user.id), checked: !form.assignee_ids.includes(String(user.id)) } };
+                                handleAssigneeChange(syntheticEvent);
+                              }}
+                            >
+                              <input
+                                id={`user-dropdown-${user.id}`}
+                                type="checkbox"
+                                name="assignee_ids"
+                                value={String(user.id)}
+                                // 💡 FIX 2: Ensure ID comparison is consistent (String(user.id) vs form.assignee_ids items which are strings)
+                                checked={form.assignee_ids.includes(String(user.id))}
+                                onChange={handleAssigneeChange}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                onClick={(e) => e.stopPropagation()}
+                              />                                        <label
+                                htmlFor={`user-dropdown-${user.id}`}
+                                className="ml-2 text-sm font-medium text-gray-700 flex items-center flex-grow cursor-pointer"
+                              >
+                                <img
+                                  src={getAvatarUrl(user)}
+                                  alt="avatar"
+                                  className="w-6 h-6 rounded-full border mr-2 object-cover"
+                                />
+                                {user.name}
+                              </label>
                             </div>
-                        )}
+                          ))}
+                        </div>
+                      )}
                     </div>
                     {errors.assignee_ids && (
                       <p className="text-red-500 text-sm mt-1">
@@ -590,7 +594,7 @@ export default function Show() {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block font-medium mb-1 text-gray-700">Start Date</label>
@@ -599,14 +603,13 @@ export default function Show() {
                       name="start_date"
                       value={form.start_date}
                       onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.start_date
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.start_date
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                     {errors.start_date && (
-                        <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
+                      <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
                     )}
                   </div>
                   <div>
@@ -616,15 +619,14 @@ export default function Show() {
                       name="end_date"
                       value={form.end_date}
                       onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.end_date ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.end_date ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
                     {(errors.end_date && errors.end_date !== "End date cannot be before start date.") && (
-                        <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
+                      <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
                     )}
                     {(errors.end_date && errors.end_date === "End date cannot be before start date.") && (
-                        <p className="text-red-500 text-sm mt-1">Date must be on or after start date.</p>
+                      <p className="text-red-500 text-sm mt-1">Date must be on or after start date.</p>
                     )}
                   </div>
                 </div>
@@ -642,7 +644,7 @@ export default function Show() {
                     <option value="high">High</option>
                   </select>
                 </div>
-                
+
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"

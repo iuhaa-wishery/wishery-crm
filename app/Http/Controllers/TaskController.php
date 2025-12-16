@@ -13,6 +13,10 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
+        if (auth()->user()->role === 'manager') {
+            return redirect()->route('admin.tasks.index');
+        }
+
         $q = $request->input('q');
         $projectId = $request->input('project_id'); // 💡 GET THE PROJECT ID
         $userId = auth()->id();
@@ -22,14 +26,18 @@ class TaskController extends Controller
             ->whereHas('assignees', function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             })
-            
+
             // 💡 2. FIX: Filter by Project ID if provided
-            ->when($projectId, fn($query) =>
+            ->when(
+                $projectId,
+                fn($query) =>
                 $query->where('project_id', $projectId)
             )
 
             // 3. Filter by Search Query
-            ->when($q, fn($query) =>
+            ->when(
+                $q,
+                fn($query) =>
                 $query->where('name', 'like', "%{$q}%")
             )
             ->orderBy($request->input('sort', 'created_at'), $request->input('direction', 'desc'))
@@ -37,7 +45,7 @@ class TaskController extends Controller
             ->withQueryString();
 
         return Inertia::render('User/Tasks/Index', [
-            'tasks'   => $tasks,
+            'tasks' => $tasks,
             'filters' => $request->only(['q', 'sort', 'direction', 'project_id']), // Include project_id in filters
         ]);
     }
@@ -48,7 +56,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task)
     {
         $userId = auth()->id();
-        
+
         // 💡 FIX 2: Check if the current user is an assignee of this task
         $isAssignee = $task->assignees()
             ->where('user_id', $userId)
@@ -56,7 +64,7 @@ class TaskController extends Controller
 
         if (!$isAssignee) {
             // Log this for debugging
-            \Log::warning("Unauthorized task update attempt for task {$task->id} by user " . $userId); 
+            \Log::warning("Unauthorized task update attempt for task {$task->id} by user " . $userId);
             abort(403, 'Unauthorized. You are not assigned to this task.');
         }
 
