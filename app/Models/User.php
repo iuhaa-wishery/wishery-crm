@@ -44,7 +44,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-           'email_verified_at' => 'datetime',
+            'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
         ];
     }
@@ -52,5 +52,15 @@ class User extends Authenticatable
     public function tasks()
     {
         return $this->belongsToMany(Task::class, 'task_user')->withTimestamps();
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
     }
 }

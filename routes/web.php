@@ -28,10 +28,10 @@ Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();
 
     if (in_array($user->role, ['admin', 'manager'])) {
-        return Inertia::render('Admin/Dashboard');
+        return app(\App\Http\Controllers\Admin\DashboardController::class)->index();
     }
 
-    return Inertia::render('Dashboard');
+    return app(\App\Http\Controllers\User\DashboardController::class)->index();
 })->name('dashboard');
 
 
@@ -50,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Profile
     Route::get('/profile', function () {
-        return Inertia\Inertia::render('Profile/Index');
+        return \Inertia\Inertia::render('Profile/Index');
     })->name('profile');
 
     // -------------------------
