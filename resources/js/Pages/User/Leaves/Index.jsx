@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { router, usePage } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import UserLayout from "@/Layouts/UserLayout";
+import { Eye, Plus, X, Calendar, FileText, Trash2 } from "lucide-react";
 
 export default function UserLeaves() {
   const { props } = usePage();
@@ -10,6 +11,7 @@ export default function UserLeaves() {
   const [isOpen, setIsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
+  const [deleteId, setDeleteId] = useState(null);
 
   const [form, setForm] = useState({
     leave_type: "",
@@ -75,83 +77,130 @@ export default function UserLeaves() {
     setViewOpen(true);
   };
 
-  return (
-    <UserLayout title="Leave Applications">
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Leave Applications</h2>
-          <button
-            onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            Apply Leave
-          </button>
-        </div>
+  const handleCancel = (id) => {
+    setDeleteId(id);
+  };
 
-        {/* Leave List */}
-        <table className="w-full border">
+  const confirmDelete = () => {
+    router.delete(route("leave.destroy", deleteId), {
+      preserveScroll: true,
+      onSuccess: () => setDeleteId(null),
+    });
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    const s = status?.toLowerCase();
+    if (s === "approved")
+      return (
+        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm font-medium">
+          Approved
+        </span>
+      );
+    if (s === "rejected")
+      return (
+        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-medium">
+          Rejected
+        </span>
+      );
+    return (
+      <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm font-medium">
+        Pending
+      </span>
+    );
+  };
+
+  return (
+    <UserLayout>
+      <Head title="Leave Applications" />
+
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Leave Applications</h1>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2"
+        >
+          <Plus size={18} /> Apply Leave
+        </button>
+      </div>
+
+      {/* Leave List */}
+      <div className="overflow-x-auto bg-white rounded-2xl shadow">
+        <table className="min-w-full border-collapse">
           <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="p-2">#</th>
-              <th className="p-2">Type</th>
-              <th className="p-2">Dates</th>
-              <th className="p-2">Days</th>
-              <th className="p-2">Reason</th>
-              <th className="p-2">Status</th>
-              <th className="p-2">Action</th>
+            <tr className="bg-blue-50 text-gray-700 text-sm uppercase">
+              <th className="px-4 py-3 text-left">Type</th>
+              <th className="px-4 py-3 text-left">Dates</th>
+              <th className="px-4 py-3 text-left">Days</th>
+              <th className="px-4 py-3 text-left">Reason</th>
+              <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             {leaves.length === 0 ? (
               <tr>
-                <td colSpan="7" className="p-4 text-center text-gray-500">
+                <td colSpan="6" className="text-center py-8 text-gray-500 italic">
                   No leave records found.
                 </td>
               </tr>
             ) : (
-              leaves.map((item, index) => {
+              leaves.map((item) => {
                 const s = new Date(item.from_date);
                 const e = new Date(item.to_date);
                 const days = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
 
                 return (
-                  <tr key={item.id} className="border-t">
-                    <td className="p-2">{index + 1}</td>
-                    <td className="p-2 capitalize">{item.leave_type}</td>
-                    <td className="p-2">
-                      {new Date(item.from_date).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })} - {new Date(item.to_date).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="p-2">{days} d</td>
-                    <td className="p-2 max-w-xs truncate" title={item.reason}>
-                      {item.reason || "-"}
-                    </td>
-                    <td className="p-2 capitalize">
-                      <span
-                        className={`px-2 py-1 rounded text-xs text-white ${item.status === "pending"
-                            ? "bg-yellow-500"
-                            : item.status === "approved"
-                              ? "bg-green-500"
-                              : "bg-red-500"
-                          }`}
-                      >
-                        {item.status}
+                  <tr key={item.id} className="border-t text-gray-700 hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 capitalize">
+                      <span className="flex items-center gap-1 font-medium">
+                        <FileText size={14} className="text-gray-400" />
+                        {item.leave_type}
                       </span>
                     </td>
-                    <td className="p-2">
-                      <button
-                        onClick={() => openView(item)}
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        View
-                      </button>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      <span className="text-gray-900 font-medium">
+                        {formatDate(item.from_date)} - {formatDate(item.to_date)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-blue-600 text-sm">
+                      {days} d
+                    </td>
+                    <td className="px-4 py-3 max-w-xs">
+                      <p className="text-sm text-gray-600 truncate" title={item.reason}>
+                        {item.reason || "-"}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {getStatusBadge(item.status)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={() => openView(item)}
+                          className="text-blue-600 hover:text-blue-800 transition"
+                          title="View Details"
+                        >
+                          <Eye size={20} />
+                        </button>
+                        {item.status === "pending" && (
+                          <button
+                            onClick={() => handleCancel(item.id)}
+                            className="text-red-600 hover:text-red-800 transition"
+                            title="Cancel Application"
+                          >
+                            <Trash2 size={20} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -159,121 +208,176 @@ export default function UserLeaves() {
             )}
           </tbody>
         </table>
+      </div>
 
-        {/* APPLY LEAVE POPUP */}
-        {isOpen && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-            <div className="bg-white w-[500px] p-6 rounded shadow-lg">
-              <h3 className="text-lg font-bold mb-4">Apply Leave</h3>
+      {/* APPLY LEAVE POPUP */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-lg relative">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold mb-6 text-gray-800">Apply Leave</h3>
 
-              <form onSubmit={handleSubmit} className="space-y-3">
-
-                <div>
-                  <label>Leave Type *</label>
-                  <select
-                    name="leave_type"
-                    value={form.leave_type}
-                    onChange={handleChange}
-                    className="w-full border p-2 rounded mt-1"
-                  >
-                    <option value="">--Select--</option>
-                    <option value="casual">Casual</option>
-                    <option value="sick">Sick</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                  {errors.leave_type && (
-                    <p className="text-red-600 text-sm">{errors.leave_type}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label>From Date *</label>
-                    <input
-                      type="date"
-                      name="from_date"
-                      value={form.from_date}
-                      onChange={handleChange}
-                      className="w-full border p-2 rounded mt-1"
-                    />
-                    {errors.from_date && (
-                      <p className="text-red-600 text-sm">{errors.from_date}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label>To Date *</label>
-                    <input
-                      type="date"
-                      name="to_date"
-                      value={form.to_date}
-                      onChange={handleChange}
-                      className="w-full border p-2 rounded mt-1"
-                    />
-                    {errors.to_date && (
-                      <p className="text-red-600 text-sm">{errors.to_date}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label>Reason *</label>
-                  <textarea
-                    name="reason"
-                    value={form.reason}
-                    onChange={handleChange}
-                    rows="3"
-                    className="w-full border p-2 rounded mt-1"
-                  ></textarea>
-                  {errors.reason && (
-                    <p className="text-red-600 text-sm">{errors.reason}</p>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-3 mt-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 bg-gray-300 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded"
-                  >
-                    Submit
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* VIEW POPUP */}
-        {viewOpen && selectedLeave && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-            <div className="bg-white w-[500px] p-6 rounded shadow-lg">
-              <h3 className="text-lg font-bold mb-4">Leave Details</h3>
-
-              <p><b>Type:</b> {selectedLeave.leave_type}</p>
-              <p><b>From:</b> {selectedLeave.from_date}</p>
-              <p><b>To:</b> {selectedLeave.to_date}</p>
-              <p><b>Status:</b> {selectedLeave.status}</p>
-              <p><b>Reason:</b> {selectedLeave.reason}</p>
-
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={() => setViewOpen(false)}
-                  className="px-4 py-2 bg-gray-300 rounded"
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Leave Type *</label>
+                <select
+                  name="leave_type"
+                  value={form.leave_type}
+                  onChange={handleChange}
+                  className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.leave_type ? "border-red-500" : "border-gray-300"}`}
                 >
-                  Close
+                  <option value="">--Select--</option>
+                  <option value="casual">Casual</option>
+                  <option value="sick">Sick</option>
+                  <option value="paid">Paid</option>
+                </select>
+                {errors.leave_type && (
+                  <p className="text-red-600 text-sm mt-1">{errors.leave_type}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">From Date *</label>
+                  <input
+                    type="date"
+                    name="from_date"
+                    value={form.from_date}
+                    onChange={handleChange}
+                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.from_date ? "border-red-500" : "border-gray-300"}`}
+                  />
+                  {errors.from_date && (
+                    <p className="text-red-600 text-sm mt-1">{errors.from_date}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block font-medium text-gray-700 mb-1">To Date *</label>
+                  <input
+                    type="date"
+                    name="to_date"
+                    value={form.to_date}
+                    onChange={handleChange}
+                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.to_date ? "border-red-500" : "border-gray-300"}`}
+                  />
+                  {errors.to_date && (
+                    <p className="text-red-600 text-sm mt-1">{errors.to_date}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-medium text-gray-700 mb-1">Reason *</label>
+                <textarea
+                  name="reason"
+                  value={form.reason}
+                  onChange={handleChange}
+                  rows="3"
+                  className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.reason ? "border-red-500" : "border-gray-300"}`}
+                  placeholder="Enter reason for leave..."
+                ></textarea>
+                {errors.reason && (
+                  <p className="text-red-600 text-sm mt-1">{errors.reason}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition"
+                >
+                  Submit Application
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW POPUP */}
+      {viewOpen && selectedLeave && (
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-lg relative">
+            <button
+              onClick={() => setViewOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold mb-6 text-gray-800">Leave Details</h3>
+
+            <div className="space-y-4">
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-gray-500">Type</span>
+                <span className="font-semibold capitalize">{selectedLeave.leave_type}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-gray-500">Duration</span>
+                <span className="font-semibold">
+                  {formatDate(selectedLeave.from_date)} - {formatDate(selectedLeave.to_date)}
+                </span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-gray-500">Status</span>
+                {getStatusBadge(selectedLeave.status)}
+              </div>
+              <div className="pt-2">
+                <span className="text-gray-500 block mb-1">Reason</span>
+                <p className="text-gray-800 bg-gray-50 p-3 rounded-lg border">
+                  {selectedLeave.reason}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => setViewOpen(false)}
+                className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition shadow-md"
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ✅ Delete Confirmation */}
+      {deleteId && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-sm">
+            <h2 className="text-lg font-bold mb-4 text-gray-800">Confirm Cancellation</h2>
+            <p className="mb-6 text-gray-600">
+              Are you sure you want to cancel this leave application?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteId(null)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+              >
+                No, Keep it
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-md transition"
+              >
+                Yes, Cancel Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </UserLayout>
   );
 }

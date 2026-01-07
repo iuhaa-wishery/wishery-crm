@@ -16,6 +16,10 @@ class Attendance extends Model
         'total_break_minutes',
         'total_worked_minutes',
         'status',
+        'punch_in_lat',
+        'punch_in_lng',
+        'punch_out_lat',
+        'punch_out_lng',
     ];
 
     protected $casts = [

@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/leave', [UserLeaveController::class, 'index'])->name('leave.index');
     Route::get('/leave/apply', [UserLeaveController::class, 'create'])->name('leave.create');
     Route::post('/leave/store', [UserLeaveController::class, 'store'])->name('leave.store');
+    Route::delete('/leave/{leave}', [UserLeaveController::class, 'destroy'])->name('leave.destroy');
 
     // -------------------------
     // ✅ CALENDAR ROUTE
@@ -122,6 +123,7 @@ Route::middleware(['auth', 'is_admin'])
         // ✅ ATTENDANCE ROUTES
         // -------------------------
         Route::get('attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
+        Route::put('attendance/{attendance}', [App\Http\Controllers\AttendanceController::class, 'update'])->name('attendance.update');
     });
 
 

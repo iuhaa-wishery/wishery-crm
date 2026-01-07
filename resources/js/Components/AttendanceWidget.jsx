@@ -82,7 +82,6 @@ export default function AttendanceWidget() {
 
     const handleAction = (action) => {
         let url = '';
-        let method = 'post';
 
         switch (action) {
             case 'punch-in': url = route('attendance.punchIn'); break;
@@ -91,10 +90,35 @@ export default function AttendanceWidget() {
             case 'break-end': url = route('attendance.break.end'); break;
         }
 
-        router.post(url, {}, {
-            preserveScroll: true,
-            onSuccess: () => fetchStatus(),
-        });
+        if (action === 'punch-in' || action === 'punch-out') {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    router.post(url, {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                    }, {
+                        preserveScroll: true,
+                        onSuccess: () => fetchStatus(),
+                    });
+                }, (error) => {
+                    console.error("Error getting location", error);
+                    router.post(url, {}, {
+                        preserveScroll: true,
+                        onSuccess: () => fetchStatus(),
+                    });
+                });
+            } else {
+                router.post(url, {}, {
+                    preserveScroll: true,
+                    onSuccess: () => fetchStatus(),
+                });
+            }
+        } else {
+            router.post(url, {}, {
+                preserveScroll: true,
+                onSuccess: () => fetchStatus(),
+            });
+        }
     };
 
     if (status === 'loading') return <div className="text-sm text-gray-500">Loading...</div>;

@@ -1,7 +1,7 @@
 import React from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Check, X } from "lucide-react";
+import { Check, X, Calendar, User, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Index({ leaves }) {
@@ -31,102 +31,136 @@ export default function Index({ leaves }) {
         return `${diffDays} d`;
     };
 
+    const getStatusBadge = (status) => {
+        const s = status?.toLowerCase();
+        if (s === "approved")
+            return (
+                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm font-medium">
+                    Approved
+                </span>
+            );
+        if (s === "rejected")
+            return (
+                <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-sm font-medium">
+                    Rejected
+                </span>
+            );
+        return (
+            <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-sm font-medium">
+                Pending
+            </span>
+        );
+    };
+
     return (
         <AdminLayout>
-            <Head title="Leaves" />
+            <Head title="Leave Requests" />
 
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-xl font-bold">Leaves</h1>
-                </div>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800">Leave Requests</h1>
+            </div>
 
-                {/* Leaves Table */}
-                <table className="w-full border">
+            {/* Leaves Table */}
+            <div className="overflow-x-auto bg-white rounded-2xl shadow">
+                <table className="min-w-full border-collapse">
                     <thead>
-                        <tr className="bg-gray-200 text-left">
-                            <th className="p-2">#</th>
-                            <th className="p-2">Employee</th>
-                            <th className="p-2">Type</th>
-                            <th className="p-2">Dates</th>
-                            <th className="p-2">Days</th>
-                            <th className="p-2">Reason</th>
-                            <th className="p-2">Status</th>
-                            <th className="p-2">Actions</th>
+                        <tr className="bg-blue-50 text-gray-700 text-sm uppercase">
+                            <th className="px-4 py-2 text-left">Employee</th>
+                            <th className="px-4 py-2 text-left">Type</th>
+                            <th className="px-4 py-2 text-left">Dates</th>
+                            <th className="px-4 py-2 text-left">Days</th>
+                            <th className="px-4 py-2 text-left">Reason</th>
+                            <th className="px-4 py-2 text-left">Status</th>
+                            <th className="px-4 py-2 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {data.length === 0 ? (
                             <tr>
-                                <td colSpan="8" className="p-4 text-center text-gray-500">
+                                <td colSpan="7" className="text-center py-8 text-gray-500 italic">
                                     No leave requests found.
                                 </td>
                             </tr>
                         ) : (
-                            data.map((leave, index) => (
-                                <tr key={leave.id} className="border-t">
-                                    <td className="p-2">{(current_page - 1) * 10 + index + 1}</td>
-                                    <td className="p-2">{leave.user?.name}</td>
-                                    <td className="p-2 capitalize">{leave.leave_type}</td>
-                                    <td className="p-2">
-                                        {formatDate(leave.from_date)} - {formatDate(leave.to_date)}
+                            data.map((leave) => (
+                                <tr key={leave.id} className="border-t text-gray-700 hover:bg-gray-50 transition">
+                                    <td className="px-4 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                                                <User size={14} />
+                                            </div>
+                                            <span className="font-semibold text-gray-900 text-sm">{leave.user?.name}</span>
+                                        </div>
                                     </td>
-                                    <td className="p-2">{getDays(leave.from_date, leave.to_date)}</td>
-                                    <td className="p-2 max-w-xs truncate" title={leave.reason}>
-                                        {leave.reason || "-"}
-                                    </td>
-                                    <td className="p-2 capitalize">
-                                        <span className={`px-2 py-1 rounded text-xs text-white ${leave.status === 'approved' ? 'bg-green-500' :
-                                            leave.status === 'rejected' ? 'bg-red-500' :
-                                                'bg-yellow-500'
-                                            }`}>
-                                            {leave.status}
+                                    <td className="px-4 py-2 capitalize text-sm">
+                                        <span className="flex items-center gap-1">
+                                            <FileText size={14} className="text-gray-400" />
+                                            {leave.leave_type.replace('_', ' ')}
                                         </span>
                                     </td>
-                                    <td className="p-2">
-                                        {leave.status === 'pending' ? (
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleAction(leave.id, 'approve')}
-                                                    className="text-green-600 hover:text-green-800"
-                                                    title="Approve"
-                                                >
-                                                    <Check size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAction(leave.id, 'reject')}
-                                                    className="text-red-600 hover:text-red-800"
-                                                    title="Reject"
-                                                >
-                                                    <X size={18} />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-gray-400 text-sm">-</span>
-                                        )}
+                                    <td className="px-4 py-2 whitespace-nowrap">
+                                        <span className="text-gray-900 font-medium text-sm">
+                                            {formatDate(leave.from_date)} - {formatDate(leave.to_date)}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-2 font-medium text-blue-600 text-sm">
+                                        {getDays(leave.from_date, leave.to_date)}
+                                    </td>
+                                    <td className="px-4 py-2 max-w-xs">
+                                        <p className="text-sm text-gray-600 truncate" title={leave.reason}>
+                                            {leave.reason || "-"}
+                                        </p>
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        {getStatusBadge(leave.status)}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                        <div className="flex justify-center gap-2">
+                                            {leave.status === 'pending' ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleAction(leave.id, 'approve')}
+                                                        className="p-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition"
+                                                        title="Approve"
+                                                    >
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAction(leave.id, 'reject')}
+                                                        className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition"
+                                                        title="Reject"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <span className="text-gray-300">-</span>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))
                         )}
                     </tbody>
                 </table>
-
-                {/* Pagination */}
-                {links.length > 3 && (
-                    <div className="flex justify-end mt-4 gap-1">
-                        {links.map((link, i) => (
-                            <Link
-                                key={i}
-                                href={link.url || "#"}
-                                className={`px-3 py-1 border rounded text-sm ${link.active
-                                    ? "bg-blue-600 text-white border-blue-600"
-                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                                    } ${!link.url && "opacity-50 cursor-not-allowed"}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
             </div>
+
+            {/* Pagination */}
+            {links.length > 3 && (
+                <div className="flex justify-center mt-8 gap-2">
+                    {links.map((link, i) => (
+                        <Link
+                            key={i}
+                            href={link.url || "#"}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${link.active
+                                ? "bg-blue-600 text-white shadow-md"
+                                : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                                } ${!link.url && "opacity-50 cursor-not-allowed"}`}
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                        />
+                    ))}
+                </div>
+            )}
         </AdminLayout>
     );
 }

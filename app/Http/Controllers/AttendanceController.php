@@ -30,20 +30,22 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function punchIn()
+    public function punchIn(Request $request)
     {
         // Always create a new record for a new session
         Attendance::create([
             'user_id' => Auth::id(),
             'date' => Carbon::today(),
             'punch_in' => Carbon::now(),
+            'punch_in_lat' => $request->latitude,
+            'punch_in_lng' => $request->longitude,
             'status' => 'punched_in',
         ]);
 
         return back();
     }
 
-    public function punchOut()
+    public function punchOut(Request $request)
     {
         // Find the latest active session
         $attendance = Attendance::where('user_id', Auth::id())
@@ -60,6 +62,8 @@ class AttendanceController extends Controller
 
             $attendance->update([
                 'punch_out' => Carbon::now(),
+                'punch_out_lat' => $request->latitude,
+                'punch_out_lng' => $request->longitude,
                 'total_worked_minutes' => max(0, $duration), // Ensure non-negative
                 'status' => 'punched_out',
             ]);
@@ -141,5 +145,31 @@ class AttendanceController extends Controller
             'totalWorkedMinutes' => $totalWorkedMinutes,
             'filters' => $request->only(['date', 'month', 'user_id']),
         ]);
+    }
+
+    public function update(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'punch_in' => 'required|date',
+            'punch_out' => 'nullable|date|after_or_equal:punch_in',
+        ]);
+
+        $punchIn = Carbon::parse($request->punch_in);
+        $punchOut = $request->punch_out ? Carbon::parse($request->punch_out) : null;
+        $totalWorkedMinutes = 0;
+
+        if ($punchIn && $punchOut) {
+            $totalBreakMinutes = $attendance->total_break_minutes ?? 0;
+            $totalWorkedMinutes = max(0, $punchIn->diffInMinutes($punchOut) - $totalBreakMinutes);
+        }
+
+        $attendance->update([
+            'punch_in' => $punchIn,
+            'punch_out' => $punchOut,
+            'total_worked_minutes' => $totalWorkedMinutes,
+            'status' => $punchOut ? 'punched_out' : 'punched_in',
+        ]);
+
+        return back()->with('success', 'Attendance updated successfully.');
     }
 }
