@@ -146,9 +146,9 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
 
             <div className="flex items-center gap-4">
               <Link href={route('profile.edit')} className="flex items-center gap-3 hover:bg-gray-50 p-1 px-2 rounded-lg transition">
-                {auth.user.thumb ? (
+                {auth.user.image_url ? (
                   <img
-                    src={`${usePage().props.appUrl}/storage/${auth.user.thumb}`}
+                    src={auth.user.image_url}
                     alt={auth.user.name}
                     className="h-8 w-8 rounded-full object-cover border"
                   />

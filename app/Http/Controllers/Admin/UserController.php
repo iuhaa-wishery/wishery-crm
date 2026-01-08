@@ -22,10 +22,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::whereIn('role', ['user', 'manager'])->get()->map(function ($user) {
-            $user->image_url = $user->image_path;
-            return $user;
-        });
+        $users = User::whereIn('role', ['user', 'manager'])->get();
 
         return inertia('Admin/Users/Index', [
             'users' => $users

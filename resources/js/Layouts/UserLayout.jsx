@@ -11,7 +11,7 @@ import {
 import AttendanceWidget from "@/Components/AttendanceWidget";
 
 export default function UserLayout({ children, title }) {
-    const { auth, appUrl } = usePage().props;
+    const { auth } = usePage().props;
     const user = auth?.user;
     const [collapsed, setCollapsed] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -90,9 +90,9 @@ export default function UserLayout({ children, title }) {
                                 onClick={() => setShowMenu(!showMenu)}
                                 className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100 transition"
                             >
-                                {user?.thumb ? (
+                                {user?.image_url ? (
                                     <img
-                                        src={`${appUrl}/storage/${user.thumb}`}
+                                        src={user.image_url}
                                         alt={user.name}
                                         className="h-8 w-8 rounded-full object-cover border"
                                     />

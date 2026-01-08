@@ -7,7 +7,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const { auth, appUrl } = usePage().props;
+    const { auth } = usePage().props;
     const user = auth.user;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
@@ -51,9 +51,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                             >
-                                                {user.thumb ? (
+                                                {user.image_url ? (
                                                     <img
-                                                        src={`${appUrl}/storage/${user.thumb}`}
+                                                        src={user.image_url}
                                                         alt={user.name}
                                                         className="h-8 w-8 rounded-full object-cover me-2"
                                                     />

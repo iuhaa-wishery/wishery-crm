@@ -10,7 +10,7 @@ export default function UpdateProfileInformation({
     status,
     className = '',
 }) {
-    const { auth, appUrl } = usePage().props;
+    const { auth } = usePage().props;
     const user = auth.user;
 
     const { data, setData, post, errors, processing, recentlySuccessful } =
@@ -47,10 +47,10 @@ export default function UpdateProfileInformation({
                 <div>
                     <InputLabel htmlFor="thumb" value="Profile Picture" />
 
-                    {user.thumb && (
+                    {user.image_url && (
                         <div className="mt-2 mb-4">
                             <img
-                                src={`${appUrl}/storage/${user.thumb}`}
+                                src={user.image_url}
                                 alt="Profile"
                                 className="h-20 w-20 rounded-full object-cover border"
                             />

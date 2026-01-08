@@ -12,6 +12,8 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $appends = ['image_url'];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -56,6 +58,15 @@ class User extends Authenticatable
     public function getImagePathAttribute(): ?string
     {
         return $this->image ?: $this->thumb;
+    }
+
+    /**
+     * Get the user's full image URL.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        $path = $this->image ?: $this->thumb;
+        return $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null;
     }
 
     public function tasks()
