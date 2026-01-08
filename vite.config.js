@@ -3,7 +3,6 @@ import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-    base: '/wishery-crm/public/build/',
     plugins: [
         laravel({
             input: 'resources/js/app.jsx',
