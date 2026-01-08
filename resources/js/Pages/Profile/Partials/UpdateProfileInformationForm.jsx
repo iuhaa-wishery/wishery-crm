@@ -10,18 +10,24 @@ export default function UpdateProfileInformation({
     status,
     className = '',
 }) {
-    const user = usePage().props.auth.user;
+    const { auth, appUrl } = usePage().props;
+    const user = auth.user;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+    const { data, setData, post, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
             email: user.email,
+            thumb: null,
+            _method: 'patch',
         });
 
     const submit = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'));
+        post(route('profile.update'), {
+            forceFormData: true,
+            preserveScroll: true,
+        });
     };
 
     return (
@@ -32,11 +38,40 @@ export default function UpdateProfileInformation({
                 </h2>
 
                 <p className="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
+                    Update your account's profile information and profile picture.
                 </p>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
+                {/* Profile Picture */}
+                <div>
+                    <InputLabel htmlFor="thumb" value="Profile Picture" />
+
+                    {user.thumb && (
+                        <div className="mt-2 mb-4">
+                            <img
+                                src={`${appUrl}/storage/${user.thumb}`}
+                                alt="Profile"
+                                className="h-20 w-20 rounded-full object-cover border"
+                            />
+                        </div>
+                    )}
+
+                    <input
+                        id="thumb"
+                        type="file"
+                        className="mt-1 block w-full text-sm text-gray-500
+                                  file:mr-4 file:py-2 file:px-4
+                                  file:rounded-full file:border-0
+                                  file:text-sm file:font-semibold
+                                  file:bg-indigo-50 file:text-indigo-700
+                                  hover:file:bg-indigo-100"
+                        onChange={(e) => setData('thumb', e.target.files[0])}
+                    />
+
+                    <InputError className="mt-2" message={errors.thumb} />
+                </div>
+
                 <div>
                     <InputLabel htmlFor="name" value="Name" />
 
@@ -54,17 +89,20 @@ export default function UpdateProfileInformation({
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value="Email (Read-only)" />
 
                     <TextInput
                         id="email"
                         type="email"
-                        className="mt-1 block w-full"
+                        className="mt-1 block w-full bg-gray-100 cursor-not-allowed"
                         value={data.email}
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
+                        readOnly
                         autoComplete="username"
                     />
+
+                    <p className="mt-1 text-xs text-gray-500">
+                        Email address cannot be changed.
+                    </p>
 
                     <InputError className="mt-2" message={errors.email} />
                 </div>

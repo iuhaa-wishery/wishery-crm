@@ -6,7 +6,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 export default function Index() {
-  const { users } = usePage().props;
+  const { users, appUrl } = usePage().props;
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -175,9 +175,9 @@ export default function Index() {
                 <td className="p-2">
                   {user.image_url ? (
                     <img
-                      src={user.image_url}
+                      src={`${appUrl}/storage/${user.image_url}`}
                       alt={user.name}
-                      className="w-10 h-10 rounded-full"
+                      className="w-10 h-10 rounded-full object-cover border"
                     />
                   ) : (
                     <span className="text-gray-400">No Image</span>
@@ -327,9 +327,9 @@ export default function Index() {
 
                   {editingUser && editingUser.image_url && (
                     <img
-                      src={editingUser.image_url}
+                      src={`${appUrl}/storage/${editingUser.image_url}`}
                       alt="Preview"
-                      className="w-16 h-16 mt-2 rounded-full"
+                      className="w-16 h-16 mt-2 rounded-full object-cover border"
                     />
                   )}
                 </div>

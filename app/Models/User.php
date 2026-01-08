@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'image',
+        'thumb',
     ];
 
     /**
@@ -47,6 +48,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the user's image path, preferring 'image' over 'thumb'.
+     */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->image ?: $this->thumb;
     }
 
     public function tasks()

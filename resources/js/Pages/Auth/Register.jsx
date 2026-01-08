@@ -16,7 +16,7 @@ export default function Register() {
     const submit = (e) => {
         e.preventDefault();
 
-        post(route('register'), {
+        post(route('register.store'), {
             onFinish: () => reset('password', 'password_confirmation'),
         });
     };
@@ -37,10 +37,12 @@ export default function Register() {
                         autoComplete="name"
                         isFocused={true}
                         onChange={(e) => setData('name', e.target.value)}
-                        required
+                        isError={!!errors.name}
                     />
 
-                    <InputError message={errors.name} className="mt-2" />
+                    {errors.name && (
+                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    )}
                 </div>
 
                 <div className="mt-4">
@@ -54,10 +56,12 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="username"
                         onChange={(e) => setData('email', e.target.value)}
-                        required
+                        isError={!!errors.email}
                     />
 
-                    <InputError message={errors.email} className="mt-2" />
+                    {errors.email && (
+                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                    )}
                 </div>
 
                 <div className="mt-4">
@@ -71,10 +75,12 @@ export default function Register() {
                         className="mt-1 block w-full"
                         autoComplete="new-password"
                         onChange={(e) => setData('password', e.target.value)}
-                        required
+                        isError={!!errors.password}
                     />
 
-                    <InputError message={errors.password} className="mt-2" />
+                    {errors.password && (
+                        <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                    )}
                 </div>
 
                 <div className="mt-4">
@@ -93,13 +99,12 @@ export default function Register() {
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)
                         }
-                        required
+                        isError={!!errors.password_confirmation}
                     />
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
+                    {errors.password_confirmation && (
+                        <p className="text-red-500 text-sm mt-1">{errors.password_confirmation}</p>
+                    )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">

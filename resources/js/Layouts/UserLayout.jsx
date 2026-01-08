@@ -11,7 +11,7 @@ import {
 import AttendanceWidget from "@/Components/AttendanceWidget";
 
 export default function UserLayout({ children, title }) {
-    const { auth } = usePage().props;
+    const { auth, appUrl } = usePage().props;
     const user = auth?.user;
     const [collapsed, setCollapsed] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -88,17 +88,26 @@ export default function UserLayout({ children, title }) {
                         <div className="relative">
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
-                                className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100"
+                                className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-100 transition"
                             >
-                                <FaUser className="text-gray-600" />
+                                {user?.thumb ? (
+                                    <img
+                                        src={`${appUrl}/storage/${user.thumb}`}
+                                        alt={user.name}
+                                        className="h-8 w-8 rounded-full object-cover border"
+                                    />
+                                ) : (
+                                    <FaUser className="text-gray-600" />
+                                )}
                                 {!collapsed && <span>{user?.name}</span>}
                             </button>
 
                             {showMenu && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-50">
                                     <Link
-                                        href={route("profile")}
+                                        href={route("profile.edit")}
                                         className="block px-4 py-2 hover:bg-gray-100"
+                                        onClick={() => setShowMenu(false)}
                                     >
                                         My Profile
                                     </Link>

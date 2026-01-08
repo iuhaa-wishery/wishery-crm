@@ -29,13 +29,20 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->name = $request->name;
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('thumb')) {
+            // Delete old thumb if exists
+            if ($user->thumb && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->thumb)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->thumb);
+            }
+
+            $path = $request->file('thumb')->store('profile_pics', 'public');
+            $user->thumb = $path;
         }
 
-        $request->user()->save();
+        $user->save();
 
         return Redirect::route('profile.edit');
     }

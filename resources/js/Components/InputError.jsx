@@ -1,10 +1,14 @@
 export default function InputError({ message, className = '', ...props }) {
-    return message ? (
+    if (!message) return null;
+
+    const displayMessage = Array.isArray(message) ? message[0] : message;
+
+    return (
         <p
             {...props}
-            className={'text-sm text-red-600 ' + className}
+            className={'text-sm text-red-600 font-medium ' + className}
         >
-            {message}
+            {displayMessage}
         </p>
-    ) : null;
+    );
 }

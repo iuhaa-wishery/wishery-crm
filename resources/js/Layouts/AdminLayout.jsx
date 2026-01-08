@@ -56,9 +56,16 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             }`}
         >
           <div className="h-16 flex items-center justify-center border-b">
-            <div className="font-bold text-lg">
-              {collapsed ? "W" : "Wishery CRM"}
-            </div>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-lg">W</span>
+              </div>
+              {!collapsed && (
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Wishery CRM
+                </span>
+              )}
+            </Link>
           </div>
 
           <nav className="flex-1 p-2 space-y-1">
@@ -138,11 +145,21 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             <h2 className="text-lg font-semibold">{title}</h2>
 
             <div className="flex items-center gap-4">
-              <FaUserCircle className="text-2xl text-gray-600" />
-              <div className="text-sm">
-                <div className="font-medium">{auth?.user?.name}</div>
-                <div className="text-xs text-gray-500">{auth?.user?.email}</div>
-              </div>
+              <Link href={route('profile.edit')} className="flex items-center gap-3 hover:bg-gray-50 p-1 px-2 rounded-lg transition">
+                {auth.user.thumb ? (
+                  <img
+                    src={`${usePage().props.appUrl}/storage/${auth.user.thumb}`}
+                    alt={auth.user.name}
+                    className="h-8 w-8 rounded-full object-cover border"
+                  />
+                ) : (
+                  <FaUserCircle className="text-2xl text-gray-600" />
+                )}
+                <div className="text-sm">
+                  <div className="font-medium">{auth?.user?.name}</div>
+                  <div className="text-xs text-gray-500">{auth?.user?.email}</div>
+                </div>
+              </Link>
 
               <button
                 onClick={handleLogout}
