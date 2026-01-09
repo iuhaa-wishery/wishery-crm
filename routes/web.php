@@ -137,7 +137,7 @@ Route::get('/fix-storage', function () {
         if (is_link($publicPath)) {
             return "Storage link already exists and is a symlink. Target: " . readlink($publicPath);
         } else {
-            return "Storage directory already exists in public folder but is NOT a symlink. Please delete the 'storage' folder in your public directory manually via File Manager, then run this again.";
+            return "CRITICAL: A physical 'storage' folder exists at " . $publicPath . ". Laravel cannot create a symlink until this is deleted. <br><br> <a href='/delete-storage-folder' style='color:red; font-weight:bold;'>[ CLICK HERE TO DELETE THE PHYSICAL STORAGE FOLDER ]</a> (Only do this if you are sure it doesn't contain important files)";
         }
     }
 
@@ -154,14 +154,15 @@ Route::get('/fix-storage', function () {
     }
 });
 
-Route::get('/debug-paths', function () {
-    return [
-        'public_path' => public_path(),
-        'storage_path' => storage_path(),
-        'base_path' => base_path(),
-        'app_url' => config('app.url'),
-        'storage_link_exists' => file_exists(public_path('storage')),
-        'storage_link_is_symlink' => is_link(public_path('storage')),
-        'storage_target_exists' => file_exists(storage_path('app/public')),
-    ];
+Route::get('/delete-storage-folder', function () {
+    $publicPath = public_path('storage');
+    if (file_exists($publicPath) && !is_link($publicPath)) {
+        try {
+            \Illuminate\Support\Facades\File::deleteDirectory($publicPath);
+            return "Physical storage folder deleted successfully! <br><br> <a href='/fix-storage'>[ CLICK HERE TO CREATE THE SYMLINK NOW ]</a>";
+        } catch (\Exception $e) {
+            return "Error deleting folder: " . $e->getMessage() . ". Please delete it manually via File Manager.";
+        }
+    }
+    return "No physical storage folder found to delete.";
 });
