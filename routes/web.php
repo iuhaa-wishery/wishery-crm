@@ -129,3 +129,11 @@ Route::middleware(['auth', 'is_admin'])
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/debug.php';
+Route::get('/fix-storage', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('storage:link');
+        return "Storage link created successfully!";
+    } catch (\Exception $e) {
+        return "Error creating storage link: " . $e->getMessage();
+    }
+});
