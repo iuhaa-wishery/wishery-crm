@@ -37,9 +37,14 @@ class ProfileController extends Controller
             if ($user->thumb && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->thumb)) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($user->thumb);
             }
+            // Delete old image if exists
+            if ($user->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->image)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->image);
+            }
 
             $path = $request->file('thumb')->store('profile_pics', 'public');
             $user->thumb = $path;
+            $user->image = null; // Clear old image column to avoid conflicts
         }
 
         $user->save();

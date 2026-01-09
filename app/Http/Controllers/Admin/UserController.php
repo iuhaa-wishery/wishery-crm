@@ -40,7 +40,8 @@ class UserController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('users', 'public');
+            $validated['thumb'] = $request->file('image')->store('users', 'public');
+            unset($validated['image']);
         }
 
         $validated['password'] = Hash::make($validated['password']);
@@ -62,10 +63,14 @@ class UserController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
+            if ($user->thumb && Storage::disk('public')->exists($user->thumb)) {
+                Storage::disk('public')->delete($user->thumb);
+            }
             if ($user->image && Storage::disk('public')->exists($user->image)) {
                 Storage::disk('public')->delete($user->image);
             }
-            $validated['image'] = $request->file('image')->store('users', 'public');
+            $validated['thumb'] = $request->file('image')->store('users', 'public');
+            $validated['image'] = null;
         } else {
             // If no new image, keep the old one
             unset($validated['image']);

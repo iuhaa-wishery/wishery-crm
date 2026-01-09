@@ -65,7 +65,7 @@ class User extends Authenticatable
      */
     public function getImageUrlAttribute(): ?string
     {
-        $path = $this->image ?: $this->thumb;
+        $path = $this->thumb ?: $this->image;
         return $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null;
     }
 
