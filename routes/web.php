@@ -189,3 +189,31 @@ Route::get('/delete-storage-folder', function () {
     }
     return "No physical storage folder found to delete.";
 });
+Route::get('/debug-drive', function () {
+    try {
+        $service = app(\App\Services\GoogleDriveService::class);
+        $client = $service->getClient(); // I need to add this getter
+
+        if (!$client) {
+            return [
+                'status' => 'error',
+                'message' => 'Google Drive Client failed to initialize. Check your refresh token in .env.'
+            ];
+        }
+
+        $accessToken = $client->getAccessToken();
+        return [
+            'status' => 'success',
+            'message' => 'Google Drive Client initialized successfully.',
+            'has_access_token' => !empty($accessToken),
+            'is_token_expired' => $client->isAccessTokenExpired(),
+            'folder_id' => config('services.google.folder_id'),
+        ];
+    } catch (\Exception $e) {
+        return [
+            'status' => 'error',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ];
+    }
+});

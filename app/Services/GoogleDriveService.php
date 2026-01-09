@@ -168,4 +168,9 @@ class GoogleDriveService
             throw new \Exception('Failed to delete: ' . $e->getMessage());
         }
     }
+
+    public function getClient()
+    {
+        return $this->client;
+    }
 }
