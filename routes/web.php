@@ -129,6 +129,29 @@ Route::middleware(['auth', 'is_admin'])
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/debug.php';
+Route::get('/debug-paths', function () {
+    $publicStorage = public_path('storage');
+    $storageAppPublic = storage_path('app/public');
+
+    // Check for a specific file that is 404ing
+    $testFile = 'users/IymiVBJ6rYHa43rHoP5UEiXetZFO4NOUU55XyjMU.png';
+    $fullTestPath = $storageAppPublic . '/' . $testFile;
+
+    return [
+        'public_path' => public_path(),
+        'storage_path' => storage_path(),
+        'base_path' => base_path(),
+        'app_url' => config('app.url'),
+        'storage_link_exists' => file_exists($publicStorage),
+        'storage_link_is_symlink' => is_link($publicStorage),
+        'storage_link_target' => is_link($publicStorage) ? readlink($publicStorage) : 'N/A',
+        'storage_target_exists' => file_exists($storageAppPublic),
+        'test_file_path' => $fullTestPath,
+        'test_file_exists' => file_exists($fullTestPath),
+        'php_version' => PHP_VERSION,
+        'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
+    ];
+});
 Route::get('/fix-storage', function () {
     $publicPath = public_path('storage');
     $storagePath = storage_path('app/public');
