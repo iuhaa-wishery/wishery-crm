@@ -66,7 +66,22 @@ class User extends Authenticatable
     public function getImageUrlAttribute(): ?string
     {
         $path = $this->thumb ?: $this->image;
-        return $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null;
+        if (!$path) {
+            return null;
+        }
+
+        // If it's already a full URL (e.g. from Google Drive), return it
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        // If it starts with 'uploads/', it's a public upload
+        if (str_starts_with($path, 'uploads/')) {
+            return asset($path);
+        }
+
+        // Fallback for old storage paths (though we are moving away from them)
+        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
     }
 
     public function tasks()

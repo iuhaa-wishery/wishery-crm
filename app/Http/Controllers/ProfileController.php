@@ -33,17 +33,25 @@ class ProfileController extends Controller
         $user->name = $request->name;
 
         if ($request->hasFile('thumb')) {
-            // Delete old thumb if exists
-            if ($user->thumb && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->thumb)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->thumb);
-            }
-            // Delete old image if exists
-            if ($user->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->image)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->image);
+            $path = public_path('uploads/profile');
+            if (!file_exists($path)) {
+                mkdir($path, 0775, true);
             }
 
-            $path = $request->file('thumb')->store('profile_pics', 'public');
-            $user->thumb = $path;
+            // Delete old thumb if exists
+            if ($user->thumb && file_exists(public_path($user->thumb))) {
+                unlink(public_path($user->thumb));
+            }
+            // Delete old image if exists
+            if ($user->image && file_exists(public_path($user->image))) {
+                unlink(public_path($user->image));
+            }
+
+            $file = $request->file('thumb');
+            $filename = uniqid('profile_') . '.' . $file->getClientOriginalExtension();
+            $file->move($path, $filename);
+
+            $user->thumb = 'uploads/profile/' . $filename;
             $user->image = null; // Clear old image column to avoid conflicts
         }
 

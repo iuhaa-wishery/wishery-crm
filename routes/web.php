@@ -129,66 +129,7 @@ Route::middleware(['auth', 'is_admin'])
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/debug.php';
-Route::get('/debug-paths', function () {
-    $publicStorage = public_path('storage');
-    $storageAppPublic = storage_path('app/public');
 
-    // Check for a specific file that is 404ing
-    $testFile = 'users/IymiVBJ6rYHa43rHoP5UEiXetZFO4NOUU55XyjMU.png';
-    $fullTestPath = $storageAppPublic . '/' . $testFile;
-
-    return [
-        'public_path' => public_path(),
-        'storage_path' => storage_path(),
-        'base_path' => base_path(),
-        'app_url' => config('app.url'),
-        'storage_link_exists' => file_exists($publicStorage),
-        'storage_link_is_symlink' => is_link($publicStorage),
-        'storage_link_target' => is_link($publicStorage) ? readlink($publicStorage) : 'N/A',
-        'storage_target_exists' => file_exists($storageAppPublic),
-        'test_file_path' => $fullTestPath,
-        'test_file_exists' => file_exists($fullTestPath),
-        'php_version' => PHP_VERSION,
-        'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
-    ];
-});
-Route::get('/fix-storage', function () {
-    $publicPath = public_path('storage');
-    $storagePath = storage_path('app/public');
-
-    if (file_exists($publicPath)) {
-        if (is_link($publicPath)) {
-            return "Storage link already exists and is a symlink. Target: " . readlink($publicPath);
-        } else {
-            return "CRITICAL: A physical 'storage' folder exists at " . $publicPath . ". Laravel cannot create a symlink until this is deleted. <br><br> <a href='/delete-storage-folder' style='color:red; font-weight:bold;'>[ CLICK HERE TO DELETE THE PHYSICAL STORAGE FOLDER ]</a> (Only do this if you are sure it doesn't contain important files)";
-        }
-    }
-
-    try {
-        app()->make('files')->link($storagePath, $publicPath);
-        return "Storage link created successfully using File::link()!";
-    } catch (\Exception $e) {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('storage:link');
-            return "Storage link created successfully using Artisan!";
-        } catch (\Exception $e2) {
-            return "Error creating storage link: " . $e2->getMessage() . " | " . $e->getMessage();
-        }
-    }
-});
-
-Route::get('/delete-storage-folder', function () {
-    $publicPath = public_path('storage');
-    if (file_exists($publicPath) && !is_link($publicPath)) {
-        try {
-            \Illuminate\Support\Facades\File::deleteDirectory($publicPath);
-            return "Physical storage folder deleted successfully! <br><br> <a href='/fix-storage'>[ CLICK HERE TO CREATE THE SYMLINK NOW ]</a>";
-        } catch (\Exception $e) {
-            return "Error deleting folder: " . $e->getMessage() . ". Please delete it manually via File Manager.";
-        }
-    }
-    return "No physical storage folder found to delete.";
-});
 Route::get('/debug-drive', function () {
     try {
         $service = app(\App\Services\GoogleDriveService::class);

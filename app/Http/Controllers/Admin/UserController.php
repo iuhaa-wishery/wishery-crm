@@ -40,7 +40,14 @@ class UserController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $validated['thumb'] = $request->file('image')->store('users', 'public');
+            $path = public_path('uploads/users');
+            if (!file_exists($path)) {
+                mkdir($path, 0775, true);
+            }
+            $file = $request->file('image');
+            $filename = uniqid('user_') . '.' . $file->getClientOriginalExtension();
+            $file->move($path, $filename);
+            $validated['thumb'] = 'uploads/users/' . $filename;
             unset($validated['image']);
         }
 
@@ -63,13 +70,22 @@ class UserController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            if ($user->thumb && Storage::disk('public')->exists($user->thumb)) {
-                Storage::disk('public')->delete($user->thumb);
+            $path = public_path('uploads/users');
+            if (!file_exists($path)) {
+                mkdir($path, 0775, true);
             }
-            if ($user->image && Storage::disk('public')->exists($user->image)) {
-                Storage::disk('public')->delete($user->image);
+
+            if ($user->thumb && file_exists(public_path($user->thumb))) {
+                unlink(public_path($user->thumb));
             }
-            $validated['thumb'] = $request->file('image')->store('users', 'public');
+            if ($user->image && file_exists(public_path($user->image))) {
+                unlink(public_path($user->image));
+            }
+
+            $file = $request->file('image');
+            $filename = uniqid('user_') . '.' . $file->getClientOriginalExtension();
+            $file->move($path, $filename);
+            $validated['thumb'] = 'uploads/users/' . $filename;
             $validated['image'] = null;
         } else {
             // If no new image, keep the old one
