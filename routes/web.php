@@ -130,10 +130,38 @@ Route::middleware(['auth', 'is_admin'])
 require __DIR__ . '/auth.php';
 require __DIR__ . '/debug.php';
 Route::get('/fix-storage', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('storage:link');
-        return "Storage link created successfully!";
-    } catch (\Exception $e) {
-        return "Error creating storage link: " . $e->getMessage();
+    $publicPath = public_path('storage');
+    $storagePath = storage_path('app/public');
+
+    if (file_exists($publicPath)) {
+        if (is_link($publicPath)) {
+            return "Storage link already exists and is a symlink. Target: " . readlink($publicPath);
+        } else {
+            return "Storage directory already exists in public folder but is NOT a symlink. Please delete the 'storage' folder in your public directory manually via File Manager, then run this again.";
+        }
     }
+
+    try {
+        app()->make('files')->link($storagePath, $publicPath);
+        return "Storage link created successfully using File::link()!";
+    } catch (\Exception $e) {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('storage:link');
+            return "Storage link created successfully using Artisan!";
+        } catch (\Exception $e2) {
+            return "Error creating storage link: " . $e2->getMessage() . " | " . $e->getMessage();
+        }
+    }
+});
+
+Route::get('/debug-paths', function () {
+    return [
+        'public_path' => public_path(),
+        'storage_path' => storage_path(),
+        'base_path' => base_path(),
+        'app_url' => config('app.url'),
+        'storage_link_exists' => file_exists(public_path('storage')),
+        'storage_link_is_symlink' => is_link(public_path('storage')),
+        'storage_target_exists' => file_exists(storage_path('app/public')),
+    ];
 });
