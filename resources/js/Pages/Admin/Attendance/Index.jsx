@@ -107,12 +107,13 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Present': return 'bg-green-100 text-green-800';
-            case 'Late': return 'bg-yellow-100 text-yellow-800';
-            case 'Early Leave': return 'bg-orange-100 text-orange-800';
-            case 'Late & Early Leave': return 'bg-red-100 text-red-800';
-            case 'Absent': return 'bg-gray-100 text-gray-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'Present': return 'bg-green-100 text-green-600';
+            case 'Late':
+            case 'Early Leave':
+            case 'Late & Early Leave': return 'bg-orange-100 text-orange-600';
+            case 'Absent': return 'bg-red-100 text-red-600';
+            case 'Half Day': return 'bg-blue-100 text-blue-600';
+            default: return 'bg-gray-100 text-gray-500';
         }
     };
 
@@ -215,56 +216,55 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                             {/* Table View (Used for both Daily and Monthly) */}
                             {displayMode === 'table' || viewType === 'daily' ? (
                                 <div className="overflow-x-auto">
-                                    <table className="min-w-full divide-y divide-gray-200">
-                                        <thead className="bg-gray-50">
-                                            <tr>
+                                    <table className="min-w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-100">
                                                 {viewType === 'daily' && (
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
                                                 )}
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
-                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check In</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check Out</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hours</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody className="divide-y divide-gray-200">
                                             {attendanceData.length > 0 ? (
                                                 attendanceData.map((record) => (
                                                     <tr key={record.id}>
                                                         {viewType === 'daily' && (
-                                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                                <div className="text-sm font-medium text-gray-900">{record.name}</div>
+                                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                                <div className="text-sm font-semibold text-gray-900">{record.name}</div>
                                                             </td>
                                                         )}
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             {formatDate(record.date || filters.date)}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {record.check_in}
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                            {record.check_in === '-' ? '--' : record.check_in}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {record.check_out}
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                            {record.check_out === '-' ? '--' : record.check_out}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap">
-                                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                            ${getStatusColor(record.status)}`}>
-                                                                {record.status}
+                                                        <td className="px-4 py-3 whitespace-nowrap">
+                                                            <span className={`px-4 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusColor(record.status)}`}>
+                                                                {record.status === 'Late & Early Leave' ? 'Late' : record.status}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                            {record.hours}
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                            {record.hours === '0h 0m' ? '--' : record.hours}
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             <div className="flex items-center gap-3">
                                                                 {record.punch_in_lat && (
                                                                     <a
                                                                         href={`https://www.google.com/maps?q=${record.punch_in_lat},${record.punch_in_lng}`}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="text-green-600 hover:text-green-800 transition-colors"
+                                                                        className="text-green-500 hover:text-green-700 transition-colors"
                                                                         title="Check-in Location"
                                                                     >
                                                                         <MapPin className="w-4 h-4" />
@@ -275,16 +275,16 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                                         href={`https://www.google.com/maps?q=${record.punch_out_lat},${record.punch_out_lng}`}
                                                                         target="_blank"
                                                                         rel="noopener noreferrer"
-                                                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                                                        className="text-red-500 hover:text-red-700 transition-colors"
                                                                         title="Check-out Location"
                                                                     >
                                                                         <MapPin className="w-4 h-4" />
                                                                     </a>
                                                                 )}
-                                                                {!record.punch_in_lat && !record.punch_out_lat && '-'}
+                                                                {!record.punch_in_lat && !record.punch_out_lat && '--'}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                                                             <button
                                                                 onClick={() => openEditModal(record)}
                                                                 className="text-indigo-600 hover:text-indigo-900"
