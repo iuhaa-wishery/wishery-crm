@@ -9,6 +9,7 @@ import {
   FaUserCircle,
   FaSignOutAlt,
   FaClock,
+  FaFileAlt,
 } from "react-icons/fa";
 
 import { Toaster, toast } from "react-hot-toast";

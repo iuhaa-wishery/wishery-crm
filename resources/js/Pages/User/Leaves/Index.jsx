@@ -15,6 +15,7 @@ export default function UserLeaves() {
 
   const [form, setForm] = useState({
     leave_type: "",
+    day_type: "full",
     from_date: "",
     to_date: "",
     reason: "",
@@ -27,8 +28,21 @@ export default function UserLeaves() {
   }, [props.leaves]);
 
   const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    setErrors((e2) => ({ ...e2, [e.target.name]: undefined }));
+    const { name, value } = e.target;
+    setForm((f) => {
+      const newForm = { ...f, [name]: value };
+
+      // Sync to_date with from_date if half-day is selected
+      if (name === "day_type" && value !== "full" && f.from_date) {
+        newForm.to_date = f.from_date;
+      }
+      if (name === "from_date" && f.day_type !== "full") {
+        newForm.to_date = value;
+      }
+
+      return newForm;
+    });
+    setErrors((e2) => ({ ...e2, [name]: undefined }));
   };
 
   const validateForm = () => {
@@ -63,7 +77,7 @@ export default function UserLeaves() {
       {
         onSuccess: () => {
           setIsOpen(false);
-          setForm({ leave_type: "", from_date: "", to_date: "", reason: "" });
+          setForm({ leave_type: "", day_type: "full", from_date: "", to_date: "", reason: "" });
         },
         onError: (errs) => {
           setErrors(errs);
@@ -154,9 +168,7 @@ export default function UserLeaves() {
               </tr>
             ) : (
               leaves.map((item) => {
-                const s = new Date(item.from_date);
-                const e = new Date(item.to_date);
-                const days = Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
+                const days = item.no_of_days;
 
                 return (
                   <tr key={item.id} className="border-t text-gray-700 hover:bg-gray-50 transition">
@@ -172,7 +184,10 @@ export default function UserLeaves() {
                       </span>
                     </td>
                     <td className="px-4 py-3 font-medium text-blue-600 text-sm">
-                      {days} d
+                      {item.day_type === 'full'
+                        ? `${parseFloat(item.no_of_days)} ${parseFloat(item.no_of_days) > 1 ? 'Days' : 'Day'}`
+                        : item.day_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                      }
                     </td>
                     <td className="px-4 py-3 max-w-xs">
                       <p className="text-sm text-gray-600 truncate" title={item.reason}>
@@ -263,11 +278,51 @@ export default function UserLeaves() {
                     name="to_date"
                     value={form.to_date}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.to_date ? "border-red-500" : "border-gray-300"}`}
+                    disabled={form.day_type !== "full"}
+                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${form.day_type !== "full" ? "bg-gray-50 text-gray-500" : ""} ${errors.to_date ? "border-red-500" : "border-gray-300"}`}
                   />
                   {errors.to_date && (
                     <p className="text-red-600 text-sm mt-1">{errors.to_date}</p>
                   )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-medium text-gray-700 mb-2">Duration Type *</label>
+                <div className="flex items-center gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="day_type"
+                      value="full"
+                      checked={form.day_type === "full"}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Full Day</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="day_type"
+                      value="first_half"
+                      checked={form.day_type === "first_half"}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">First Half</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="day_type"
+                      value="second_half"
+                      checked={form.day_type === "second_half"}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">Second Half</span>
+                  </label>
                 </div>
               </div>
 
@@ -327,6 +382,9 @@ export default function UserLeaves() {
                 <span className="text-gray-500">Duration</span>
                 <span className="font-semibold">
                   {formatDate(selectedLeave.from_date)} - {formatDate(selectedLeave.to_date)}
+                  <span className="ml-2 text-xs text-blue-600 uppercase">
+                    ({selectedLeave.day_type.replace('_', ' ')})
+                  </span>
                 </span>
               </div>
               <div className="flex justify-between border-b pb-2">

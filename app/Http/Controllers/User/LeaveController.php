@@ -32,21 +32,29 @@ class LeaveController extends Controller
 	public function store(Request $request)
 	{
 		$request->validate([
-			'type' => 'required|string',
-			'start_date' => 'required|date|after_or_equal:today',
-			'end_date' => 'required|date|after_or_equal:start_date',
+			'leave_type' => 'required|string',
+			'day_type' => 'required|in:full,first_half,second_half',
+			'from_date' => 'required|date|after_or_equal:today',
+			'to_date' => 'required|date|after_or_equal:from_date',
 			'reason' => 'required|string',
 		]);
 
-		$from = Carbon::parse($request->start_date);
-		$to = Carbon::parse($request->end_date);
+		$from = Carbon::parse($request->from_date);
+		$to = Carbon::parse($request->to_date);
 
 		// calculate days
-		$days = $from->diffInDays($to) + 1;
+		if ($request->day_type === 'full') {
+			$days = $from->diffInDays($to) + 1;
+		} else {
+			// Half day is always 0.5 days and must be same day
+			$days = 0.5;
+			$to = $from; // Force same day for half-day
+		}
 
 		Leave::create([
 			'user_id' => auth()->id(),
-			'leave_type' => $request->type,
+			'leave_type' => $request->leave_type,
+			'day_type' => $request->day_type,
 			'from_date' => $from,
 			'to_date' => $to,
 			'no_of_days' => $days,

@@ -13,6 +13,7 @@ use App\Http\Controllers\User\ProjectController as UserProjectController;
 use App\Http\Controllers\User\LeaveController as UserLeaveController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\GoogleDriveController;
+use App\Http\Controllers\AttendanceController;
 
 
 // Home page
@@ -122,8 +123,10 @@ Route::middleware(['auth', 'is_admin'])
         // -------------------------
         // ✅ ATTENDANCE ROUTES
         // -------------------------
-        Route::get('attendance', [App\Http\Controllers\AttendanceController::class, 'index'])->name('attendance.index');
-        Route::put('attendance/{attendance}', [App\Http\Controllers\AttendanceController::class, 'update'])->name('attendance.update');
+        Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+        Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+        Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
+        Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
     });
 
 
@@ -156,5 +159,58 @@ Route::get('/debug-drive', function () {
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ];
+    }
+});
+Route::get('/debug-remember', function () {
+    $user = auth()->user();
+    if (!$user) {
+        return ['status' => 'error', 'message' => 'Not authenticated'];
+    }
+
+    return [
+        'status' => 'success',
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'remember_token' => $user->remember_token,
+        'session_id' => session()->getId(),
+        'cookies' => request()->cookies->all(),
+    ];
+});
+
+// Temporary OAuth Helper Routes
+Route::get('/google-drive/auth', function () {
+    $client = new \Google\Client();
+    $client->setClientId(config('services.google.client_id'));
+    $client->setClientSecret(config('services.google.client_secret'));
+    // Dynamically determine redirect URI based on current host to support both local and live
+    $redirectUri = url('/google-drive/callback');
+    $client->setRedirectUri($redirectUri);
+    $client->setAccessType('offline'); // Crucial for getting refresh token
+    $client->setPrompt('consent'); // Force consent to ensure refresh token is returned
+    $client->addScope("https://www.googleapis.com/auth/drive");
+
+    return redirect($client->createAuthUrl());
+});
+
+Route::get('/google-drive/callback', function (\Illuminate\Http\Request $request) {
+    if (!$request->has('code')) {
+        return "Error: No code returned from Google.";
+    }
+
+    try {
+        $client = new \Google\Client();
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setRedirectUri(url('/google-drive/callback'));
+
+        $token = $client->fetchAccessTokenWithAuthCode($request->input('code'));
+
+        if (isset($token['error'])) {
+            return "Error fetching token: " . json_encode($token);
+        }
+
+        return "<h1>Success! Here is your new Refresh Token:</h1><p style='font-family:monospace; background:#eee; padding:10px;'>" . ($token['refresh_token'] ?? 'No refresh token found. Did you set prompt=consent?') . "</p><p>Copy this and update your .env file: <br><code>GOOGLE_DRIVE_REFRESH_TOKEN=" . ($token['refresh_token'] ?? '...') . "</code></p>";
+    } catch (\Exception $e) {
+        return "Exception: " . $e->getMessage();
     }
 });

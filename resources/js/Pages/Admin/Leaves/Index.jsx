@@ -23,13 +23,6 @@ export default function Index({ leaves }) {
         });
     };
 
-    const getDays = (from, to) => {
-        const start = new Date(from);
-        const end = new Date(to);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        return `${diffDays} d`;
-    };
 
     const getStatusBadge = (status) => {
         const s = status?.toLowerCase();
@@ -99,12 +92,20 @@ export default function Index({ leaves }) {
                                         </span>
                                     </td>
                                     <td className="px-4 py-2 whitespace-nowrap">
-                                        <span className="text-gray-900 font-medium text-sm">
-                                            {formatDate(leave.from_date)} - {formatDate(leave.to_date)}
-                                        </span>
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-900 font-medium text-sm">
+                                                {formatDate(leave.from_date)} - {formatDate(leave.to_date)}
+                                            </span>
+                                            <span className="text-[10px] text-blue-600 uppercase font-bold">
+                                                {leave.day_type.replace('_', ' ')}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-2 font-medium text-blue-600 text-sm">
-                                        {getDays(leave.from_date, leave.to_date)}
+                                        {leave.day_type === 'full'
+                                            ? `${parseFloat(leave.no_of_days)} ${parseFloat(leave.no_of_days) > 1 ? 'Days' : 'Day'}`
+                                            : leave.day_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                                        }
                                     </td>
                                     <td className="px-4 py-2 max-w-xs">
                                         <p className="text-sm text-gray-600 truncate" title={leave.reason}>

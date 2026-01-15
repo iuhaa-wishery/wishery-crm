@@ -49,6 +49,10 @@ class GoogleDriveService
 
     public function listFiles($folderId = null)
     {
+        if (!$this->service) {
+            throw new \Exception('Google Drive service not initialized. Please check your refresh token and credentials in .env.');
+        }
+
         $targetFolderId = $folderId ?: $this->folderId;
 
         return Cache::remember("google_drive_files_{$targetFolderId}", 3600, function () use ($targetFolderId) {
@@ -79,6 +83,10 @@ class GoogleDriveService
 
     public function uploadFile($file, $folderId = null)
     {
+        if (!$this->service) {
+            throw new \Exception('Google Drive service not initialized. Please check your refresh token and credentials in .env.');
+        }
+
         try {
             $targetFolderId = $folderId ?: $this->folderId;
 
@@ -119,6 +127,10 @@ class GoogleDriveService
 
     public function createFolder($folderName, $parentFolderId = null)
     {
+        if (!$this->service) {
+            throw new \Exception('Google Drive service not initialized. Please check your refresh token and credentials in .env.');
+        }
+
         try {
             $targetParentId = $parentFolderId ?: $this->folderId;
 
@@ -152,6 +164,10 @@ class GoogleDriveService
 
     public function deleteFile($fileId, $parentFolderId = null)
     {
+        if (!$this->service) {
+            throw new \Exception('Google Drive service not initialized. Please check your refresh token and credentials in .env.');
+        }
+
         try {
             $this->service->files->delete($fileId);
 

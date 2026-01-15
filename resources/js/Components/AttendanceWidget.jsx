@@ -140,13 +140,19 @@ export default function AttendanceWidget() {
 
             {/* Actions */}
             <div className="flex items-center space-x-2">
-                {(status === 'not_started' || status === 'punched_out') && (
+                {status === 'not_started' && (
                     <button
                         onClick={() => handleAction('punch-in')}
                         className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition"
                     >
                         <Play className="w-3 h-3 mr-1" /> Punch In
                     </button>
+                )}
+
+                {status === 'punched_out' && (
+                    <div className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-400 text-sm font-medium rounded border border-gray-200 cursor-not-allowed">
+                        <Square className="w-3 h-3 mr-1" /> Shift Ended
+                    </div>
                 )}
 
                 {status === 'punched_in' && (
