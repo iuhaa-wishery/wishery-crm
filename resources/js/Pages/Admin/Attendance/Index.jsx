@@ -40,6 +40,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
         }
         if (key === 'date' && value) {
             newParams.month = '';
+            newParams.user_id = ''; // Clear user filter when switching to daily view
         }
 
         router.get(route('admin.attendance.index'), newParams, {

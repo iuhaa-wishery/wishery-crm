@@ -222,12 +222,18 @@ class AttendanceController extends Controller
 
         // Mode 2: Daily View (All Users for Specific Date)
         $date = $request->input('date', Carbon::today()->toDateString());
+        $userId = $request->user_id;
+
+        $filteredUsers = $users;
+        if ($userId) {
+            $filteredUsers = $users->where('id', $userId);
+        }
 
         // Fetch attendances for the selected date
         $attendances = Attendance::where('date', $date)->get()->keyBy('user_id');
 
         // Map users to their attendance and calculate status
-        $attendanceData = $users->map(function ($user) use ($attendances) {
+        $attendanceData = $filteredUsers->map(function ($user) use ($attendances) {
             $attendance = $attendances->get($user->id);
             $status = 'Absent';
             $checkIn = '-';
