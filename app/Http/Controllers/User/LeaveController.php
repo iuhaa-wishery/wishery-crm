@@ -34,7 +34,7 @@ class LeaveController extends Controller
 		$request->validate([
 			'leave_type' => 'required|string',
 			'day_type' => 'required|in:full,first_half,second_half',
-			'from_date' => 'required|date|after_or_equal:today',
+			'from_date' => 'required|date',
 			'to_date' => 'required|date|after_or_equal:from_date',
 			'reason' => 'required|string',
 		]);
