@@ -165,9 +165,10 @@ class AttendanceController extends Controller
                     $checkInTime = Carbon::parse($attendance->punch_in);
                     $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
                     $nineAM = Carbon::parse($dateString . ' 09:00:00');
+                    $nineThirtyAM = Carbon::parse($dateString . ' 09:30:00');
                     $sixPM = Carbon::parse($dateString . ' 18:00:00');
 
-                    $isLate = $checkInTime->gt($nineAM);
+                    $isLate = $checkInTime->gt($nineThirtyAM);
                     $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
 
                     $status = 'Present';
@@ -251,9 +252,10 @@ class AttendanceController extends Controller
                 // Calculate Status
                 $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
                 $nineAM = Carbon::parse($dateString . ' 09:00:00');
+                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:00');
                 $sixPM = Carbon::parse($dateString . ' 18:00:00');
 
-                $isLate = $checkInTime->gt($nineAM);
+                $isLate = $checkInTime->gt($nineThirtyAM);
                 $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
 
                 $status = 'Present';
