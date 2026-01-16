@@ -227,6 +227,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check Out</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hours</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Break</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
                                                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
                                             </tr>
@@ -256,6 +257,9 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             {record.hours === '0h 0m' ? '--' : record.hours}
+                                                        </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                            {record.break_time === '0h 0m' ? '--' : record.break_time}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             <div className="flex items-center gap-3">
