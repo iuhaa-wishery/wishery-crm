@@ -6,211 +6,136 @@ export default function Welcome({ canLogin, canRegister }) {
 
     return (
         <>
-            <Head title="Welcome to Wishery CRM" />
+            <Head title="Task Manager - Wishery CRM" />
 
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            <div className="min-h-screen bg-[#fff5f8] relative overflow-hidden font-sans">
+                {/* Decorative Background Blobs */}
+                <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] bg-[#fce4ec] rounded-full blur-[100px] opacity-60 animate-pulse"></div>
+                <div className="absolute bottom-[-10%] right-[-5%] w-[50%] h-[50%] bg-[#e3f2fd] rounded-full blur-[120px] opacity-70"></div>
+                <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-[#f3e5f5] rounded-full blur-[100px] opacity-50"></div>
+
                 {/* Header */}
-                <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md shadow-sm z-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center py-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold text-xl">W</span>
+                <header className="relative z-50">
+                    <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+                        <div className="flex justify-between items-center py-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-gradient-to-br from-[#ff4081] to-[#7c4dff] rounded-2xl flex items-center justify-center shadow-lg transform rotate-12">
+                                    <span className="text-white font-black text-2xl -rotate-12">W</span>
                                 </div>
-                                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    Wishery CRM
+                                <span className="text-2xl font-black tracking-tight text-[#2d3436]">
+                                    WISHERY <span className="text-[#ff4081]">CRM</span>
                                 </span>
                             </div>
 
-                            <nav className="flex items-center gap-4">
+                            <nav className="hidden md:flex items-center gap-10">
+                                <Link href="/" className="text-[#2d3436] font-bold hover:text-[#ff4081] transition-colors">Home</Link>
+                                {auth?.user && (
+                                    <Link href="/dashboard" className="text-[#636e72] font-bold hover:text-[#ff4081] transition-colors">Dashboard</Link>
+                                )}
+                            </nav>
+
+                            <div className="flex items-center gap-4">
                                 {auth?.user ? (
                                     <Link
                                         href="/dashboard"
-                                        className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+                                        className="px-8 py-3 bg-[#2d3436] text-white rounded-full font-bold hover:bg-[#ff4081] transition-all shadow-lg hover:shadow-[#ff4081]/20"
                                     >
-                                        Dashboard
+                                        DASHBOARD
                                     </Link>
                                 ) : (
-                                    <>
-                                        {canLogin && (
-                                            <Link
-                                                href={route('login')}
-                                                className="px-6 py-2.5 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                                            >
-                                                Login
-                                            </Link>
-                                        )}
-                                        {canRegister && (
-                                            <Link
-                                                href={route('register')}
-                                                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-                                            >
-                                                Sign Up
-                                            </Link>
-                                        )}
-                                    </>
+                                    <Link
+                                        href={route('login')}
+                                        className="px-8 py-3 bg-[#ff4081] text-white rounded-full font-bold hover:bg-[#e91e63] transition-all shadow-lg hover:shadow-[#ff4081]/30 flex items-center gap-2 group"
+                                    >
+                                        LOGIN <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                    </Link>
                                 )}
-                            </nav>
+                            </div>
                         </div>
                     </div>
                 </header>
 
                 {/* Hero Section */}
-                <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="text-center">
-                            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                                Manage Your Projects
-                                <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    With Confidence
-                                </span>
+                <main className="relative z-10 max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-12 pb-24">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        {/* Left Content */}
+                        <div className="order-2 lg:order-1">
+                            <h1 className="text-[64px] md:text-[84px] font-black leading-[0.9] text-[#2d3436] mb-8">
+                                TASK<br />
+                                <span className="text-[#ff4081]">MANAGER</span>
                             </h1>
-                            <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-                                Streamline your workflow, collaborate with your team, and deliver projects on time with our powerful project management system.
+                            <p className="text-xl text-[#636e72] mb-12 max-w-lg leading-relaxed font-medium">
+                                Streamline your workflow with our creative CRM. Manage projects, track time, and collaborate with your team in a beautiful, intuitive environment.
                             </p>
-                            {!auth?.user && (
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+                            <div className="flex items-center gap-6">
+                                <Link
+                                    href={auth?.user ? "/dashboard" : route('login')}
+                                    className="px-10 py-4 bg-[#ff4081] text-white rounded-full font-black text-lg hover:bg-[#e91e63] transition-all shadow-xl hover:shadow-[#ff4081]/40 flex items-center gap-3 group"
+                                >
+                                    {auth?.user ? 'DASHBOARD' : 'GET STARTED'} <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                </Link>
+
+                                {!auth?.user && canRegister && (
                                     <Link
                                         href={route('register')}
-                                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                                        className="text-[#2d3436] font-extrabold text-lg hover:text-[#ff4081] transition-colors underline decoration-4 decoration-[#ff4081]/20 underline-offset-8"
                                     >
-                                        Get Started Free
+                                        Create Account
                                     </Link>
-                                    <Link
-                                        href={route('login')}
-                                        className="px-8 py-4 bg-white text-gray-700 rounded-lg font-semibold text-lg border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-300"
-                                    >
-                                        Sign In
-                                    </Link>
-                                </div>
-                            )}
+                                )}
+                            </div>
+
+                            {/* Decorative Leaf Shape */}
+                            <div className="mt-20 opacity-20 hidden md:block">
+                                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 110C10 110 10 10 110 10C110 10 110 110 10 110Z" fill="#ff4081" />
+                                    <path d="M10 110C10 110 60 110 60 60C60 10 10 10 10 10V110Z" fill="#7c4dff" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Right Illustration */}
+                        <div className="order-1 lg:order-2 relative">
+                            <div className="relative z-20 transform hover:scale-105 transition-transform duration-700">
+                                <img
+                                    src="images/task_manager_hero.png"
+                                    alt="Task Manager Illustration"
+                                    className="w-full h-auto drop-shadow-[0_35px_35px_rgba(0,0,0,0.1)]"
+                                />
+                            </div>
+
+                            {/* Floating Elements */}
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#fff176] rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+                            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#81d4fa] rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
                         </div>
                     </div>
-                </section>
+                </main>
 
-                {/* Features Section */}
-                <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                                Everything You Need to Succeed
-                            </h2>
-                            <p className="text-xl text-gray-600">
-                                Powerful features to help you manage projects efficiently
-                            </p>
-                        </div>
+                {/* Bottom Decorative Bar */}
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl h-3 bg-gradient-to-r from-[#ff4081] via-[#7c4dff] to-[#ff4081] rounded-full opacity-20"></div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {/* Feature 1 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Project Management</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Create, organize, and track projects with ease. Keep everything in one place and stay on top of deadlines.
-                                </p>
-                            </div>
-
-                            {/* Feature 2 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Task Tracking</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Break down projects into manageable tasks. Assign, prioritize, and monitor progress in real-time.
-                                </p>
-                            </div>
-
-                            {/* Feature 3 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Team Collaboration</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Work together seamlessly. Share files, communicate, and collaborate with your team members.
-                                </p>
-                            </div>
-
-                            {/* Feature 4 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Leave Management</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Manage employee leave requests efficiently. Track time off and maintain proper records.
-                                </p>
-                            </div>
-
-                            {/* Feature 5 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Cloud Storage</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Store and access your files securely in the cloud. Integration with Google Drive for seamless file management.
-                                </p>
-                            </div>
-
-                            {/* Feature 6 */}
-                            <div className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100">
-                                <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mb-6">
-                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3">Role-Based Access</h3>
-                                <p className="text-gray-600 leading-relaxed">
-                                    Control access with different user roles. Admins, managers, and users with appropriate permissions.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* CTA Section */}
-                {!auth?.user && (
-                    <section className="py-20 px-4 sm:px-6 lg:px-8">
-                        <div className="max-w-4xl mx-auto text-center">
-                            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-12 shadow-2xl">
-                                <h2 className="text-4xl font-bold text-white mb-4">
-                                    Ready to Get Started?
-                                </h2>
-                                <p className="text-xl text-blue-100 mb-8">
-                                    Join us today and transform the way you manage projects
-                                </p>
-                                <Link
-                                    href={route('register')}
-                                    className="inline-block px-10 py-4 bg-white text-blue-600 rounded-lg font-bold text-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-                                >
-                                    Create Your Account
-                                </Link>
-                            </div>
-                        </div>
-                    </section>
-                )}
-
-                {/* Footer */}
-                <footer className="bg-gray-900 text-gray-400 py-8">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <p>&copy; 2025 Wishery CRM. All rights reserved.</p>
-                    </div>
-                </footer>
+                {/* Floating Leaf Shapes */}
+                <div className="absolute bottom-10 left-10 w-24 h-24 text-[#ff4081] opacity-10 rotate-45">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8.13,20C11,20 13.85,18.08 15,15.5C15.91,13.5 15.61,11.5 15,9.5C14.34,7.5 13,5.5 12,3.5C11,1.5 10,0 10,0C10,0 10,1.5 10.5,3.5C11,5.5 12.34,7.5 13,9.5C13.61,11.5 13.91,13.5 13,15.5C11.85,18.08 9,20 6.13,20C5.64,20 5.14,19.87 4.66,19.7L17,8Z" /></svg>
+                </div>
             </div>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @keyframes blob {
+                    0% { transform: translate(0px, 0px) scale(1); }
+                    33% { transform: translate(30px, -50px) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) scale(0.9); }
+                    100% { transform: translate(0px, 0px) scale(1); }
+                }
+                .animate-blob {
+                    animation: blob 7s infinite;
+                }
+                .animation-delay-2000 {
+                    animation-delay: 2s;
+                }
+            `}} />
         </>
     );
 }
