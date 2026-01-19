@@ -191,6 +191,7 @@ class AttendanceController extends Controller
                         'check_out' => $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-',
                         'status' => $status,
                         'hours' => floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm',
+                        'total_worked_minutes' => $attendance->total_worked_minutes,
                         'break_time' => floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm',
                         'attendance_id' => $attendance->id,
                         'punch_in_raw' => $attendance->punch_in,

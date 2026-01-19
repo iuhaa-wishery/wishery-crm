@@ -47,15 +47,35 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange }) => {
                 return current >= start && current <= end;
             });
 
+            // Determine if it's a weekend
+            const dateObj = new Date(dateStr);
+            const dayOfWeek = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+            // Determine if it's a future date
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const isFuture = dateObj > today;
+
             let status = 'Absent';
             if (attendance) {
-                status = attendance.status;
+                // User requested: "when anybody punched in show present"
+                // We'll map 'Late' and other active statuses to 'Present' for the calendar view
+                if (attendance.status === 'Late' || attendance.status === 'Early Leave' || attendance.status === 'Late & Early Leave') {
+                    status = 'Present';
+                } else {
+                    status = attendance.status;
+                }
             } else if (leave) {
                 if (leave.day_type === 'first_half' || leave.day_type === 'second_half') {
                     status = 'Half Day';
                 } else {
                     status = 'On Leave';
                 }
+            } else if (isWeekend) {
+                status = 'Off';
+            } else if (isFuture) {
+                status = '-';
             }
 
             days.push({
@@ -82,6 +102,17 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange }) => {
         return days;
     }, [monthDate, daysInMonth, firstDayOfMonth, attendanceData, leaves]);
 
+    const getStatusStyles = (status) => {
+        switch (status) {
+            case 'Present': return 'bg-green-50 text-green-700';
+            case 'Half Day': return 'bg-blue-50 text-blue-700';
+            case 'Absent': return 'bg-red-50 text-red-700';
+            case 'On Leave': return 'bg-purple-50 text-purple-700';
+            case 'Off': return 'bg-gray-50 text-gray-500';
+            default: return 'bg-gray-50 text-gray-400';
+        }
+    };
+
     const handlePrevMonth = () => {
         const prev = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
         onFilterChange('month', `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`);
@@ -92,83 +123,168 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange }) => {
         onFilterChange('month', `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}`);
     };
 
-    const getStatusStyles = (status) => {
-        switch (status) {
-            case 'Present': return 'bg-green-100 text-green-600';
-            case 'Late':
-            case 'Early Leave':
-            case 'Late & Early Leave': return 'bg-orange-100 text-orange-600';
-            case 'Half Day': return 'bg-blue-100 text-blue-600';
-            case 'Absent': return 'bg-red-100 text-red-600';
-            case 'On Leave': return 'bg-purple-100 text-purple-600';
-            default: return 'bg-gray-50 text-gray-400';
-        }
-    };
+    const stats = useMemo(() => {
+        let present = 0;
+        let absent = 0;
+        let halfDay = 0;
+        let onLeave = 0;
+        let totalMinutes = 0;
+
+        calendarDays.forEach(day => {
+            if (!day.currentMonth) return;
+
+            const dateObj = new Date(day.date);
+            const todayDate = new Date();
+            todayDate.setHours(0, 0, 0, 0);
+            if (dateObj > todayDate) return;
+
+            if (day.status === 'Present') present++;
+            else if (day.status === 'Absent') absent++;
+            else if (day.status === 'Half Day') halfDay++;
+            else if (day.status === 'On Leave') onLeave++;
+
+            if (day.attendance) {
+                totalMinutes += day.attendance.total_worked_minutes || 0;
+            }
+        });
+
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        return {
+            present,
+            absent,
+            halfDay,
+            onLeave,
+            totalWorked: `${hours}h ${minutes}m`
+        };
+    }, [calendarDays]);
 
     const monthName = monthDate.toLocaleString('default', { month: 'short', year: 'numeric' });
     const today = new Date().toISOString().slice(0, 10);
 
     return (
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-10">
-                <h3 className="text-2xl font-bold text-gray-800">Calendar</h3>
-                <div className="flex items-center gap-4">
-                    <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                        <ChevronLeft className="w-5 h-5 text-gray-600" />
-                    </button>
-                    <div className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 min-w-[120px] text-center">
-                        {monthName}
+        <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+            {/* Calendar Section */}
+            <div className="flex-1 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-8">
+                    <h3 className="text-xl font-extrabold text-[#2d3436]">Attendance Calendar</h3>
+                    <div className="flex items-center gap-3">
+                        <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <div className="px-5 py-2 bg-gray-50 rounded-xl text-sm font-bold text-[#2d3436] min-w-[120px] text-center border border-gray-100">
+                            {monthName}
+                        </div>
+                        <button onClick={handleNextMonth} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <ChevronRight className="w-5 h-5 text-gray-600" />
+                        </button>
                     </div>
-                    <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                        <ChevronRight className="w-5 h-5 text-gray-600" />
-                    </button>
+                </div>
+
+                <div className="grid grid-cols-7 mb-4">
+                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                        <div key={day} className="text-center text-[11px] font-black text-gray-400 tracking-widest">
+                            {day}
+                        </div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-3">
+                    {calendarDays.map((item, idx) => (
+                        <div
+                            key={idx}
+                            className={`aspect-square rounded-2xl border p-2 flex flex-col transition-all ${!item.currentMonth ? 'bg-gray-50/30 border-transparent' : 'bg-white border-gray-100'
+                                } ${item.date === today ? 'border-[#ff4081] ring-2 ring-[#ff4081]/10' : ''}`}
+                        >
+                            <span className={`text-sm font-black ${!item.currentMonth ? 'text-gray-200' : 'text-[#2d3436]'}`}>
+                                {item.day}
+                            </span>
+
+                            {item.currentMonth && item.status !== '-' && (
+                                <div className={`mt-auto px-1 py-1 rounded-lg text-[10px] font-black text-center uppercase tracking-tighter ${getStatusStyles(item.status)}`}>
+                                    {item.status}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-8 flex flex-wrap justify-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm shadow-green-200"></div>
+                        <span className="text-xs text-[#636e72] font-bold uppercase tracking-wider">Present</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-200"></div>
+                        <span className="text-xs text-[#636e72] font-bold uppercase tracking-wider">Half Day</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm shadow-red-200"></div>
+                        <span className="text-xs text-[#636e72] font-bold uppercase tracking-wider">Absent</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm shadow-gray-200"></div>
+                        <span className="text-xs text-[#636e72] font-bold uppercase tracking-wider">Off</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 mb-4">
-                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                    <div key={day} className="text-center text-xs font-bold text-gray-400 tracking-widest">
-                        {day}
-                    </div>
-                ))}
-            </div>
+            {/* Statistics Sidebar */}
+            <div className="lg:w-80 space-y-4">
+                <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
+                    <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Monthly Stats</h4>
 
-            <div className="grid grid-cols-7 gap-4">
-                {calendarDays.map((item, idx) => (
-                    <div
-                        key={idx}
-                        className={`min-h-[110px] rounded-2xl border p-3 flex flex-col transition-all ${!item.currentMonth ? 'bg-gray-50/30 border-transparent' : 'bg-white border-gray-100'
-                            } ${item.date === today ? 'border-blue-400 ring-1 ring-blue-400' : ''}`}
-                    >
-                        <span className={`text-sm font-bold ${!item.currentMonth ? 'text-gray-300' : 'text-gray-400'}`}>
-                            {item.day}
-                        </span>
-
-                        {item.currentMonth && (
-                            <div className={`mt-auto px-3 py-1.5 rounded-xl text-[11px] font-bold text-center ${getStatusStyles(item.status)}`}>
-                                {item.status === 'Late & Early Leave' ? 'Late' : item.status}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Present</p>
+                                    <p className="text-xl font-black text-[#2d3436]">{stats.present}</p>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))}
-            </div>
+                        </div>
 
-            <div className="mt-10 flex justify-center gap-8">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span className="text-sm text-gray-700 font-medium">Present</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="text-sm text-gray-700 font-medium">Late</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-sm text-gray-700 font-medium">Half Day</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-sm text-gray-700 font-medium">Absent</span>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Absent</p>
+                                    <p className="text-xl font-black text-[#2d3436]">{stats.absent}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Worked Hours</p>
+                                    <p className="text-xl font-black text-[#2d3436]">{stats.totalWorked}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-50">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Half Days</p>
+                                    <p className="text-lg font-black text-[#2d3436]">{stats.halfDay}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">On Leave</p>
+                                    <p className="text-lg font-black text-[#2d3436]">{stats.onLeave}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
