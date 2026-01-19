@@ -1,6 +1,5 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -25,68 +24,68 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
-            <form onSubmit={submit}>
+            <div className="mb-8 text-center">
+                <h2 className="text-3xl font-black text-[#2d3436] mb-2">Create Account</h2>
+                <p className="text-[#636e72] font-medium">Join Wishery CRM today</p>
+            </div>
+
+            <form onSubmit={submit} className="space-y-6">
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Full Name" className="text-[#2d3436] font-bold mb-2 ml-1" />
 
                     <TextInput
                         id="name"
                         name="name"
                         value={data.name}
-                        className="mt-1 block w-full"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#ff4081] transition-all font-medium text-[#2d3436]"
                         autoComplete="name"
                         isFocused={true}
                         onChange={(e) => setData('name', e.target.value)}
-                        isError={!!errors.name}
+                        placeholder="John Doe"
                     />
 
-                    {errors.name && (
-                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                    )}
+                    <InputError message={errors.name} className="mt-2 ml-1" />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                <div>
+                    <InputLabel htmlFor="email" value="Email Address" className="text-[#2d3436] font-bold mb-2 ml-1" />
 
                     <TextInput
                         id="email"
                         type="email"
                         name="email"
                         value={data.email}
-                        className="mt-1 block w-full"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#ff4081] transition-all font-medium text-[#2d3436]"
                         autoComplete="username"
                         onChange={(e) => setData('email', e.target.value)}
-                        isError={!!errors.email}
+                        placeholder="Enter your email address"
                     />
 
-                    {errors.email && (
-                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                    )}
+                    <InputError message={errors.email} className="mt-2 ml-1" />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                <div>
+                    <InputLabel htmlFor="password" value="Password" className="text-[#2d3436] font-bold mb-2 ml-1" />
 
                     <TextInput
                         id="password"
                         type="password"
                         name="password"
                         value={data.password}
-                        className="mt-1 block w-full"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#ff4081] transition-all font-medium text-[#2d3436]"
                         autoComplete="new-password"
                         onChange={(e) => setData('password', e.target.value)}
-                        isError={!!errors.password}
+                        placeholder="••••••••"
                     />
 
-                    {errors.password && (
-                        <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                    )}
+                    <InputError message={errors.password} className="mt-2 ml-1" />
                 </div>
 
-                <div className="mt-4">
+                <div>
                     <InputLabel
                         htmlFor="password_confirmation"
                         value="Confirm Password"
+                        className="text-[#2d3436] font-bold mb-2 ml-1"
                     />
 
                     <TextInput
@@ -94,30 +93,35 @@ export default function Register() {
                         type="password"
                         name="password_confirmation"
                         value={data.password_confirmation}
-                        className="mt-1 block w-full"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-[#ff4081] transition-all font-medium text-[#2d3436]"
                         autoComplete="new-password"
                         onChange={(e) =>
                             setData('password_confirmation', e.target.value)
                         }
-                        isError={!!errors.password_confirmation}
+                        placeholder="••••••••"
                     />
 
-                    {errors.password_confirmation && (
-                        <p className="text-red-500 text-sm mt-1">{errors.password_confirmation}</p>
-                    )}
+                    <InputError message={errors.password_confirmation} className="mt-2 ml-1" />
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="w-full py-4 bg-[#ff4081] text-white rounded-2xl font-black text-lg hover:bg-[#e91e63] transition-all shadow-xl shadow-[#ff4081]/20 active:scale-[0.98] disabled:opacity-50"
+                >
+                    {processing ? 'CREATING ACCOUNT...' : 'REGISTER'}
+                </button>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
+                <div className="text-center pt-4">
+                    <p className="text-[#636e72] font-medium">
+                        Already have an account?{' '}
+                        <Link
+                            href={route('login')}
+                            className="text-[#ff4081] font-black hover:underline decoration-2 underline-offset-4"
+                        >
+                            Sign In
+                        </Link>
+                    </p>
                 </div>
             </form>
         </GuestLayout>
