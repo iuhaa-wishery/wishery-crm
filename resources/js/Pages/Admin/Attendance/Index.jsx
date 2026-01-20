@@ -11,7 +11,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import MonthPicker from '@/Components/MonthPicker';
 import CalendarView from '@/Components/CalendarView';
 
-export default function Index({ attendanceData, filters, users, viewType, totalMonthlyMinutes, selectedUser, leaves }) {
+export default function Index({ attendanceData, filters, users, viewType, totalMonthlyMinutes, selectedUser, leaves, settings }) {
     const [displayMode, setDisplayMode] = useState('table'); // 'table' or 'calendar'
     const [editingAttendance, setEditingAttendance] = useState(null);
     const { data, setData, put, post, processing, errors, reset } = useForm({
@@ -313,6 +313,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                     attendanceData={attendanceData}
                                     leaves={leaves}
                                     filters={filters}
+                                    settings={settings}
                                     onFilterChange={handleFilterChange}
                                 />
                             )}

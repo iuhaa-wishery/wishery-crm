@@ -10,6 +10,7 @@ import {
   FaSignOutAlt,
   FaClock,
   FaFileAlt,
+  FaCog,
 } from "react-icons/fa";
 
 import { Toaster, toast } from "react-hot-toast";
@@ -123,6 +124,16 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <FaProjectDiagram />
               <span className={`${collapsed ? "hidden" : ""}`}>Drive</span>
             </Link>
+
+            {auth.user.role === 'admin' && (
+              <Link
+                href={route("admin.settings.index")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+              >
+                <FaCog />
+                <span className={`${collapsed ? "hidden" : ""}`}>Settings</span>
+              </Link>
+            )}
 
           </nav>
 

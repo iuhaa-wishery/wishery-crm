@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CalendarView = ({ attendanceData, leaves, filters, onFilterChange }) => {
+const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, settings }) => {
     const monthDate = useMemo(() => {
         return filters.month ? new Date(filters.month + '-01') : new Date();
     }, [filters.month]);
@@ -284,7 +284,23 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange }) => {
                                 </div>
                             </div>
                         </div>
+
+                        {settings?.monthly_working_days && (
+                            <div className="pt-4 border-t border-gray-50">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Target Working Days</p>
+                                    <p className="text-lg font-black text-[#ff4081]">{settings.monthly_working_days}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
+                </div>
+
+                {/* Info Card */}
+                <div className="bg-gradient-to-br from-[#ff4081] to-[#7c4dff] rounded-[32px] p-6 text-white shadow-xl shadow-[#ff4081]/20">
+                    <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-2">Office Hours</p>
+                    <p className="text-2xl font-black mb-4">09:00 AM - 06:00 PM</p>
+                    <div className="h-1 w-12 bg-white/30 rounded-full"></div>
                 </div>
             </div>
         </div>

@@ -127,6 +127,12 @@ Route::middleware(['auth', 'is_admin'])
         Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
         Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
         Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+
+        // -------------------------
+        // ✅ SETTINGS ROUTES
+        // -------------------------
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
     });
 
 

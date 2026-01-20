@@ -211,6 +211,8 @@ class AttendanceController extends Controller
                     })
                     ->get();
 
+                $settings = \App\Models\Setting::all()->pluck('value', 'key');
+
                 return Inertia::render('Admin/Attendance/Index', [
                     'attendanceData' => $attendanceData,
                     'users' => $users,
@@ -219,6 +221,7 @@ class AttendanceController extends Controller
                     'totalMonthlyMinutes' => $totalMonthlyMinutes,
                     'selectedUser' => $users->find($userId),
                     'leaves' => $leaves,
+                    'settings' => $settings,
                 ]);
             }
         }
