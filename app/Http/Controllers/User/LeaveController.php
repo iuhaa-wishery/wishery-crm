@@ -11,14 +11,57 @@ use Illuminate\Support\Facades\Auth;
 class LeaveController extends Controller
 {
 	// Inertia page for listing leaves
-	public function index()
+	// Inertia page for listing leaves
+	public function index(Request $request)
 	{
-		$leaves = Leave::where('user_id', Auth::id())
-			->orderBy('id', 'desc')
-			->get();
+		$userId = Auth::id();
+		$year = $request->input('year', Carbon::now()->year);
+		$month = $request->input('month');
+
+		$query = Leave::where('user_id', $userId)
+			->orderBy('from_date', 'desc');
+
+		if ($year) {
+			$query->whereYear('from_date', $year);
+		}
+
+		if ($month) {
+			$query->whereMonth('from_date', $month);
+		}
+
+		$leaves = $query->get();
+
+		// Stats should always be calculated for the selected year (or current year if not selected)
+		// If month is selected, stats could arguably be for that month, but usually annual quotas are yearly.
+		// Let's keep stats yearly for now as quotas are annual.
+		$statsYear = $year ?: Carbon::now()->year;
+
+		$stats = [
+			'SL' => [
+				'total' => 12,
+				'taken' => Leave::where('user_id', $userId)
+					->where('leave_type', 'SL')
+					->where('status', 'approved')
+					->whereYear('from_date', $statsYear)
+					->sum('no_of_days'),
+			],
+			'CL' => [
+				'total' => 12,
+				'taken' => Leave::where('user_id', $userId)
+					->where('leave_type', 'CL')
+					->where('status', 'approved')
+					->whereYear('from_date', $statsYear)
+					->sum('no_of_days'),
+			],
+		];
 
 		return inertia("User/Leaves/Index", [
-			"leaves" => $leaves
+			"leaves" => $leaves,
+			"stats" => $stats,
+			"filters" => [
+				'year' => $year,
+				'month' => $month
+			]
 		]);
 	}
 
@@ -32,7 +75,7 @@ class LeaveController extends Controller
 	public function store(Request $request)
 	{
 		$request->validate([
-			'leave_type' => 'required|string',
+			'leave_type' => 'required|in:SL,CL',
 			'day_type' => 'required|in:full,first_half,second_half',
 			'from_date' => 'required|date',
 			'to_date' => 'required|date|after_or_equal:from_date',

@@ -4,8 +4,29 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Check, X, Calendar, User, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function Index({ leaves }) {
+export default function Index({ leaves, users, filters, stats }) {
     const { data, links, current_page } = leaves;
+
+    const [year, setYear] = React.useState(filters.year || new Date().getFullYear());
+    const [month, setMonth] = React.useState(filters.month || '');
+    const [userId, setUserId] = React.useState(filters.user_id || '');
+
+    const handleFilterChange = (key, value) => {
+        const newFilters = {
+            year: key === 'year' ? value : year,
+            month: key === 'month' ? value : month,
+            user_id: key === 'user_id' ? value : userId,
+        };
+
+        if (key === 'year') setYear(value);
+        if (key === 'month') setMonth(value);
+        if (key === 'user_id') setUserId(value);
+
+        router.get(route('admin.leaves.index'), newFilters, {
+            preserveState: true,
+            replace: true,
+        });
+    };
 
     const handleAction = (id, action) => {
         router.post(route(`admin.leaves.${action}`, id), {}, {
@@ -22,7 +43,6 @@ export default function Index({ leaves }) {
             year: "numeric",
         });
     };
-
 
     const getStatusBadge = (status) => {
         const s = status?.toLowerCase();
@@ -45,12 +65,117 @@ export default function Index({ leaves }) {
         );
     };
 
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+    const months = [
+        { value: '', label: 'All Months' },
+        { value: '1', label: 'January' },
+        { value: '2', label: 'February' },
+        { value: '3', label: 'March' },
+        { value: '4', label: 'April' },
+        { value: '5', label: 'May' },
+        { value: '6', label: 'June' },
+        { value: '7', label: 'July' },
+        { value: '8', label: 'August' },
+        { value: '9', label: 'September' },
+        { value: '10', label: 'October' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'December' },
+    ];
+
     return (
         <AdminLayout>
             <Head title="Leave Requests" />
 
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Leave Requests</h1>
+
+                <div className="flex flex-wrap gap-3">
+                    {/* User Filter */}
+                    <select
+                        value={userId}
+                        onChange={(e) => handleFilterChange('user_id', e.target.value)}
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm"
+                    >
+                        <option value="">All Employees</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.name}</option>
+                        ))}
+                    </select>
+
+                    {/* Year Filter */}
+                    <select
+                        value={year}
+                        onChange={(e) => handleFilterChange('year', e.target.value)}
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm"
+                    >
+                        {years.map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+
+                    {/* Month Filter */}
+                    <select
+                        value={month}
+                        onChange={(e) => handleFilterChange('month', e.target.value)}
+                        className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm"
+                    >
+                        {months.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            {/* Leave Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Sick Leave (SL)</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-gray-800">{parseFloat(stats?.SL?.taken || 0)}</span>
+                            {stats?.SL?.total && (
+                                <span className="text-gray-400 font-bold">/ {stats.SL.total} Days Taken</span>
+                            )}
+                            {!stats?.SL?.total && (
+                                <span className="text-gray-400 font-bold">Days Taken</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
+                        <Calendar size={24} />
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Casual Leave (CL)</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-gray-800">{parseFloat(stats?.CL?.taken || 0)}</span>
+                            {stats?.CL?.total && (
+                                <span className="text-gray-400 font-bold">/ {stats.CL.total} Days Taken</span>
+                            )}
+                            {!stats?.CL?.total && (
+                                <span className="text-gray-400 font-bold">Days Taken</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+                        <Calendar size={24} />
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Pending Requests</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-black text-gray-800">{stats?.pending || 0}</span>
+                            <span className="text-gray-400 font-bold">Requests</span>
+                        </div>
+                    </div>
+                    <div className="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-500">
+                        <FileText size={24} />
+                    </div>
+                </div>
             </div>
 
             {/* Leaves Table */}
@@ -82,13 +207,15 @@ export default function Index({ leaves }) {
                                             <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
                                                 <User size={14} />
                                             </div>
-                                            <span className="font-semibold text-gray-900 text-sm">{leave.user?.name}</span>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-gray-900 text-sm">{leave.user?.name}</span>
+                                            </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2 capitalize text-sm">
+                                    <td className="px-4 py-2 text-sm">
                                         <span className="flex items-center gap-1">
                                             <FileText size={14} className="text-gray-400" />
-                                            {leave.leave_type.replace('_', ' ')}
+                                            {leave.leave_type === 'SL' || leave.leave_type === 'CL' ? leave.leave_type : leave.leave_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                         </span>
                                     </td>
                                     <td className="px-4 py-2 whitespace-nowrap">

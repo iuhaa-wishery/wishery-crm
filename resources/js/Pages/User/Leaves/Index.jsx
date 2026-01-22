@@ -6,12 +6,16 @@ import { Eye, Plus, X, Calendar, FileText, Trash2 } from "lucide-react";
 export default function UserLeaves() {
   const { props } = usePage();
   const initialLeaves = props.leaves || [];
+  const filters = props.filters || {};
 
   const [leaves, setLeaves] = useState(initialLeaves);
   const [isOpen, setIsOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+
+  const [year, setYear] = useState(filters.year || new Date().getFullYear());
+  const [month, setMonth] = useState(filters.month || '');
 
   const [form, setForm] = useState({
     leave_type: "",
@@ -26,6 +30,21 @@ export default function UserLeaves() {
   useEffect(() => {
     setLeaves(props.leaves || []);
   }, [props.leaves]);
+
+  const handleFilterChange = (key, value) => {
+    const newFilters = {
+      year: key === 'year' ? value : year,
+      month: key === 'month' ? value : month,
+    };
+
+    if (key === 'year') setYear(value);
+    if (key === 'month') setMonth(value);
+
+    router.get(route('leave.index'), newFilters, {
+      preserveState: true,
+      replace: true,
+    });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -132,18 +151,89 @@ export default function UserLeaves() {
     );
   };
 
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+  const months = [
+    { value: '', label: 'All Months' },
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
+  ];
+
   return (
     <UserLayout>
       <Head title="Leave Applications" />
 
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h1 className="text-3xl font-bold text-gray-800">Leave Applications</h1>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2"
-        >
-          <Plus size={18} /> Apply Leave
-        </button>
+
+        <div className="flex flex-wrap gap-3">
+          {/* Year Filter */}
+          <select
+            value={year}
+            onChange={(e) => handleFilterChange('year', e.target.value)}
+            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          {/* Month Filter */}
+          <select
+            value={month}
+            onChange={(e) => handleFilterChange('month', e.target.value)}
+            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg shadow-sm text-sm"
+          >
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => setIsOpen(true)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition flex items-center gap-2"
+          >
+            <Plus size={18} /> Apply Leave
+          </button>
+        </div>
+      </div>
+
+      {/* Leave Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Sick Leave (SL)</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-800">{parseFloat(props.stats?.SL?.taken || 0)}</span>
+              <span className="text-gray-400 font-bold">/ {props.stats?.SL?.total || 12} Days Taken</span>
+            </div>
+          </div>
+          <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-500">
+            <Calendar size={24} />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Casual Leave (CL)</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-800">{parseFloat(props.stats?.CL?.taken || 0)}</span>
+              <span className="text-gray-400 font-bold">/ {props.stats?.CL?.total || 12} Days Taken</span>
+            </div>
+          </div>
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500">
+            <Calendar size={24} />
+          </div>
+        </div>
       </div>
 
       {/* Leave List */}
@@ -172,10 +262,10 @@ export default function UserLeaves() {
 
                 return (
                   <tr key={item.id} className="border-t text-gray-700 hover:bg-gray-50 transition">
-                    <td className="px-4 py-3 capitalize">
+                    <td className="px-4 py-3">
                       <span className="flex items-center gap-1 font-medium">
                         <FileText size={14} className="text-gray-400" />
-                        {item.leave_type}
+                        {item.leave_type === 'SL' || item.leave_type === 'CL' ? item.leave_type : item.leave_type.charAt(0).toUpperCase() + item.leave_type.slice(1)}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -247,9 +337,8 @@ export default function UserLeaves() {
                   className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${errors.leave_type ? "border-red-500" : "border-gray-300"}`}
                 >
                   <option value="">--Select--</option>
-                  <option value="casual">Casual</option>
-                  <option value="sick">Sick</option>
-                  <option value="paid">Paid</option>
+                  <option value="SL">Sick Leave (SL)</option>
+                  <option value="CL">Casual Leave (CL)</option>
                 </select>
                 {errors.leave_type && (
                   <p className="text-red-600 text-sm mt-1">{errors.leave_type}</p>
@@ -376,7 +465,7 @@ export default function UserLeaves() {
             <div className="space-y-4">
               <div className="flex justify-between border-b pb-2">
                 <span className="text-gray-500">Type</span>
-                <span className="font-semibold capitalize">{selectedLeave.leave_type}</span>
+                <span className="font-semibold">{selectedLeave.leave_type === 'SL' || selectedLeave.leave_type === 'CL' ? selectedLeave.leave_type : selectedLeave.leave_type.charAt(0).toUpperCase() + selectedLeave.leave_type.slice(1)}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-gray-500">Duration</span>
