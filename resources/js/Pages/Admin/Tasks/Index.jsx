@@ -1,5 +1,8 @@
 import React from "react";
 import { Head, Link, usePage } from "@inertiajs/react";
+import { Eye } from "lucide-react";
+
+const route = window.route;
 
 export default function TasksIndex() {
   const { tasks } = usePage().props;
@@ -72,6 +75,17 @@ export default function TasksIndex() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="mt-6 flex justify-center">
+          {tasks.links.map((link) => (
+            <Link
+              key={link.label}
+              href={link.url || ""}
+              className={`px-4 py-2 border rounded mx-1 ${link.active ? "bg-blue-600 text-white" : "bg-white text-gray-700"
+                } ${!link.url ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"}`}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+            />
+          ))}
         </div>
       </div>
     </>

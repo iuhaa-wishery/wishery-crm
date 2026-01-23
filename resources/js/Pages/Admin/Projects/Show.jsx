@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
-import { usePage, router } from "@inertiajs/react";
+import { usePage, router, Link } from "@inertiajs/react";
 import axios from 'axios';
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Edit, Trash2, Calendar, X, ChevronDown } from "lucide-react"; // Added ChevronDown
+import { Edit, Trash2, Calendar, X, ChevronDown, Eye } from "lucide-react"; // Added ChevronDown
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+
+const route = window.route;
 
 // Helper function to format date to YYYY-MM-DD for date input
 const formatDate = (dateString) => {
@@ -372,6 +374,13 @@ export default function Show() {
                                       {task.name}
                                     </h3>
                                     <div className="flex items-center gap-2">
+                                      <Link
+                                        href={route('admin.tasks.show', task.id)}
+                                        className="text-gray-600 hover:text-green-600 p-1 rounded-full hover:bg-white/50"
+                                        title="View Details"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </Link>
                                       <button
                                         onClick={() => openModal(task)}
                                         className="text-gray-600 hover:text-blue-700 p-1 rounded-full hover:bg-white/50"

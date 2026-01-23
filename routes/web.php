@@ -45,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::put('/tasks/{task}/status', [TaskController::class, 'updateStatus'])
         ->name('tasks.updateStatus');
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::post('/tasks/{task}/comments', [TaskController::class, 'storeComment'])->name('tasks.comments.store');
 
     // Projects
     Route::get('/projects', [UserProjectController::class, 'index'])->name('projects.index');
@@ -111,6 +113,8 @@ Route::middleware(['auth', 'is_admin'])
         Route::resource('tasks', AdminTaskController::class);
         Route::put('/tasks/{id}/status', [AdminTaskController::class, 'updateStatus'])
             ->name('tasks.status');
+        Route::post('/tasks/{task}/comments', [AdminTaskController::class, 'storeComment'])->name('tasks.comments.store');
+        Route::delete('/comments/{comment}', [AdminTaskController::class, 'destroyComment'])->name('tasks.comments.destroy');
 
         // -------------------------
         // ✅ ADMIN LEAVE ROUTES

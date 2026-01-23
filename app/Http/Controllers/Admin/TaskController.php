@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Response;
@@ -18,7 +19,7 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with(['project', 'assignees'])->latest()->get();
+        $tasks = Task::with(['project', 'assignees'])->latest()->paginate(10);
         $projects = Project::all();
         $users = User::all();
 
@@ -216,5 +217,47 @@ class TaskController extends Controller
         return Response::json([
             'message' => 'Task status updated successfully.'
         ], 200);
+    }
+
+    public function show($id)
+    {
+        $task = Task::with(['project', 'assignees', 'comments.user'])
+            ->findOrFail($id);
+
+        return Inertia::render('Admin/Tasks/Show', [
+            'task' => $task
+        ]);
+    }
+
+    public function storeComment(Request $request, $taskId)
+    {
+        $request->validate([
+            'content' => 'required|string|max:1000',
+            'parent_id' => 'nullable|exists:comments,id',
+        ]);
+
+        $task = Task::findOrFail($taskId);
+
+        $task->comments()->create([
+            'user_id' => auth()->id(),
+            'content' => $request->input('content'),
+            'parent_id' => $request->input('parent_id'),
+        ]);
+
+        return back()->with('success', 'Comment added successfully');
+    }
+
+    public function destroyComment($id)
+    {
+        $comment = Comment::findOrFail($id);
+
+        // Authorization check (already inside admin middleware group, but good to be explicit)
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Unauthorized.');
+        }
+
+        $comment->delete();
+
+        return back()->with('success', 'Comment deleted successfully');
     }
 }

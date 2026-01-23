@@ -76,4 +76,48 @@ class TaskController extends Controller
 
         return back()->with('message', 'Task status updated');
     }
+
+    public function show($id)
+    {
+        $task = Task::with(['project', 'assignees', 'comments.user'])
+            ->findOrFail($id);
+
+        // Check if user is authorized (assignee or admin/manager)
+        $user = auth()->user();
+        $isAssignee = $task->assignees()->where('user_id', $user->id)->exists();
+
+        if (!$isAssignee && !in_array($user->role, ['admin', 'manager'])) {
+            abort(403, 'Unauthorized access to this task.');
+        }
+
+        return Inertia::render('User/Tasks/Show', [
+            'task' => $task
+        ]);
+    }
+
+    public function storeComment(Request $request, $taskId)
+    {
+        $request->validate([
+            'content' => 'required|string|max:1000',
+            'parent_id' => 'nullable|exists:comments,id',
+        ]);
+
+        $task = Task::findOrFail($taskId);
+
+        // Check authorization
+        $user = auth()->user();
+        $isAssignee = $task->assignees()->where('user_id', $user->id)->exists();
+
+        if (!$isAssignee && !in_array($user->role, ['admin', 'manager'])) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $task->comments()->create([
+            'user_id' => $user->id,
+            'content' => $request->input('content'),
+            'parent_id' => $request->input('parent_id'),
+        ]);
+
+        return back()->with('success', 'Comment added successfully');
+    }
 }
