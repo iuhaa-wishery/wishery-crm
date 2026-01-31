@@ -21,28 +21,50 @@ class GoogleDriveService
             $this->client->setScopes([
                 'https://www.googleapis.com/auth/drive'
             ]);
+            $this->client->setAccessType('offline');
+            $this->client->setPrompt('select_account consent');
 
-            // Set the refresh token and fetch a new access token
             $refreshToken = config('services.google.refresh_token');
 
-            if ($refreshToken) {
-                $this->client->refreshToken($refreshToken);
-                $accessToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
-
-                if (isset($accessToken['error'])) {
-                    \Log::error('Google Drive Token Error: ' . json_encode($accessToken));
-                    // Don't throw, just log. Service will be unusable but app won't crash.
-                    $this->client = null;
-                } else {
-                    $this->service = new Drive($this->client);
-                    $this->folderId = config('services.google.folder_id');
-                }
-            } else {
-                \Log::warning('Google Drive Refresh Token not configured.');
+            if (!$refreshToken) {
+                \Log::warning('Google Drive Refresh Token not configured in .env (GOOGLE_DRIVE_REFRESH_TOKEN).');
+                return;
             }
 
+            // Try to get access token from cache
+            $cacheKey = 'google_drive_access_token';
+            $accessToken = Cache::get($cacheKey);
+
+            if ($accessToken) {
+                $this->client->setAccessToken($accessToken);
+            }
+
+            // If token is expired or not in cache, refresh it
+            if ($this->client->isAccessTokenExpired()) {
+                $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
+
+                if (isset($newToken['error'])) {
+                    \Log::error('Google Drive Token Refresh Failed', [
+                        'error' => $newToken['error'],
+                        'error_description' => $newToken['error_description'] ?? 'No description',
+                        'hint' => 'If error is "invalid_grant", your refresh token might be expired (Testing mode) or revoked.'
+                    ]);
+                    $this->client = null;
+                    return;
+                }
+
+                // Cache the new token (Google tokens usually last 1 hour, we cache for 55 mins)
+                Cache::put($cacheKey, $newToken, 3300);
+                $this->client->setAccessToken($newToken);
+            }
+
+            $this->service = new Drive($this->client);
+            $this->folderId = config('services.google.folder_id');
+
         } catch (\Exception $e) {
-            \Log::error('Google Drive Service Init Error: ' . $e->getMessage());
+            \Log::error('Google Drive Service Init Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             $this->client = null;
         }
     }

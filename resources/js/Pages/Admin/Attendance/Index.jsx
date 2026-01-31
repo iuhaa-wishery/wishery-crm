@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Filter, Edit, RotateCcw, MapPin } from 'lucide-react';
+import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor } from 'lucide-react';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -229,6 +229,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hours</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Break</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Device</th>
                                                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
                                             </tr>
                                         </thead>
@@ -288,6 +289,19 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                                 {!record.punch_in_lat && !record.punch_out_lat && '--'}
                                                             </div>
                                                         </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                                                            {record.device_type === 'Mobile' ? (
+                                                                <span className="flex items-center gap-1" title="Mobile">
+                                                                    <Smartphone className="w-4 h-4 text-gray-500" /> Mobile
+                                                                </span>
+                                                            ) : record.device_type === 'Desktop' ? (
+                                                                <span className="flex items-center gap-1" title="Desktop">
+                                                                    <Monitor className="w-4 h-4 text-gray-500" /> Desktop
+                                                                </span>
+                                                            ) : (
+                                                                '--'
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                                                             <button
                                                                 onClick={() => openEditModal(record)}
@@ -300,7 +314,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={viewType === 'daily' ? 8 : 7} className="px-6 py-4 text-center text-gray-500">
+                                                    <td colSpan={viewType === 'daily' ? 9 : 8} className="px-6 py-4 text-center text-gray-500">
                                                         No records found.
                                                     </td>
                                                 </tr>

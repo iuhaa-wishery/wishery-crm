@@ -108,4 +108,39 @@ class GoogleDriveController extends Controller
             ], 500);
         }
     }
+
+    public function generateAuthUrl()
+    {
+        $client = $this->googleDriveService->getClient();
+        if (!$client) {
+            return "Google Client not initialized. Check your Client ID and Secret in .env.";
+        }
+
+        $client->setRedirectUri(route('admin.google.callback'));
+        $authUrl = $client->createAuthUrl();
+
+        return redirect()->away($authUrl);
+    }
+
+    public function handleCallback(Request $request)
+    {
+        $client = $this->googleDriveService->getClient();
+        $client->setRedirectUri(route('admin.google.callback'));
+
+        if ($request->has('code')) {
+            $token = $client->fetchAccessTokenWithAuthCode($request->input('code'));
+
+            if (isset($token['error'])) {
+                return response()->json($token);
+            }
+
+            return response()->json([
+                'message' => 'Copy the refresh_token below and paste it into your .env file as GOOGLE_DRIVE_REFRESH_TOKEN',
+                'refresh_token' => $token['refresh_token'] ?? 'No refresh token returned. Make sure you revoked access first or set prompt to consent.',
+                'full_token' => $token
+            ]);
+        }
+
+        return "No code provided.";
+    }
 }

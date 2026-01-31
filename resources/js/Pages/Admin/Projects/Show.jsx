@@ -3,15 +3,20 @@ import { toast } from "react-hot-toast";
 import { usePage, router, Link } from "@inertiajs/react";
 import axios from 'axios';
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Edit, Trash2, Calendar, X, ChevronDown, Eye } from "lucide-react"; // Added ChevronDown
+import { Edit, Trash2, Calendar, X, ChevronDown, Eye, Briefcase, MessageSquare } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const route = window.route;
 
-// Helper function to format date to YYYY-MM-DD for date input
+// Helper function to format date to "15 Dec 2025"
 const formatDate = (dateString) => {
   if (!dateString) return "";
-  return dateString.split("T")[0].split(" ")[0];
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'short' });
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
 };
 
 export default function Show() {
@@ -43,10 +48,10 @@ export default function Show() {
 
   const statusOrder = ["not started", "in progress", "on hold", "completed"];
   const columns = {
-    "not started": "To Do",
-    "in progress": "In Progress",
-    "on hold": "On Hold",
-    completed: "Completed",
+    "not started": "TODO",
+    "in progress": "IN PROGRESS",
+    "on hold": "ON HOLD",
+    completed: "COMPLETED",
   };
 
   const bgByStatus = {
@@ -107,8 +112,8 @@ export default function Show() {
         name: task.name || "",
         description: task.description || "",
         assignee_ids: currentAssigneeIds, // <-- Now uses the mapped IDs
-        start_date: formatDate(task.start_date) || "",
-        end_date: formatDate(task.end_date) || "",
+        start_date: task.start_date ? task.start_date.split(' ')[0] : "",
+        end_date: task.end_date ? task.end_date.split(' ')[0] : "",
         status: task.status || "not started",
         priority: task.priority || "medium",
       });
@@ -212,22 +217,6 @@ export default function Show() {
     acc[key] = tasks.filter((t) => (t.status || "").toLowerCase() === key).sort((a, b) => a.id - b.id);
     return acc;
   }, {});
-
-  const getDaysLeft = (endDate) => {
-    if (!endDate) return "";
-    const now = new Date();
-    const end = new Date(formatDate(endDate));
-    now.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-
-    const diffTime = end.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return <span className="text-red-600 font-bold">Overdue</span>;
-    if (diffDays === 0)
-      return <span className="text-yellow-600 font-bold">Due today</span>;
-    return <span className="text-blue-700 font-bold">{diffDays} days left</span>;
-  };
 
   const getAssigneeUsers = (task) => {
     if (Array.isArray(task.assignees) && task.assignees.length > 0) {
@@ -336,7 +325,7 @@ export default function Show() {
           </div>
         )}
 
-        {/* Kanban Context (unchanged) */}
+        {/* Kanban Context */}
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="overflow-x-auto pb-4">
             <div className="flex gap-6 min-w-max">
@@ -346,14 +335,13 @@ export default function Show() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
-                        }`}
+                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow-sm p-5 bg-white ${snapshot.isDraggingOver ? "bg-slate-50" : ""}`}
                     >
-                      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                      <h2 className="text-[13px] font-bold mb-4 text-slate-600 uppercase tracking-wider">
                         {columns[statusKey]} ({grouped[statusKey].length})
                       </h2>
 
-                      <div className="space-y-4 min-h-[50px]">
+                      <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: 'calc(100vh - 280px)', minHeight: '100px' }}>
                         {grouped[statusKey].length > 0 ? (
                           grouped[statusKey].map((task, index) => (
                             <Draggable
@@ -366,92 +354,83 @@ export default function Show() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-pointer ${bgByStatus[statusKey]} ${snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''
-                                    }`}
+                                  className={`p-4 rounded-xl shadow-sm border border-slate-100 ${bgByStatus[task.status] || "bg-white"} hover:shadow-md transition cursor-pointer ${snapshot.isDragging ? 'shadow-xl ring-2 ring-blue-500' : ''}`}
                                 >
-                                  <div className="flex justify-between items-start">
-                                    <h3 className="font-semibold text-gray-800">
-                                      {task.name}
-                                    </h3>
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <span className="text-[12px] font-medium text-slate-400">
+                                      {formatDate(task.start_date) || "-"}
+                                    </span>
+                                    <div className="flex items-center gap-1">
                                       <Link
                                         href={route('admin.tasks.show', task.id)}
-                                        className="text-gray-600 hover:text-green-600 p-1 rounded-full hover:bg-white/50"
+                                        className="text-gray-400 hover:text-green-600 p-1 rounded-full hover:bg-white/50"
                                         title="View Details"
                                       >
-                                        <Eye className="w-4 h-4" />
+                                        <Eye className="w-3.5 h-3.5" />
                                       </Link>
                                       <button
-                                        onClick={() => openModal(task)}
-                                        className="text-gray-600 hover:text-blue-700 p-1 rounded-full hover:bg-white/50"
+                                        onClick={(e) => { e.stopPropagation(); openModal(task); }}
+                                        className="text-gray-400 hover:text-blue-700 p-1 rounded-full hover:bg-white/50"
                                         title="Edit Task"
                                       >
-                                        <Edit className="w-4 h-4" />
+                                        <Edit className="w-3.5 h-3.5" />
                                       </button>
                                       <button
-                                        onClick={() => setDeleteTaskId(task.id)}
-                                        className="text-gray-600 hover:text-red-600 p-1 rounded-full hover:bg-white/50"
+                                        onClick={(e) => { e.stopPropagation(); setDeleteTaskId(task.id); }}
+                                        className="text-gray-400 hover:text-red-600 p-1 rounded-full hover:bg-white/50"
                                         title="Delete Task"
                                       >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </div>
 
-                                  <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                                    {task.description || "No description provided."}
-                                  </p>
-
-                                  <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
-                                    <div className="flex items-center">
-                                      <Calendar className="w-4 h-4 mr-1" />
-                                      <span>{formatDate(task.start_date) || "-"}</span>
-                                    </div>
-                                    <div className="flex items-center">
-                                      <Calendar className="w-4 h-4 mr-1" />
-                                      <span>{formatDate(task.end_date) || "-"}</span>
-                                    </div>
-                                  </div>
-
-                                  <div className="mt-2 text-sm font-medium">
-                                    {getDaysLeft(task.end_date)}
-                                  </div>
-
-                                  <div className="mt-3 flex items-center justify-between">
-                                    {/* Display multiple assignees/avatars */}
-                                    <div className="flex items-center">
-                                      <div className="flex -space-x-2 overflow-hidden">
-                                        {getAssigneeUsers(task).slice(0, 3).map((user) => (
-                                          <img
-                                            key={user.id}
-                                            src={getAvatarUrl(user)}
-                                            alt={user.name}
-                                            className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-md transition hover:z-10"
-                                            title={user.name}
-                                          />
-                                        ))}
-                                        {getAssigneeUsers(task).length > 3 && (
-                                          <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-400 flex items-center justify-center text-xs text-white shadow-md">
-                                            +{getAssigneeUsers(task).length - 3}
-                                          </div>
-                                        )}
-                                        {getAssigneeUsers(task).length === 0 && (
-                                          <span className="text-sm text-gray-500 italic">Unassigned</span>
-                                        )}
-                                      </div>
-                                    </div>
-
+                                  <div className="flex justify-between items-start mb-3">
+                                    <h3 className="text-[15px] font-bold text-slate-700 leading-snug">
+                                      {task.name}
+                                    </h3>
                                     <span
-                                      className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${task.priority === "high"
-                                        ? "bg-red-200 text-red-800"
+                                      className={`px-2 py-0.5 text-[10px] font-bold rounded ${task.priority === "high"
+                                        ? "bg-red-50 text-red-500"
                                         : task.priority === "medium"
-                                          ? "bg-yellow-200 text-yellow-800"
-                                          : "bg-green-200 text-green-800"
+                                          ? "bg-orange-50 text-orange-400"
+                                          : "bg-green-50 text-green-400"
                                         }`}
                                     >
-                                      {task.priority.charAt(0).toUpperCase() +
-                                        task.priority.slice(1)}
+                                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                                     </span>
+                                  </div>
+
+                                  {/* Project and Comments */}
+                                  <div className="flex items-center gap-4 mb-4 text-[13px] text-slate-500">
+                                    <div className="flex items-center gap-1.5">
+                                      <Briefcase size={14} className="text-slate-400" />
+                                      <span className="font-medium">{project.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <MessageSquare size={14} className="text-slate-400" />
+                                      <span className="font-medium">{task.comments_count || 0} Comments</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Assignees */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex -space-x-2 overflow-hidden">
+                                      {getAssigneeUsers(task).slice(0, 4).map((user) => (
+                                        <img
+                                          key={user.id}
+                                          src={getAvatarUrl(user)}
+                                          alt={user.name}
+                                          className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm transition hover:z-10 hover:scale-110"
+                                          title={user.name}
+                                        />
+                                      ))}
+                                      {getAssigneeUsers(task).length > 4 && (
+                                        <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600 shadow-sm">
+                                          +{getAssigneeUsers(task).length - 4}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )}
@@ -528,7 +507,6 @@ export default function Show() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block font-medium mb-1 text-gray-700">Assignees</label>
-                    {/* 💡 CUSTOM MULTI-SELECT DROPDOWN */}
                     <div ref={dropdownRef} className="relative">
                       <button
                         type="button"
@@ -549,7 +527,7 @@ export default function Show() {
                             <div
                               key={user.id}
                               className="flex items-center p-2 hover:bg-gray-50 transition cursor-pointer"
-                              onClick={() => { /* clicking div toggles checkbox */
+                              onClick={() => {
                                 const syntheticEvent = { target: { value: String(user.id), checked: !form.assignee_ids.includes(String(user.id)) } };
                                 handleAssigneeChange(syntheticEvent);
                               }}
@@ -559,12 +537,12 @@ export default function Show() {
                                 type="checkbox"
                                 name="assignee_ids"
                                 value={String(user.id)}
-                                // 💡 FIX 2: Ensure ID comparison is consistent (String(user.id) vs form.assignee_ids items which are strings)
                                 checked={form.assignee_ids.includes(String(user.id))}
                                 onChange={handleAssigneeChange}
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                                 onClick={(e) => e.stopPropagation()}
-                              />                                        <label
+                              />
+                              <label
                                 htmlFor={`user-dropdown-${user.id}`}
                                 className="ml-2 text-sm font-medium text-gray-700 flex items-center flex-grow cursor-pointer"
                               >
@@ -674,7 +652,7 @@ export default function Show() {
           </div>
         )}
 
-        {/* Delete Confirmation (unchanged) */}
+        {/* Delete Confirmation */}
         {deleteTaskId && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm">
@@ -700,6 +678,21 @@ export default function Show() {
           </div>
         )}
       </div>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+      `}</style>
     </AdminLayout>
   );
 }

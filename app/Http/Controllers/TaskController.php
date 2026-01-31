@@ -21,7 +21,8 @@ class TaskController extends Controller
         $projectId = $request->input('project_id'); // 💡 GET THE PROJECT ID
         $userId = auth()->id();
 
-        $tasks = Task::with('project')
+        $tasks = Task::with(['project', 'assignees'])
+            ->withCount('comments')
             // 1. Filter by Assignee (using the correct pivot table logic)
             ->whereHas('assignees', function ($query) use ($userId) {
                 $query->where('user_id', $userId);

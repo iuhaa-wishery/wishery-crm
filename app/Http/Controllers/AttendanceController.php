@@ -36,6 +36,11 @@ class AttendanceController extends Controller
         $today = Carbon::today();
         $userId = Auth::id();
 
+        // Enforce Location
+        if (!$request->latitude || !$request->longitude) {
+            return back()->with('error', 'Location is mandatory to punch in. Please allow location access.');
+        }
+
         // Check if attendance already exists for today
         $attendance = Attendance::where('user_id', $userId)
             ->where('date', $today)
@@ -49,6 +54,13 @@ class AttendanceController extends Controller
             return back();
         }
 
+        // Detect Device Type
+        $userAgent = $request->header('User-Agent');
+        $deviceType = 'Desktop';
+        if (preg_match('/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/', $userAgent)) {
+            $deviceType = 'Mobile';
+        }
+
         // Create new attendance
         Attendance::create([
             'user_id' => $userId,
@@ -57,6 +69,7 @@ class AttendanceController extends Controller
             'punch_in_lat' => $request->latitude,
             'punch_in_lng' => $request->longitude,
             'status' => 'punched_in',
+            'device_type' => $deviceType,
         ]);
 
         return back();
@@ -200,6 +213,7 @@ class AttendanceController extends Controller
                         'punch_in_lng' => $attendance->punch_in_lng,
                         'punch_out_lat' => $attendance->punch_out_lat,
                         'punch_out_lng' => $attendance->punch_out_lng,
+                        'device_type' => $attendance->device_type,
                     ];
                 });
 
@@ -292,6 +306,7 @@ class AttendanceController extends Controller
                 'punch_in_lng' => $attendance ? $attendance->punch_in_lng : null,
                 'punch_out_lat' => $attendance ? $attendance->punch_out_lat : null,
                 'punch_out_lng' => $attendance ? $attendance->punch_out_lng : null,
+                'device_type' => $attendance ? $attendance->device_type : null,
             ];
         });
 

@@ -3,20 +3,18 @@ import React, { useState, useEffect } from "react";
 const route = window.route;
 import { usePage, router, Link } from "@inertiajs/react";
 import UserLayout from "@/Layouts/UserLayout";
-import { Edit, Calendar, X, Eye } from "lucide-react";
+import { Edit, Calendar, X, Eye, Briefcase, MessageSquare } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
-// Helper: format date string to YYYY-MM-DD (works with ISO or plain date strings)
+// Helper function to format date to "15 Dec 2025"
 const formatDate = (dateString) => {
   if (!dateString) return "";
-  try {
-    const d = new Date(dateString);
-    // Fallback for non-ISO dates, ensuring we don't return "NaN"
-    if (isNaN(d.getTime())) return dateString.split("T")[0] || dateString;
-    return d.toISOString().split("T")[0];
-  } catch (e) {
-    return dateString;
-  }
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'short' });
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
 };
 
 export default function UserTasks() {
@@ -57,10 +55,10 @@ export default function UserTasks() {
 
   const statusOrder = ["not started", "in progress", "on hold", "completed"];
   const columns = {
-    "not started": "To Do",
-    "in progress": "In Progress",
-    "on hold": "On Hold",
-    completed: "Completed",
+    "not started": "TODO",
+    "in progress": "IN PROGRESS",
+    "on hold": "ON HOLD",
+    completed: "COMPLETED",
   };
 
   const bgByStatus = {
@@ -185,19 +183,25 @@ export default function UserTasks() {
   };
 
 
-  const getDaysLeft = (endDate) => {
-    if (!endDate) return "";
-    const now = new Date();
-    const end = new Date(endDate);
-    now.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
+  const getAssigneeUsers = (task) => {
+    if (Array.isArray(task.assignees) && task.assignees.length > 0) {
+      return task.assignees;
+    }
+    return [];
+  };
 
-    const diffTime = end.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const getAvatarUrl = (user) => {
+    const basePath = import.meta.env.VITE_BASE_URL;
 
-    if (diffDays < 0) return <span className="text-red-600 text-sm font-medium">Overdue</span>;
-    if (diffDays === 0) return <span className="text-yellow-600 text-sm font-medium">Due today</span>;
-    return <span className="text-blue-700 text-sm font-medium">{diffDays} days left</span>;
+    if (user?.image) {
+      return user.image.startsWith("http")
+        ? user.image
+        : `${basePath}/storage/${user.image}`;
+    }
+
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      user?.name || "U"
+    )}&background=random&color=fff`;
   };
 
   const grouped = statusOrder.reduce((acc, key) => {
@@ -239,14 +243,13 @@ export default function UserTasks() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow p-5 ${snapshot.isDraggingOver ? "bg-gray-100" : "bg-white"
-                        }`}
+                      className={`flex-shrink-0 w-[320px] rounded-2xl shadow-sm p-5 bg-white ${snapshot.isDraggingOver ? "bg-slate-50" : ""}`}
                     >
-                      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                      <h2 className="text-[13px] font-bold mb-4 text-slate-600 uppercase tracking-wider">
                         {columns[statusKey]} ({grouped[statusKey].length})
                       </h2>
 
-                      <div className="space-y-4 min-h-[50px]">
+                      <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: 'calc(100vh - 280px)', minHeight: '100px' }}>
                         {grouped[statusKey].length > 0 ? (
                           grouped[statusKey].map((task, index) => (
                             <Draggable key={task.id} draggableId={`task-${task.id}`} index={index}>
@@ -255,51 +258,82 @@ export default function UserTasks() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                  }}
-                                  className={`p-5 rounded-2xl shadow-sm hover:shadow-md transition cursor-grab ${bgByStatus[statusKey]} ${snapshot.isDragging ? "shadow-xl ring-2 ring-blue-500" : ""
-                                    }`}
+                                  className={`p-4 rounded-xl shadow-sm border border-slate-100 ${bgByStatus[task.status] || "bg-white"} hover:shadow-md transition cursor-grab ${snapshot.isDragging ? "shadow-xl ring-2 ring-blue-500" : ""}`}
                                 >
-                                  <div className="flex justify-between items-start">
-                                    <Link href={route('tasks.show', task.id)} className="font-semibold text-gray-800 hover:text-blue-600 transition">
+                                  <div className="flex justify-between items-start mb-3">
+                                    <span className="text-[12px] font-medium text-slate-400">
+                                      {formatDate(task.start_date) || "-"}
+                                    </span>
+                                    <span
+                                      className={`px-2 py-0.5 text-[10px] font-bold rounded ${task.priority === "high"
+                                        ? "bg-red-50 text-red-500"
+                                        : task.priority === "medium"
+                                          ? "bg-orange-50 text-orange-400"
+                                          : "bg-green-50 text-green-400"
+                                        }`}
+                                    >
+                                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex justify-between items-start mb-3">
+                                    <Link href={route('tasks.show', task.id)} className="text-[15px] font-bold text-slate-700 leading-snug hover:text-blue-600 transition">
                                       {task.name || "Untitled Task"}
                                     </Link>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1">
                                       <Link
                                         href={route('tasks.show', task.id)}
-                                        className="text-gray-500 hover:text-blue-600"
+                                        className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-white/50"
                                         title="View Details"
                                       >
-                                        <Eye className="w-4 h-4" />
+                                        <Eye className="w-3.5 h-3.5" />
                                       </Link>
                                       <button
-                                        onClick={() => {
+                                        onClick={(e) => {
+                                          e.stopPropagation();
                                           setSelectedTask(task);
                                           setNewStatus(task.status || "not started");
                                         }}
-                                        className="text-gray-500 hover:text-blue-600"
+                                        className="text-gray-400 hover:text-blue-600 p-1 rounded-full hover:bg-white/50"
                                         title="Edit Status"
                                       >
-                                        <Edit className="w-4 h-4" />
+                                        <Edit className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </div>
 
-                                  <p className="text-sm text-gray-700 mt-2 line-clamp-2">{task.description || "No description provided."}</p>
-
-                                  <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="w-4 h-4" />
-                                      <span>{formatDate(task.start_date) || "-"}</span>
+                                  {/* Project and Comments */}
+                                  <div className="flex items-center gap-4 mb-4 text-[13px] text-slate-500">
+                                    <div className="flex items-center gap-1.5">
+                                      <Briefcase size={14} className="text-slate-400" />
+                                      <span className="font-medium">{task.project?.name}</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <Calendar className="w-4 h-4" />
-                                      <span>{formatDate(task.end_date) || "-"}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <MessageSquare size={14} className="text-slate-400" />
+                                      <span className="font-medium">{task.comments_count || 0} Comments</span>
                                     </div>
                                   </div>
 
-                                  <div className="mt-2">{getDaysLeft(task.end_date)}</div>
+                                  {/* Assignees */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex -space-x-2 overflow-hidden">
+                                      {getAssigneeUsers(task).slice(0, 4).map((user) => (
+                                        <img
+                                          key={user.id}
+                                          src={getAvatarUrl(user)}
+                                          alt={user.name}
+                                          className="w-7 h-7 rounded-full border-2 border-white object-cover shadow-sm transition hover:z-10 hover:scale-110"
+                                          title={user.name}
+                                        />
+                                      ))}
+                                      {getAssigneeUsers(task).length > 4 && (
+                                        <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-600 shadow-sm">
+                                          +{getAssigneeUsers(task).length - 4}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
                                 </div>
                               )}
                             </Draggable>
@@ -432,18 +466,32 @@ export default function UserTasks() {
         </div>
       )}
       <style>{`
-                .kanban-scroll-area {
-                    overflow-x: auto;
-                    overflow-y: hidden;
-                    width: 100%;
-                    padding-bottom: 1rem;
-                    scrollbar-width: thin;
-                    scrollbar-color: #9ca3af transparent;
-                }
-                .kanban-scroll-area::-webkit-scrollbar { height: 8px; }
-                .kanban-scroll-area::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-                .kanban-scroll-area::-webkit-scrollbar-track { background: transparent; }
-            `}</style>
+        .kanban-scroll-area {
+          overflow-x: auto;
+          overflow-y: hidden;
+          width: 100%;
+          padding-bottom: 1rem;
+          scrollbar-width: thin;
+          scrollbar-color: #9ca3af transparent;
+        }
+        .kanban-scroll-area::-webkit-scrollbar { height: 8px; }
+        .kanban-scroll-area::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .kanban-scroll-area::-webkit-scrollbar-track { background: transparent; }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+      `}</style>
     </UserLayout>
   );
 }

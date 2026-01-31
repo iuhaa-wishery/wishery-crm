@@ -20,6 +20,7 @@ class Attendance extends Model
         'punch_in_lng',
         'punch_out_lat',
         'punch_out_lng',
+        'device_type',
     ];
 
     protected $casts = [

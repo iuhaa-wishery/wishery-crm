@@ -105,6 +105,7 @@ class ProjectController extends Controller
     {
         // ✅ Updated: use 'assignees' instead of old 'assignee'
         $tasks = Task::with(['assignees'])
+            ->withCount('comments')
             ->where('project_id', $project->id)
             ->get();
 

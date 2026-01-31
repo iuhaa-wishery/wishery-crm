@@ -116,6 +116,10 @@ Route::middleware(['auth', 'is_admin'])
         Route::post('/tasks/{task}/comments', [AdminTaskController::class, 'storeComment'])->name('tasks.comments.store');
         Route::delete('/comments/{comment}', [AdminTaskController::class, 'destroyComment'])->name('tasks.comments.destroy');
 
+        // Temporary Google Auth Routes
+        Route::get('/google-auth', [GoogleDriveController::class, 'generateAuthUrl'])->name('google.auth');
+        Route::get('/google-callback', [GoogleDriveController::class, 'handleCallback'])->name('google.callback');
+
         // -------------------------
         // ✅ ADMIN LEAVE ROUTES
         // -------------------------

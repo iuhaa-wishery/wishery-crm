@@ -102,16 +102,10 @@ export default function AttendanceWidget() {
                     });
                 }, (error) => {
                     console.error("Error getting location", error);
-                    router.post(url, {}, {
-                        preserveScroll: true,
-                        onSuccess: () => fetchStatus(),
-                    });
+                    alert("Location access is mandatory to punch in. Please allow location access in your browser settings.");
                 });
             } else {
-                router.post(url, {}, {
-                    preserveScroll: true,
-                    onSuccess: () => fetchStatus(),
-                });
+                alert("Geolocation is not supported by this browser. Please use a supported device to punch in.");
             }
         } else {
             router.post(url, {}, {
