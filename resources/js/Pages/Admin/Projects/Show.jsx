@@ -220,7 +220,14 @@ export default function Show() {
   };
 
   const grouped = statusOrder.reduce((acc, key) => {
-    acc[key] = tasks.filter((t) => (t.status || "").toLowerCase() === key).sort((a, b) => a.id - b.id);
+    acc[key] = tasks
+      .filter((t) => (t.status || "").toLowerCase() === key)
+      .sort((a, b) => {
+        const priorityWeight = { high: 3, medium: 2, low: 1 };
+        const pA = priorityWeight[(a.priority || "medium").toLowerCase()] || 0;
+        const pB = priorityWeight[(b.priority || "medium").toLowerCase()] || 0;
+        return pB - pA; // Descending order
+      });
     return acc;
   }, {});
 

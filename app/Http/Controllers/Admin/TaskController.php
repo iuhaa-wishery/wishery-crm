@@ -19,7 +19,10 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with(['project', 'assignees'])->latest()->paginate(10);
+        $tasks = Task::with(['project', 'assignees'])
+            ->orderByRaw("FIELD(priority, 'high', 'medium', 'low')")
+            ->latest()
+            ->paginate(10);
         $projects = Project::all();
         $users = User::all();
 
