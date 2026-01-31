@@ -55,6 +55,8 @@ class TaskController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'caption' => 'nullable|string|max:255',
+            'thumb_text' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'project_id' => 'required|exists:projects,id',
             'start_date' => 'nullable|date',
@@ -68,6 +70,8 @@ class TaskController extends Controller
         // Create the task
         $task = Task::create($request->only([
             'name',
+            'caption',
+            'thumb_text',
             'description',
             'project_id',
             'start_date',
@@ -105,6 +109,8 @@ class TaskController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'caption' => 'nullable|string|max:255',
+            'thumb_text' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'project_id' => 'required|exists:projects,id',
             'start_date' => 'nullable|date',
@@ -118,6 +124,8 @@ class TaskController extends Controller
         // Update base task details
         $task->update($request->only([
             'name',
+            'caption',
+            'thumb_text',
             'description',
             'project_id',
             'start_date',

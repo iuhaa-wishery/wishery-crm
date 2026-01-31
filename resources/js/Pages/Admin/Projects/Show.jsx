@@ -37,6 +37,8 @@ export default function Show() {
 
   const [form, setForm] = useState({
     name: "",
+    caption: "",
+    thumb_text: "",
     description: "",
     assignee_ids: [],
     start_date: "",
@@ -110,6 +112,8 @@ export default function Show() {
 
       setForm({
         name: task.name || "",
+        caption: task.caption || "",
+        thumb_text: task.thumb_text || "",
         description: task.description || "",
         assignee_ids: currentAssigneeIds, // <-- Now uses the mapped IDs
         start_date: task.start_date ? task.start_date.split(' ')[0] : "",
@@ -121,6 +125,8 @@ export default function Show() {
       setEditingTask(null);
       setForm({
         name: "",
+        caption: "",
+        thumb_text: "",
         description: "",
         assignee_ids: [],
         start_date: "",
@@ -482,6 +488,30 @@ export default function Show() {
                   {errors.name && (
                     <p className="text-red-500 text-sm mt-1">{errors.name}</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-1 text-gray-700">Caption (optional)</label>
+                  <input
+                    type="text"
+                    name="caption"
+                    value={form.caption}
+                    onChange={handleChange}
+                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                    placeholder="Brief caption"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-1 text-gray-700">Thumb Text (optional)</label>
+                  <input
+                    type="text"
+                    name="thumb_text"
+                    value={form.thumb_text}
+                    onChange={handleChange}
+                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                    placeholder="Short thumb text"
+                  />
                 </div>
 
                 <div>

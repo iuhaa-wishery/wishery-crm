@@ -6,6 +6,8 @@ export default function Edit({ task, projects, users }) {
     project_id: task.project_id || "",
     user_id: task.user_id || "",
     name: task.name || "",
+    caption: task.caption || "",
+    thumb_text: task.thumb_text || "",
     description: task.description || "",
     status: task.status || "not started",
     start_date: task.start_date || "",
@@ -49,6 +51,18 @@ export default function Edit({ task, projects, users }) {
           className="border p-2 w-full"
           value={data.name}
           onChange={(e) => setData("name", e.target.value)}
+        />
+        <input
+          className="border p-2 w-full"
+          placeholder="Caption (optional)"
+          value={data.caption}
+          onChange={(e) => setData("caption", e.target.value)}
+        />
+        <input
+          className="border p-2 w-full"
+          placeholder="Thumb Text (optional)"
+          value={data.thumb_text}
+          onChange={(e) => setData("thumb_text", e.target.value)}
         />
         <textarea
           className="border p-2 w-full"

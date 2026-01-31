@@ -6,6 +6,8 @@ export default function Create({ projects, users }) {
     project_id: "",
     user_id: "",
     name: "",
+    caption: "",
+    thumb_text: "",
     description: "",
     status: "not started",
     start_date: "",
@@ -52,6 +54,18 @@ export default function Create({ projects, users }) {
           placeholder="Task name"
           value={data.name}
           onChange={(e) => setData("name", e.target.value)}
+        />
+        <input
+          className="border p-2 w-full"
+          placeholder="Caption (optional)"
+          value={data.caption}
+          onChange={(e) => setData("caption", e.target.value)}
+        />
+        <input
+          className="border p-2 w-full"
+          placeholder="Thumb Text (optional)"
+          value={data.thumb_text}
+          onChange={(e) => setData("thumb_text", e.target.value)}
         />
         <textarea
           className="border p-2 w-full"
