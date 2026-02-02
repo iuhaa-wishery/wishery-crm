@@ -90,6 +90,18 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance && $attendance->punch_in) {
+            // Detect Device Type
+            $userAgent = $request->header('User-Agent');
+            $deviceType = 'Desktop';
+            if (preg_match('/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/', $userAgent)) {
+                $deviceType = 'Mobile';
+            }
+
+            // Restrict if user is set to Desktop Only
+            if (Auth::user()->desktop_only && $deviceType === 'Mobile') {
+                return back()->with('error', 'You are restricted to punch out from Desktop only.');
+            }
+
             $punchIn = Carbon::parse($attendance->punch_in);
             // Subtract break time from this session's duration
             $totalBreakMinutes = $attendance->total_break_minutes ?? 0;
