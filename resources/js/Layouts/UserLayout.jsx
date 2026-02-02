@@ -9,12 +9,23 @@ import {
     FaFolder,
 } from "react-icons/fa";
 import AttendanceWidget from "@/Components/AttendanceWidget";
+import toast, { Toaster } from "react-hot-toast";
+import { useEffect } from "react";
 
 export default function UserLayout({ children, title }) {
-    const { auth } = usePage().props;
+    const { auth, flash } = usePage().props;
     const user = auth?.user;
     const [collapsed, setCollapsed] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+    }, [flash]);
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -129,6 +140,7 @@ export default function UserLayout({ children, title }) {
                 {/* Page Content */}
                 <main className="p-6 overflow-y-auto flex-1">{children}</main>
             </div>
+            <Toaster position="top-right" />
         </div>
     );
 }
