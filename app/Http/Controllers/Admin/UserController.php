@@ -36,6 +36,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:user,manager',
+            'desktop_only' => 'boolean',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -66,6 +67,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|in:user,manager',
+            'desktop_only' => 'boolean',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
@@ -111,6 +113,17 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'User deleted successfully.');
+    }
+
+    public function toggleDesktop(User $user)
+    {
+        $user->desktop_only = !$user->desktop_only;
+        $user->save();
+
+        return response()->json([
+            'message' => 'User desktop punch-in restriction updated.',
+            'desktop_only' => $user->desktop_only
+        ]);
     }
 
     public function toggle(User $user)

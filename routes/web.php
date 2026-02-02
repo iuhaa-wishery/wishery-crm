@@ -104,6 +104,8 @@ Route::middleware(['auth', 'is_admin'])
 
         Route::patch('users/toggle/{user}', [AdminUserController::class, 'toggle'])
             ->name('users.toggle');
+        Route::patch('users/toggle-desktop/{user}', [AdminUserController::class, 'toggleDesktop'])
+            ->name('users.toggle.desktop');
         Route::resource('users', AdminUserController::class);
 
         Route::resource('projects', AdminProjectController::class);

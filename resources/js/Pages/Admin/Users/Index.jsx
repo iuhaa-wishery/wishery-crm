@@ -16,6 +16,7 @@ export default function Index() {
     password: "",
     password_confirmation: "",
     image: null,
+    desktop_only: false,
   });
   const [errors, setErrors] = useState({});
 
@@ -30,6 +31,7 @@ export default function Index() {
         password_confirmation: "",
         role: user.role || "user",
         image: null,
+        desktop_only: user.desktop_only || false,
       });
     } else {
       setEditingUser(null);
@@ -40,6 +42,7 @@ export default function Index() {
         password_confirmation: "",
         role: "user",
         image: null,
+        desktop_only: false,
       });
     }
     setErrors({});
@@ -50,10 +53,10 @@ export default function Index() {
 
   // Handle input change
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value, files, type, checked } = e.target;
     setForm({
       ...form,
-      [name]: files ? files[0] : value,
+      [name]: files ? files[0] : type === 'checkbox' ? (checked ? 1 : 0) : value,
     });
   };
 
@@ -127,6 +130,23 @@ export default function Index() {
     setDeleteId(null);
   };
 
+  // Toggle Desktop Only
+  const handleDesktopToggle = (id) => {
+    const url = route("admin.users.toggle.desktop", { user: id });
+
+    axios.patch(url)
+      .then(() => {
+        // Optimistically update local state or reload
+        // Since we are using inertia prop 'users', reload is easiest to keep sync
+        router.reload({ only: ['users'] });
+        toast.success("Desktop restriction updated!");
+      })
+      .catch(error => {
+        console.error("Error toggling desktop restriction:", error);
+        toast.error("Failed to update desktop restriction.");
+      });
+  };
+
   // Toggle active/inactive
   const handleToggle = (id) => {
     const url = route("admin.users.toggle", { user: id });
@@ -164,6 +184,7 @@ export default function Index() {
               <th className="p-2">Name</th>
               <th className="p-2">Email</th>
               <th className="p-2">Role</th>
+              <th className="p-2">Desktop Only</th>
               <th className="p-2">Status</th>
               <th className="p-2">Actions</th>
             </tr>
@@ -186,6 +207,18 @@ export default function Index() {
                 <td className="p-2">{user.name}</td>
                 <td className="p-2">{user.email}</td>
                 <td className="p-2 capitalize">{user.role}</td>
+                <td className="p-2">
+                  <label className="relative inline-flex items-center cursor-pointer" title="Restrict to Desktop Punch-in">
+                    <input
+                      type="checkbox"
+                      checked={user.desktop_only}
+                      onChange={() => handleDesktopToggle(user.id)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+                    <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></span>
+                  </label>
+                </td>
                 <td className="p-2">
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -312,6 +345,21 @@ export default function Index() {
                     <option value="user">User</option>
                     <option value="manager">Manager</option>
                   </select>
+                </div>
+
+                {/* Desktop Only Toggle */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="desktop_only"
+                    id="desktop_only"
+                    checked={!!form.desktop_only}
+                    onChange={handleChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="desktop_only" className="ml-2 block text-sm text-gray-900">
+                    Desktop Punch-in Only
+                  </label>
                 </div>
 
                 {/* Image */}

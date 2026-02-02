@@ -61,6 +61,11 @@ class AttendanceController extends Controller
             $deviceType = 'Mobile';
         }
 
+        // Restrict if user is set to Desktop Only
+        if (Auth::user()->desktop_only && $deviceType === 'Mobile') {
+            return back()->with('error', 'You are restricted to punch in from Desktop only.');
+        }
+
         // Create new attendance
         Attendance::create([
             'user_id' => $userId,

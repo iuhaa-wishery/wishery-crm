@@ -27,6 +27,7 @@ class User extends Authenticatable
         'is_active',
         'image',
         'thumb',
+        'desktop_only',
     ];
 
     /**
@@ -49,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
+            'desktop_only' => 'boolean',
         ];
     }
 
@@ -81,7 +83,7 @@ class User extends Authenticatable
         }
 
         // Fallback for old storage paths (though we are moving away from them)
-        return \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        return asset('storage/' . $this->image);
     }
 
     public function tasks()
