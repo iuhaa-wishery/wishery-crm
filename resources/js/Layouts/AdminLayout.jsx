@@ -19,6 +19,8 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
   const { auth, flash } = usePage().props;
   const [collapsed, setCollapsed] = useState(false);
 
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-collapsed");
     setCollapsed(stored === "true");
@@ -50,139 +52,152 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
     <>
       <Head title={title} />
       <Toaster position="top-right" />
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen bg-gray-100 overflow-hidden">
+
+        {/* MOBILE OVERLAY */}
+        {isMobileOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
 
         {/* SIDEBAR */}
         <aside
-          className={`bg-white shadow transition-all duration-200 flex flex-col ${collapsed ? "w-20" : "w-64"
-            }`}
+          className={`bg-white shadow transition-all duration-300 flex flex-col fixed md:relative z-50 h-full
+            ${collapsed ? "md:w-20" : "md:w-64"} 
+            ${isMobileOpen ? "translate-x-0 w-64" : "-translate-x-full md:translate-x-0"}
+          `}
         >
-          <div className="h-16 flex items-center justify-center border-b">
+          <div className="h-16 flex items-center justify-between px-4 border-b">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-lg">W</span>
-              </div>
-              {!collapsed && (
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Wishery CRM
-                </span>
-              )}
+              <span className="text-2xl font-bold text-blue-600">Wishery</span>
             </Link>
+            <button onClick={() => setIsMobileOpen(false)} className="md:hidden p-2 text-gray-500 hover:bg-gray-100 rounded">
+              <FaBars className="rotate-90 transition-transform" />
+            </button>
           </div>
 
-          <nav className="flex-1 p-2 space-y-1">
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto custom-scrollbar">
 
-            <Link href={route("dashboard")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
-              <FaTachometerAlt />
-              <span className={`${collapsed ? "hidden" : ""}`}>Dashboard</span>
+            <Link href={route("dashboard")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
+              <FaTachometerAlt className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Dashboard</span>
             </Link>
 
-            <Link href={route("admin.projects.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
-              <FaProjectDiagram />
-              <span className={`${collapsed ? "hidden" : ""}`}>Projects</span>
+            <Link href={route("admin.projects.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
+              <FaProjectDiagram className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Projects</span>
             </Link>
 
             {auth.user.role === 'admin' && (
               <>
-                <Link href={route("admin.users.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700">
-                  <FaUserCircle />
-                  <span className={`${collapsed ? "hidden" : ""}`}>Users</span>
+                <Link href={route("admin.users.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
+                  <FaUserCircle className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Users</span>
                 </Link>
 
-                {/* NEW - Leaves Menu */}
                 <Link
                   href={route("admin.leaves.index")}
-                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
                 >
-                  <FaTasks />
-                  <span className={`${collapsed ? "hidden" : ""}`}>Leaves</span>
+                  <FaTasks className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
                 </Link>
 
-                {/* Attendance Menu */}
                 <Link
                   href={route("admin.attendance.index")}
-                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
                 >
-                  <FaClock />
-                  <span className={`${collapsed ? "hidden" : ""}`}>Attendance</span>
+                  <FaClock className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Attendance</span>
                 </Link>
               </>
             )}
 
             <Link
               href={route("calendar.index")}
-              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
             >
-              <FaTasks />
-              <span className={`${collapsed ? "hidden" : ""}`}>Calendar</span>
+              <FaTasks className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Calendar</span>
             </Link>
 
             <Link
               href={route("admin.drive.index")}
-              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
             >
-              <FaProjectDiagram />
-              <span className={`${collapsed ? "hidden" : ""}`}>Drive</span>
+              <FaProjectDiagram className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Drive</span>
             </Link>
 
             {auth.user.role === 'admin' && (
               <Link
                 href={route("admin.settings.index")}
-                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700"
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
               >
-                <FaCog />
-                <span className={`${collapsed ? "hidden" : ""}`}>Settings</span>
+                <FaCog className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Settings</span>
               </Link>
             )}
 
           </nav>
 
-          <div className="p-3 border-t">
+          <div className="p-3 border-t hidden md:block">
             <button
               onClick={toggleSidebar}
-              className="flex items-center gap-3 w-full px-2 py-2 rounded hover:bg-gray-100 text-gray-700"
+              className="flex items-center gap-3 w-full px-2 py-2 rounded hover:bg-gray-100 text-gray-700 transition-all"
             >
-              <FaBars />
-              <span className={`${collapsed ? "hidden" : ""}`}>Collapse</span>
+              <FaBars className={`${collapsed ? "" : "rotate-90"} transition-transform`} />
+              <span className={`${collapsed ? "hidden" : ""}`}>Collapse Menu</span>
             </button>
           </div>
         </aside >
 
         {/* MAIN */}
-        < div className="flex-1 flex flex-col overflow-hidden" >
-          <header className="h-16 bg-white shadow flex items-center justify-between px-4">
-            <button onClick={toggleSidebar} className="p-2 rounded hover:bg-gray-100">
-              <FaBars />
-            </button>
-            <h2 className="text-lg font-semibold">{title}</h2>
+        < div className="flex-1 flex flex-col min-w-0" >
+          <header className="h-16 bg-white shadow flex items-center justify-between px-4 sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button onClick={() => setIsMobileOpen(true)} className="md:hidden p-2 rounded hover:bg-gray-100 transition-colors">
+                <FaBars className="text-gray-600" />
+              </button>
+              <button onClick={toggleSidebar} className="hidden md:p-2 rounded hover:bg-gray-100 transition-colors md:block text-gray-600">
+                <FaBars className={`${collapsed ? "" : "rotate-90"} transition-transform`} />
+              </button>
+              <h2 className="text-lg font-bold truncate">{title}</h2>
+            </div>
 
-            <div className="flex items-center gap-4">
-              <Link href={route('profile.edit')} className="flex items-center gap-3 hover:bg-gray-50 p-1 px-2 rounded-lg transition">
+            <div className="flex items-center gap-2 md:gap-4">
+              <Link href={route('profile.edit')} className="flex items-center gap-2 hover:bg-gray-50 p-1 px-2 rounded-lg transition shrink-0 max-w-[150px] md:max-w-none">
                 {auth.user.image_url ? (
                   <img
                     src={auth.user.image_url}
                     alt={auth.user.name}
-                    className="h-8 w-8 rounded-full object-cover border"
+                    className="h-8 w-8 rounded-full object-cover border-2 border-blue-100 shrink-0"
                   />
                 ) : (
-                  <FaUserCircle className="text-2xl text-gray-600" />
+                  <FaUserCircle className="text-2xl text-gray-400 shrink-0" />
                 )}
-                <div className="text-sm">
-                  <div className="font-medium">{auth?.user?.name}</div>
-                  <div className="text-xs text-gray-500">{auth?.user?.email}</div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-sm font-semibold text-gray-900 truncate">{auth?.user?.name}</div>
+                  <div className="text-[10px] text-gray-500 truncate">{auth?.user?.email}</div>
                 </div>
               </Link>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all text-sm font-medium"
+                title="Logout"
               >
-                <FaSignOutAlt /> Logout
+                <FaSignOutAlt className="shrink-0" />
+                <span className="hidden lg:inline">Logout</span>
               </button>
             </div>
           </header>
 
-          <main className="p-6 overflow-auto">{children}</main>
+          <main className="flex-1 overflow-auto p-6">
+            {children}
+          </main>
         </div >
       </div >
     </>

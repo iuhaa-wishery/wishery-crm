@@ -176,84 +176,86 @@ export default function Index() {
         </div>
 
         {/* Users Table */}
-        <table className="w-full border">
-          <thead>
-            <tr className="bg-gray-200 text-left">
-              <th className="p-2">#</th>
-              <th className="p-2">Image</th>
-              <th className="p-2">Name</th>
-              <th className="p-2">Email</th>
-              <th className="p-2">Role</th>
-              <th className="p-2">Desktop Only</th>
-              <th className="p-2">Status</th>
-              <th className="p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user, i) => (
-              <tr key={user.id} className="border-t">
-                <td className="p-2">{i + 1}</td>
-                <td className="p-2">
-                  {user.image_url ? (
-                    <img
-                      src={user.image_url}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover border"
-                    />
-                  ) : (
-                    <span className="text-gray-400">No Image</span>
-                  )}
-                </td>
-                <td className="p-2">{user.name}</td>
-                <td className="p-2">{user.email}</td>
-                <td className="p-2 capitalize">{user.role}</td>
-                <td className="p-2">
-                  <label className="relative inline-flex items-center cursor-pointer" title="Restrict to Desktop Punch-in">
-                    <input
-                      type="checkbox"
-                      checked={user.desktop_only}
-                      onChange={() => handleDesktopToggle(user.id)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
-                    <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></span>
-                  </label>
-                </td>
-                <td className="p-2">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={user.is_active}
-                      onChange={() => handleToggle(user.id)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 transition-colors"></div>
-                    <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></span>
-                  </label>
-                </td>
-                <td className="p-2 space-x-3">
-                  {/* Edit button */}
-                  <button
-                    onClick={() => openModal(user)}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Edit"
-                  >
-                    <Edit size={18} />
-                  </button>
-
-                  {/* Delete button */}
-                  <button
-                    onClick={() => confirmDelete(user.id)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
+        <div className="bg-white overflow-x-auto">
+          <table className="w-full border">
+            <thead>
+              <tr className="bg-gray-200 text-left">
+                <th className="p-2">#</th>
+                <th className="p-2">Image</th>
+                <th className="p-2">Name</th>
+                <th className="p-2">Email</th>
+                <th className="p-2">Role</th>
+                <th className="p-2">Desktop Only</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user, i) => (
+                <tr key={user.id} className="border-t">
+                  <td className="p-2">{i + 1}</td>
+                  <td className="p-2">
+                    {user.image_url ? (
+                      <img
+                        src={user.image_url}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-full object-cover border"
+                      />
+                    ) : (
+                      <span className="text-gray-400 font-bold">No Image</span>
+                    )}
+                  </td>
+                  <td className="p-2">{user.name}</td>
+                  <td className="p-2">{user.email}</td>
+                  <td className="p-2 capitalize">{user.role}</td>
+                  <td className="p-2">
+                    <label className="relative inline-flex items-center cursor-pointer" title="Restrict to Desktop Punch-in">
+                      <input
+                        type="checkbox"
+                        checked={user.desktop_only}
+                        onChange={() => handleDesktopToggle(user.id)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+                      <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></span>
+                    </label>
+                  </td>
+                  <td className="p-2">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={user.is_active}
+                        onChange={() => handleToggle(user.id)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 transition-colors"></div>
+                      <span className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transform transition peer-checked:translate-x-5"></span>
+                    </label>
+                  </td>
+                  <td className="p-2 space-x-3">
+                    {/* Edit button */}
+                    <button
+                      onClick={() => openModal(user)}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Edit"
+                    >
+                      <Edit size={18} />
+                    </button>
+
+                    {/* Delete button */}
+                    <button
+                      onClick={() => confirmDelete(user.id)}
+                      className="text-red-600 hover:text-red-800"
+                      title="Delete"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {/* Create/Edit Modal */}
         {isOpen && (

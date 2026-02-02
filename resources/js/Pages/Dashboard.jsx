@@ -11,6 +11,7 @@ import {
     ClipboardList,
     AlertCircle
 } from "lucide-react";
+import AttendanceWidget from "@/Components/AttendanceWidget";
 
 export default function Dashboard({ stats, todayAttendance, recentTasks }) {
     const statCards = [
@@ -70,7 +71,7 @@ export default function Dashboard({ stats, todayAttendance, recentTasks }) {
 
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">My Dashboard</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Dashboard</h1>
                     <p className="text-gray-500 mt-1 text-lg">Welcome back! Here's an overview of your work.</p>
                 </div>
                 {todayAttendance ? (
@@ -86,6 +87,11 @@ export default function Dashboard({ stats, todayAttendance, recentTasks }) {
                         <span className="text-orange-700 font-semibold text-sm">Not Punched In Yet</span>
                     </div>
                 )}
+            </div>
+
+            {/* Mobile Attendance Widget */}
+            <div className="md:hidden">
+                <AttendanceWidget />
             </div>
 
             {/* Stat Cards */}

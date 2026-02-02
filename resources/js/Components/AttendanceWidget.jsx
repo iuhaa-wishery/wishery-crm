@@ -118,34 +118,34 @@ export default function AttendanceWidget() {
     if (status === 'loading') return <div className="text-sm text-gray-500">Loading...</div>;
 
     return (
-        <div className="flex items-center space-x-4 bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-3 sm:space-y-0 bg-white p-3 sm:p-2 rounded-xl sm:rounded-lg shadow-sm border border-gray-200 w-full sm:w-auto">
             {/* Timer Display */}
-            <div className="flex flex-col items-end min-w-[80px]">
-                <div className="flex items-center text-gray-800 font-mono font-bold text-lg">
-                    <Clock className="w-4 h-4 mr-1 text-blue-600" />
+            <div className="flex flex-col items-center sm:items-end min-w-[100px] sm:min-w-[80px]">
+                <div className="flex items-center text-gray-800 font-mono font-bold text-xl sm:text-lg">
+                    <Clock className="w-5 h-5 sm:w-4 sm:h-4 mr-2 sm:mr-1 text-blue-600" />
                     {formatTime(timer)}
                 </div>
                 {status === 'on_break' && (
-                    <div className="text-xs text-orange-600 font-medium">
+                    <div className="text-xs text-orange-600 font-bold uppercase tracking-wider">
                         Break: {formatTime(breakTimer)}
                     </div>
                 )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-center space-x-2 w-full sm:w-auto">
                 {status === 'not_started' && (
                     <button
                         onClick={() => handleAction('punch-in')}
-                        className="flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition"
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-green-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-green-700 transition shadow-sm"
                     >
-                        <Play className="w-3 h-3 mr-1" /> Punch In
+                        <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Punch In
                     </button>
                 )}
 
                 {status === 'punched_out' && (
-                    <div className="flex items-center px-3 py-1.5 bg-gray-100 text-gray-400 text-sm font-medium rounded border border-gray-200 cursor-not-allowed">
-                        <Square className="w-3 h-3 mr-1" /> Shift Ended
+                    <div className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-gray-100 text-gray-400 text-sm font-bold rounded-lg sm:rounded border border-gray-200 cursor-not-allowed">
+                        <Square className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Shift Ended
                     </div>
                 )}
 
@@ -153,15 +153,15 @@ export default function AttendanceWidget() {
                     <>
                         <button
                             onClick={() => handleAction('break-start')}
-                            className="flex items-center px-3 py-1.5 bg-orange-500 text-white text-sm font-medium rounded hover:bg-orange-600 transition"
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-orange-500 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-orange-600 transition shadow-sm"
                         >
-                            <Coffee className="w-3 h-3 mr-1" /> Break
+                            <Coffee className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Break
                         </button>
                         <button
                             onClick={() => handleAction('punch-out')}
-                            className="flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition"
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-red-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-red-700 transition shadow-sm"
                         >
-                            <Square className="w-3 h-3 mr-1" /> Punch Out
+                            <Square className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Punch Out
                         </button>
                     </>
                 )}
@@ -169,9 +169,9 @@ export default function AttendanceWidget() {
                 {status === 'on_break' && (
                     <button
                         onClick={() => handleAction('break-end')}
-                        className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition"
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-blue-700 transition shadow-sm"
                     >
-                        <Play className="w-3 h-3 mr-1" /> Resume
+                        <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Resume
                     </button>
                 )}
 

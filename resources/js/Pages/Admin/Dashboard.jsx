@@ -77,7 +77,7 @@ export default function Dashboard({
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
           <p className="text-gray-500 mt-1 text-lg">Welcome back! Here's what's happening today.</p>
         </div>
         <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center gap-2 px-4">
