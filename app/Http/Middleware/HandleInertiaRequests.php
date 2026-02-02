@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'timestamp' => ($request->session()->has('success') || $request->session()->has('error')) ? microtime(true) : null,
             ],
         ];
     }

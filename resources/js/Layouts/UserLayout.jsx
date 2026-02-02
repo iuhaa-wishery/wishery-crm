@@ -25,7 +25,7 @@ export default function UserLayout({ children, title }) {
         if (flash?.error) {
             toast.error(flash.error);
         }
-    }, [flash]);
+    }, [flash, flash?.timestamp]);
 
     return (
         <div className="flex h-screen bg-gray-100">
