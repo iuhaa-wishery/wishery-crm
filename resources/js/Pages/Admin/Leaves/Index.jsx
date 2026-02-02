@@ -1,7 +1,7 @@
 import React from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Check, X, Calendar, User, FileText } from "lucide-react";
+import { Check, X, Calendar, User, FileText, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Index({ leaves, users, filters, stats }) {
@@ -10,6 +10,7 @@ export default function Index({ leaves, users, filters, stats }) {
     const [year, setYear] = React.useState(filters.year || new Date().getFullYear());
     const [month, setMonth] = React.useState(filters.month || '');
     const [userId, setUserId] = React.useState(filters.user_id || '');
+    const [selectedLeave, setSelectedLeave] = React.useState(null);
 
     const handleFilterChange = (key, value) => {
         const newFilters = {
@@ -187,7 +188,7 @@ export default function Index({ leaves, users, filters, stats }) {
                             <th className="px-4 py-2 text-left">Type</th>
                             <th className="px-4 py-2 text-left">Dates</th>
                             <th className="px-4 py-2 text-left">Days</th>
-                            <th className="px-4 py-2 text-left">Reason</th>
+                            <th className="px-4 py-2 text-center">Reason</th>
                             <th className="px-4 py-2 text-left">Status</th>
                             <th className="px-4 py-2 text-center">Actions</th>
                         </tr>
@@ -234,10 +235,18 @@ export default function Index({ leaves, users, filters, stats }) {
                                             : leave.day_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
                                         }
                                     </td>
-                                    <td className="px-4 py-2 max-w-xs">
-                                        <p className="text-sm text-gray-600 truncate" title={leave.reason}>
-                                            {leave.reason || "-"}
-                                        </p>
+                                    <td className="px-4 py-2 text-center">
+                                        {leave.reason ? (
+                                            <button
+                                                onClick={() => setSelectedLeave(leave)}
+                                                className="text-gray-500 hover:text-blue-600 p-1.5 rounded-full hover:bg-blue-50 transition-colors inline-flex items-center justify-center"
+                                                title="View Reason"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-300">-</span>
+                                        )}
                                     </td>
                                     <td className="px-4 py-2">
                                         {getStatusBadge(leave.status)}
@@ -287,6 +296,78 @@ export default function Index({ leaves, users, filters, stats }) {
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />
                     ))}
+                </div>
+            )}
+
+            {/* Leave Details Modal */}
+            {selectedLeave && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-800">Leave Details</h3>
+                            <button
+                                onClick={() => setSelectedLeave(null)}
+                                className="text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center gap-3 pb-4 border-b">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
+                                    {selectedLeave.user?.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-gray-800">{selectedLeave.user?.name}</h4>
+                                    <p className="text-sm text-gray-500">Employee</p>
+                                </div>
+                                <div className="ml-auto">
+                                    {getStatusBadge(selectedLeave.status)}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Leave Type</p>
+                                    <p className="font-semibold text-gray-700">
+                                        {selectedLeave.leave_type === 'SL' || selectedLeave.leave_type === 'CL'
+                                            ? selectedLeave.leave_type
+                                            : selectedLeave.leave_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Day Type</p>
+                                    <p className="font-semibold text-gray-700 capitalize">
+                                        {selectedLeave.day_type.replace('_', ' ')}
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">From</p>
+                                    <p className="font-semibold text-gray-700">{formatDate(selectedLeave.from_date)}</p>
+                                </div>
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">To</p>
+                                    <p className="font-semibold text-gray-700">{formatDate(selectedLeave.to_date)}</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Reason</p>
+                                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                    {selectedLeave.reason || "No reason provided."}
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    onClick={() => setSelectedLeave(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </AdminLayout>
