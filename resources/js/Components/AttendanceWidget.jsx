@@ -94,6 +94,12 @@ export default function AttendanceWidget() {
         }
 
         if (action === 'punch-in' || action === 'punch-out') {
+            // Geolocation requires HTTPS
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                alert("Location access requires a secure HTTPS connection. Please use https://erp.wishery.tech");
+                return;
+            }
+
             if ("geolocation" in navigator) {
                 const geoOptions = {
                     enableHighAccuracy: true,
@@ -101,7 +107,7 @@ export default function AttendanceWidget() {
                     maximumAge: 0
                 };
 
-                navigator.geolocation.getCurrentPosition((position) => {
+                const success = (position) => {
                     router.post(url, {
                         latitude: position.coords.latitude,
                         longitude: position.coords.longitude,
@@ -109,27 +115,41 @@ export default function AttendanceWidget() {
                         preserveScroll: true,
                         onSuccess: () => fetchStatus(),
                     });
-                }, (error) => {
+                };
+
+                const errorCallback = (error) => {
                     console.error("Geolocation error:", error);
-                    let msg = "Location access is mandatory. ";
+
+                    // Fallback for some desktops/laptops where high accuracy might fail
+                    if (error.code === error.POSITION_UNAVAILABLE && geoOptions.enableHighAccuracy) {
+                        console.warn("Retrying without high accuracy...");
+                        navigator.geolocation.getCurrentPosition(success, (err2) => {
+                            alert("Location information is unavailable. Please check your internet/GPS and try again.");
+                        }, { ...geoOptions, enableHighAccuracy: false });
+                        return;
+                    }
+
+                    let msg = `Location Error (Code: ${error.code}): `;
 
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
-                            msg += "Please allow location access in your browser/system settings.";
+                            msg += "Access denied. If you already allowed it in the browser, please also check your Mac System Settings (Privacy & Security > Location Services) and ensure your browser is enabled.";
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            msg += "Location information is unavailable. Please try again or check your internet connection.";
+                            msg += "Location unavailable. Please check your internet connection or Wi-Fi.";
                             break;
                         case error.TIMEOUT:
-                            msg += "Location request timed out. Please try again.";
+                            msg += "Request timed out. Please try again.";
                             break;
                         default:
-                            msg += "An unknown error occurred while retrieving location.";
+                            msg += "An unknown error occurred.";
                     }
                     alert(msg);
-                }, geoOptions);
+                };
+
+                navigator.geolocation.getCurrentPosition(success, errorCallback, geoOptions);
             } else {
-                alert("Geolocation is not supported by this browser. Please use a supported device to punch in.");
+                alert("Geolocation is not supported by this browser.");
             }
         } else {
             router.post(url, {}, {
