@@ -12,11 +12,14 @@ export default function AttendanceWidget() {
 
     useEffect(() => {
         fetchStatus();
+    }, []); // Run only once on mount
+
+    useEffect(() => {
         const interval = setInterval(() => {
             tick();
         }, 1000);
         return () => clearInterval(interval);
-    }, [status]); // Re-run effect when status changes to update tick logic
+    }, [status]); // Re-run effect when status changes to update tick closure with current status
 
     const fetchStatus = async () => {
         try {
