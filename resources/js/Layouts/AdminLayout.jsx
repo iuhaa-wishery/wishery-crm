@@ -13,7 +13,7 @@ import {
   FaCog,
 } from "react-icons/fa";
 
-// import { Toaster, toast } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 
 export default function AdminLayout({ children, title = "Dashboard" }) {
   const { auth, flash } = usePage().props;
@@ -28,7 +28,12 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
 
   // Handle Flash Messages
   useEffect(() => {
-    // Toast logic removed for isolation
+    if (flash?.success) {
+      toast.success(flash.success);
+    }
+    if (flash?.error) {
+      toast.error(flash.error);
+    }
   }, [flash, flash?.timestamp]);
 
   const toggleSidebar = () => {
@@ -46,7 +51,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
   return (
     <>
       <Head title={title} />
-      {/* <Toaster position="top-right" /> */}
+      <Toaster position="top-right" />
       <div className="flex h-screen bg-gray-100 overflow-hidden">
 
         {/* MOBILE OVERLAY */}
