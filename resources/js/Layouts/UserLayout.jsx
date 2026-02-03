@@ -9,7 +9,6 @@ import {
     FaFolder,
 } from "react-icons/fa";
 import AttendanceWidget from "@/Components/AttendanceWidget";
-import toast, { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 
 export default function UserLayout({ children, title }) {
@@ -20,12 +19,7 @@ export default function UserLayout({ children, title }) {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     useEffect(() => {
-        if (flash?.success) {
-            toast.success(flash.success);
-        }
-        if (flash?.error) {
-            toast.error(flash.error);
-        }
+        // toast logic removed for isolation
     }, [flash, flash?.timestamp]);
 
     return (
@@ -118,7 +112,7 @@ export default function UserLayout({ children, title }) {
 
                     <div className="flex items-center gap-2 md:gap-4">
                         <div className="hidden sm:block">
-                            <AttendanceWidget />
+                            {/* AttendanceWidget removed for isolation */}
                         </div>
                         <div className="relative">
                             <button
@@ -169,7 +163,6 @@ export default function UserLayout({ children, title }) {
                     {children}
                 </main>
             </div>
-            <Toaster position="top-right" />
         </div>
     );
 }
