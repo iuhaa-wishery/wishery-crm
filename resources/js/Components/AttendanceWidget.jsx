@@ -92,6 +92,12 @@ export default function AttendanceWidget() {
 
         if (action === 'punch-in' || action === 'punch-out') {
             if ("geolocation" in navigator) {
+                const geoOptions = {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                };
+
                 navigator.geolocation.getCurrentPosition((position) => {
                     router.post(url, {
                         latitude: position.coords.latitude,
@@ -101,9 +107,24 @@ export default function AttendanceWidget() {
                         onSuccess: () => fetchStatus(),
                     });
                 }, (error) => {
-                    console.error("Error getting location", error);
-                    alert("Location access is mandatory to punch in. Please allow location access in your browser settings.");
-                });
+                    console.error("Geolocation error:", error);
+                    let msg = "Location access is mandatory. ";
+
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            msg += "Please allow location access in your browser/system settings.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            msg += "Location information is unavailable. Please try again or check your internet connection.";
+                            break;
+                        case error.TIMEOUT:
+                            msg += "Location request timed out. Please try again.";
+                            break;
+                        default:
+                            msg += "An unknown error occurred while retrieving location.";
+                    }
+                    alert(msg);
+                }, geoOptions);
             } else {
                 alert("Geolocation is not supported by this browser. Please use a supported device to punch in.");
             }
