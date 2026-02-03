@@ -117,27 +117,6 @@ export default function AttendanceWidget() {
                     });
                 };
 
-                const fetchIpLocation = async () => {
-                    console.log("Attempting IP-based location fallback...");
-                    try {
-                        const response = await axios.get('https://ipapi.co/json/');
-                        if (response.data && response.data.latitude && response.data.longitude) {
-                            console.log("IP-based location found:", response.data.city);
-                            success({
-                                coords: {
-                                    latitude: response.data.latitude,
-                                    longitude: response.data.longitude
-                                }
-                            });
-                        } else {
-                            throw new Error("Invalid IP location data");
-                        }
-                    } catch (ipErr) {
-                        console.error("IP Genlocation failed:", ipErr);
-                        alert("Location Error (Code: 2):\n\nWe could not find your location automatically.\n1. Ensure Wi-Fi is TURNED ON.\n2. Ensure 'Location Services' is enabled in Mac System Settings.\n3. Try moving closer to a window.");
-                    }
-                };
-
                 const errorCallback = (error) => {
                     console.error("Geolocation error:", error);
 
@@ -145,13 +124,9 @@ export default function AttendanceWidget() {
                     if (error.code === error.POSITION_UNAVAILABLE && geoOptions.enableHighAccuracy) {
                         console.warn("Retrying without high accuracy...");
                         navigator.geolocation.getCurrentPosition(success, (err2) => {
-                            fetchIpLocation(); // Final fallback
+                            let msg = `Location Error (Code: 2):\n\n1. Ensure Wi-Fi is TURNED ON (even if using Ethernet).\n2. Ensure 'Location Services' is enabled in Mac System Settings.\n3. Try moving closer to a window.`;
+                            alert(msg);
                         }, { ...geoOptions, enableHighAccuracy: false });
-                        return;
-                    }
-
-                    if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
-                        fetchIpLocation();
                         return;
                     }
 
@@ -160,6 +135,12 @@ export default function AttendanceWidget() {
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
                             msg += "Access denied. Please check:\n- System Settings > Privacy & Security > Location Services (MUST be ON).\n- Ensure your browser is allowed in that list.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            msg += "Location unavailable. Please ensure Wi-Fi is ON (Macs need Wi-Fi to find location).";
+                            break;
+                        case error.TIMEOUT:
+                            msg += "Request timed out. Please check your internet and try again.";
                             break;
                         default:
                             msg += "An unknown error occurred.";
