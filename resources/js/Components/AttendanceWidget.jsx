@@ -103,7 +103,7 @@ export default function AttendanceWidget() {
             if ("geolocation" in navigator) {
                 const geoOptions = {
                     enableHighAccuracy: true,
-                    timeout: 10000,
+                    timeout: 15000,
                     maximumAge: 0
                 };
 
@@ -124,22 +124,23 @@ export default function AttendanceWidget() {
                     if (error.code === error.POSITION_UNAVAILABLE && geoOptions.enableHighAccuracy) {
                         console.warn("Retrying without high accuracy...");
                         navigator.geolocation.getCurrentPosition(success, (err2) => {
-                            alert("Location information is unavailable. Please check your internet/GPS and try again.");
+                            let msg = "Location Error (Code: 2):\n\n1. Ensure Wi-Fi is TURNED ON (even if using Ethernet).\n2. Ensure 'Location Services' is enabled in Mac System Settings.\n3. Try moving closer to a window.";
+                            alert(msg);
                         }, { ...geoOptions, enableHighAccuracy: false });
                         return;
                     }
 
-                    let msg = `Location Error (Code: ${error.code}): `;
+                    let msg = `Location Error (Code: ${error.code}):\n\n`;
 
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
-                            msg += "Access denied. If you already allowed it in the browser, please also check your Mac System Settings (Privacy & Security > Location Services) and ensure your browser is enabled.";
+                            msg += "Access denied. Please check:\n- System Settings > Privacy & Security > Location Services (MUST be ON).\n- Ensure your browser is allowed in that list.";
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            msg += "Location unavailable. Please check your internet connection or Wi-Fi.";
+                            msg += "Location unavailable. Please ensure Wi-Fi is ON (Macs need Wi-Fi to find location).";
                             break;
                         case error.TIMEOUT:
-                            msg += "Request timed out. Please try again.";
+                            msg += "Request timed out. Please check your internet and try again.";
                             break;
                         default:
                             msg += "An unknown error occurred.";
