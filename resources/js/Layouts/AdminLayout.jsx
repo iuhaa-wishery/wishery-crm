@@ -34,7 +34,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
     if (flash?.error) {
       toast.error(flash.error);
     }
-  }, [flash]);
+  }, [flash, flash?.timestamp]);
 
   const toggleSidebar = () => {
     setCollapsed((c) => {
@@ -152,10 +152,10 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <span className={`${collapsed ? "hidden" : ""}`}>Collapse Menu</span>
             </button>
           </div>
-        </aside >
+        </aside>
 
         {/* MAIN */}
-        < div className="flex-1 flex flex-col min-w-0" >
+        <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 bg-white shadow flex items-center justify-between px-4 sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button onClick={() => setIsMobileOpen(true)} className="md:hidden p-2 rounded hover:bg-gray-100 transition-colors">
@@ -198,8 +198,8 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
           <main className="flex-1 overflow-auto p-6">
             {children}
           </main>
-        </div >
-      </div >
+        </div>
+      </div>
     </>
   );
 }

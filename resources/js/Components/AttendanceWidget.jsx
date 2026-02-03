@@ -12,6 +12,11 @@ export default function AttendanceWidget() {
 
     useEffect(() => {
         fetchStatus();
+        // Failsafe: If still loading after 5s, show buttons anyway
+        const timeout = setTimeout(() => {
+            setStatus(s => s === 'loading' ? 'not_started' : s);
+        }, 5000);
+        return () => clearTimeout(timeout);
     }, []); // Run only once on mount
 
     useEffect(() => {
@@ -30,7 +35,15 @@ export default function AttendanceWidget() {
             calculateTimers(attendance, now);
         } catch (error) {
             console.error("Failed to fetch attendance status", error);
+            setStatus('not_started');
         }
+    };
+
+    const parseSafariDate = (dateString) => {
+        if (!dateString) return new Date();
+        // Convert "YYYY-MM-DD HH:MM:SS" to "YYYY-MM-DDTHH:MM:SS" for Safari compatibility
+        const isoString = dateString.toString().replace(/\s/, 'T');
+        return new Date(isoString);
     };
 
     const calculateTimers = (attendance, nowString) => {
@@ -39,8 +52,8 @@ export default function AttendanceWidget() {
             return;
         }
 
-        const now = new Date(nowString).getTime();
-        const punchIn = new Date(attendance.punch_in).getTime();
+        const now = parseSafariDate(nowString).getTime();
+        const punchIn = parseSafariDate(attendance.punch_in).getTime();
         const totalWorkedMs = (attendance.total_worked_minutes || 0) * 60 * 1000;
 
         if (attendance.status === 'punched_in') {
