@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor } from 'lucide-react';
@@ -151,13 +151,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                     Table View
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        if (viewType === 'daily') {
-                                            // Switch to monthly view if in daily view
-                                            handleFilterChange('month', new Date().toISOString().slice(0, 7));
-                                        }
-                                        setDisplayMode('calendar');
-                                    }}
+                                    onClick={() => setDisplayMode('calendar')}
                                     className={`px-6 py-2 text-sm font-medium transition-colors border-b-2 ${displayMode === 'calendar'
                                         ? 'border-indigo-600 text-indigo-600'
                                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -214,7 +208,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                             </div>
 
                             {/* Table View (Used for both Daily and Monthly) */}
-                            {displayMode === 'table' || viewType === 'daily' ? (
+                            {displayMode === 'table' ? (
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full">
                                         <thead>
@@ -234,37 +228,37 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
-                                            {attendanceData.length > 0 ? (
+                                            {attendanceData && attendanceData.length > 0 ? (
                                                 attendanceData.map((record) => (
-                                                    <tr key={record.id}>
+                                                    <tr key={record?.id || Math.random()}>
                                                         {viewType === 'daily' && (
                                                             <td className="px-4 py-3 whitespace-nowrap">
-                                                                <div className="text-sm font-semibold text-gray-900">{record.name}</div>
+                                                                <div className="text-sm font-semibold text-gray-900">{record?.name}</div>
                                                             </td>
                                                         )}
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {formatDate(record.date || filters.date)}
+                                                            {formatDate(record?.date || filters?.date)}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record.check_in === '-' ? '--' : record.check_in}
+                                                            {record?.check_in === '-' ? '--' : record?.check_in}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record.check_out === '-' ? '--' : record.check_out}
+                                                            {record?.check_out === '-' ? '--' : record?.check_out}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap">
-                                                            <span className={`px-4 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusColor(record.status)}`}>
-                                                                {record.status === 'Late & Early Leave' ? 'Late' : record.status}
+                                                            <span className={`px-4 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusColor(record?.status)}`}>
+                                                                {record?.status === 'Late & Early Leave' ? 'Late' : record?.status}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record.hours === '0h 0m' ? '--' : record.hours}
+                                                            {record?.hours === '0h 0m' ? '--' : record?.hours}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record.break_time === '0h 0m' ? '--' : record.break_time}
+                                                            {record?.break_time === '0h 0m' ? '--' : record?.break_time}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             <div className="flex items-center gap-3">
-                                                                {record.punch_in_lat && (
+                                                                {record?.punch_in_lat && (
                                                                     <a
                                                                         href={`https://www.google.com/maps?q=${record.punch_in_lat},${record.punch_in_lng}`}
                                                                         target="_blank"
@@ -275,7 +269,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                                         <MapPin className="w-4 h-4" />
                                                                     </a>
                                                                 )}
-                                                                {record.punch_out_lat && (
+                                                                {record?.punch_out_lat && (
                                                                     <a
                                                                         href={`https://www.google.com/maps?q=${record.punch_out_lat},${record.punch_out_lng}`}
                                                                         target="_blank"
@@ -286,15 +280,15 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                                         <MapPin className="w-4 h-4" />
                                                                     </a>
                                                                 )}
-                                                                {!record.punch_in_lat && !record.punch_out_lat && '--'}
+                                                                {!record?.punch_in_lat && !record?.punch_out_lat && '--'}
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record.device_type === 'Mobile' ? (
+                                                            {record?.device_type === 'Mobile' ? (
                                                                 <span className="flex items-center gap-1" title="Mobile">
                                                                     <Smartphone className="w-4 h-4 text-gray-500" /> Mobile
                                                                 </span>
-                                                            ) : record.device_type === 'Desktop' ? (
+                                                            ) : record?.device_type === 'Desktop' ? (
                                                                 <span className="flex items-center gap-1" title="Desktop">
                                                                     <Monitor className="w-4 h-4 text-gray-500" /> Desktop
                                                                 </span>
@@ -314,7 +308,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={viewType === 'daily' ? 9 : 8} className="px-6 py-4 text-center text-gray-500">
+                                                    <td colSpan={viewType === 'daily' ? 10 : 9} className="px-6 py-4 text-center text-gray-500">
                                                         No records found.
                                                     </td>
                                                 </tr>
@@ -322,7 +316,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                         </tbody>
                                     </table>
                                 </div>
-                            ) : (
+                            ) : displayMode === 'calendar' ? (
                                 <CalendarView
                                     attendanceData={attendanceData}
                                     leaves={leaves}
@@ -330,7 +324,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                     settings={settings}
                                     onFilterChange={handleFilterChange}
                                 />
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </div>

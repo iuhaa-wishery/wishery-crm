@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
-import { Play, Square, Coffee, Clock } from 'lucide-react';
+import { Play, Square, Coffee, Clock, Loader2 } from 'lucide-react';
 
 export default function AttendanceWidget() {
     // Version: 1.1 (Multiple Punch-in Support)
@@ -9,6 +9,7 @@ export default function AttendanceWidget() {
     const [attendance, setAttendance] = useState(null);
     const [timer, setTimer] = useState(0); // in seconds
     const [breakTimer, setBreakTimer] = useState(0); // in seconds
+    const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
         fetchStatus();
@@ -106,6 +107,8 @@ export default function AttendanceWidget() {
             case 'break-end': url = route('attendance.break.end'); break;
         }
 
+        setProcessing(true);
+
         if (action === 'punch-in' || action === 'punch-out') {
             // Geolocation requires HTTPS
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
@@ -127,6 +130,7 @@ export default function AttendanceWidget() {
                     }, {
                         preserveScroll: true,
                         onSuccess: () => fetchStatus(),
+                        onFinish: () => setProcessing(false),
                     });
                 };
 
@@ -139,11 +143,13 @@ export default function AttendanceWidget() {
                         navigator.geolocation.getCurrentPosition(success, (err2) => {
                             let msg = `Location Error (Code: 2):\n\n1. Ensure Wi-Fi is TURNED ON (even if using Ethernet).\n2. Ensure 'Location Services' is enabled in Mac System Settings.\n3. Try moving closer to a window.`;
                             alert(msg);
+                            setProcessing(false);
                         }, { ...geoOptions, enableHighAccuracy: false });
                         return;
                     }
 
                     let msg = `Location Error (Code: ${error.code}):\n\n`;
+                    setProcessing(false);
 
                     switch (error.code) {
                         case error.PERMISSION_DENIED:
@@ -169,6 +175,7 @@ export default function AttendanceWidget() {
             router.post(url, {}, {
                 preserveScroll: true,
                 onSuccess: () => fetchStatus(),
+                onFinish: () => setProcessing(false),
             });
         }
     };
@@ -195,9 +202,11 @@ export default function AttendanceWidget() {
                 {status === 'not_started' && (
                     <button
                         onClick={() => handleAction('punch-in')}
-                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-green-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-green-700 transition shadow-sm"
+                        disabled={processing}
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-green-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-green-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Punch In
+                        {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                        {processing ? 'Processing...' : 'Punch In'}
                     </button>
                 )}
 
@@ -211,15 +220,19 @@ export default function AttendanceWidget() {
                     <>
                         <button
                             onClick={() => handleAction('break-start')}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-orange-500 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-orange-600 transition shadow-sm"
+                            disabled={processing}
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-orange-500 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-orange-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Coffee className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Break
+                            {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Coffee className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                            Break
                         </button>
                         <button
                             onClick={() => handleAction('punch-out')}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-red-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-red-700 transition shadow-sm"
+                            disabled={processing}
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-red-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-red-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Square className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Punch Out
+                            {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Square className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                            Punch Out
                         </button>
                     </>
                 )}
@@ -227,9 +240,11 @@ export default function AttendanceWidget() {
                 {status === 'on_break' && (
                     <button
                         onClick={() => handleAction('break-end')}
-                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-blue-700 transition shadow-sm"
+                        disabled={processing}
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" /> Resume
+                        {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                        Resume
                     </button>
                 )}
 
