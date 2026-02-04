@@ -120,9 +120,17 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
             case 'Early Leave':
             case 'Late & Early Leave': return 'bg-orange-100 text-orange-600';
             case 'Absent': return 'bg-red-100 text-red-600';
-            case 'Half Day': return 'bg-blue-100 text-blue-600';
-            default: return 'bg-gray-100 text-gray-500';
+            case 'OFF': return 'bg-blue-100 text-blue-600';
+            case 'Leave': return 'bg-purple-100 text-purple-600';
+            default: return 'bg-gray-50 text-gray-400';
         }
+    };
+
+    const getRowStyle = (status) => {
+        if (status === 'OFF') return 'bg-blue-50/30';
+        if (status === 'Absent') return 'bg-red-50/30';
+        if (status === 'Leave') return 'bg-purple-50/30';
+        return '';
     };
 
     return (
@@ -248,7 +256,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                         <tbody className="divide-y divide-gray-200">
                                             {attendanceData && attendanceData.length > 0 ? (
                                                 attendanceData.map((record) => (
-                                                    <tr key={record?.id || Math.random()}>
+                                                    <tr key={record?.id || Math.random()} className={`hover:bg-gray-50 transition-colors ${getRowStyle(record?.status)}`}>
                                                         {viewType === 'daily' && (
                                                             <td className="px-4 py-3 whitespace-nowrap">
                                                                 <div className="text-sm font-semibold text-gray-900">{record?.name}</div>
@@ -265,7 +273,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap">
                                                             <span className={`px-4 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusColor(record?.status)}`}>
-                                                                {record?.status === 'Late & Early Leave' ? 'Late' : record?.status}
+                                                                {record?.status}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">

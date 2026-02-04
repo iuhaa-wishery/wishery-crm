@@ -183,64 +183,124 @@ class AttendanceController extends Controller
             }
 
             if ($userId) {
+                // Get all attendance records for the month
                 $attendances = Attendance::where('user_id', $userId)
                     ->whereYear('date', $month->year)
                     ->whereMonth('date', $month->month)
-                    ->orderBy('date', 'desc')
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
+                    });
+
+                // Get approved leaves for the month
+                $leaves = Leave::where('user_id', $userId)
+                    ->where('status', 'approved')
+                    ->where(function ($query) use ($month) {
+                        $query->whereBetween('from_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()])
+                            ->orWhereBetween('to_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()]);
+                    })
                     ->get();
 
                 $totalMonthlyMinutes = $attendances->sum('total_worked_minutes');
 
-                $attendanceData = $attendances->map(function ($attendance) {
-                    $checkInTime = Carbon::parse($attendance->punch_in);
-                    $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
-                    $nineAM = Carbon::parse($dateString . ' 09:00:00');
-                    $nineThirtyAM = Carbon::parse($dateString . ' 09:30:00');
-                    $sixPM = Carbon::parse($dateString . ' 18:00:00');
+                // Generate all dates for the month
+                $startDate = $month->copy()->startOfMonth();
+                $realEndDate = $month->copy()->endOfMonth();
+                $today = Carbon::today();
 
-                    $isLate = $checkInTime->gt($nineThirtyAM);
-                    $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+                // Don't show future days beyond today
+                $endDate = $realEndDate->gt($today) ? $today : $realEndDate;
 
-                    $status = 'Present';
-                    if ($isLate && $isEarlyLeave) {
-                        $status = 'Late & Early Leave';
-                    } elseif ($isLate) {
-                        $status = 'Late';
-                    } elseif ($isEarlyLeave) {
-                        $status = 'Early Leave';
+                $attendanceData = [];
+
+                for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+                    $dateStr = $date->toDateString();
+                    $attendance = $attendances->get($dateStr);
+
+                    $status = '-';
+                    $checkIn = '-';
+                    $checkOut = '-';
+                    $hours = '-';
+                    $breakTime = '-';
+                    $attendanceId = null;
+                    $punchInRaw = null;
+                    $punchOutRaw = null;
+                    $punchInLat = null;
+                    $punchInLng = null;
+                    $punchOutLat = null;
+                    $punchOutLng = null;
+                    $deviceType = null;
+
+                    if ($attendance) {
+                        $attendanceId = $attendance->id;
+                        $punchInRaw = $attendance->punch_in;
+                        $punchOutRaw = $attendance->punch_out;
+                        $punchInLat = $attendance->punch_in_lat;
+                        $punchInLng = $attendance->punch_in_lng;
+                        $punchOutLat = $attendance->punch_out_lat;
+                        $punchOutLng = $attendance->punch_out_lng;
+                        $deviceType = $attendance->device_type;
+
+                        $checkInTime = Carbon::parse($attendance->punch_in);
+                        $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
+                        $nineThirtyAM = Carbon::parse($dateString . ' 09:30:00');
+                        $sixPM = Carbon::parse($dateString . ' 18:00:00');
+
+                        $isLate = $checkInTime->gt($nineThirtyAM);
+                        $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+
+                        $status = 'Present';
+                        if ($isLate && $isEarlyLeave) {
+                            $status = 'Late & Early Leave';
+                        } elseif ($isLate) {
+                            $status = 'Late';
+                        } elseif ($isEarlyLeave) {
+                            $status = 'Early Leave';
+                        }
+
+                        $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-';
+                        $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-';
+                        $hours = floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm';
+                        $breakTime = floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm';
+                    } else {
+                        // Check if it's a Saturday or Sunday
+                        if ($date->isSaturday() || $date->isSunday()) {
+                            $status = 'OFF';
+                        } else {
+                            // Check for Leaves
+                            $isOnLeave = $leaves->filter(function ($leave) use ($dateStr) {
+                                return $dateStr >= $leave->from_date && $dateStr <= $leave->to_date;
+                            })->first();
+
+                            if ($isOnLeave) {
+                                $status = 'Leave';
+                            } elseif ($date->lt($today)) {
+                                $status = 'Absent';
+                            }
+                        }
                     }
 
-                    if ($attendance->status === 'punched_in' || $attendance->status === 'on_break') {
-                        // Status is already tracked
-                    }
-
-                    return [
-                        'id' => $attendance->id,
-                        'date' => $attendance->date,
-                        'check_in' => $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-',
-                        'check_out' => $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-',
+                    $attendanceData[] = [
+                        'id' => $attendanceId ?? $dateStr,
+                        'date' => $dateStr,
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut,
                         'status' => $status,
-                        'hours' => floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm',
-                        'total_worked_minutes' => $attendance->total_worked_minutes,
-                        'break_time' => floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm',
-                        'attendance_id' => $attendance->id,
-                        'punch_in_raw' => $attendance->punch_in,
-                        'punch_out_raw' => $attendance->punch_out,
-                        'punch_in_lat' => $attendance->punch_in_lat,
-                        'punch_in_lng' => $attendance->punch_in_lng,
-                        'punch_out_lat' => $attendance->punch_out_lat,
-                        'punch_out_lng' => $attendance->punch_out_lng,
-                        'device_type' => $attendance->device_type,
+                        'hours' => $hours,
+                        'break_time' => $breakTime,
+                        'attendance_id' => $attendanceId,
+                        'punch_in_raw' => $punchInRaw,
+                        'punch_out_raw' => $punchOutRaw,
+                        'punch_in_lat' => $punchInLat,
+                        'punch_in_lng' => $punchInLng,
+                        'punch_out_lat' => $punchOutLat,
+                        'punch_out_lng' => $punchOutLng,
+                        'device_type' => $deviceType,
                     ];
-                });
+                }
 
-                $leaves = Leave::where('user_id', $userId)
-                    ->where('status', 'approved')
-                    ->where(function ($query) use ($month) {
-                        $query->whereBetween('from_date', [$month->startOfMonth()->toDateString(), $month->endOfMonth()->toDateString()])
-                            ->orWhereBetween('to_date', [$month->startOfMonth()->toDateString(), $month->endOfMonth()->toDateString()]);
-                    })
-                    ->get();
+                // Reverse to show most recent first (like it was before)
+                $attendanceData = array_reverse($attendanceData);
 
                 $settings = \App\Models\Setting::all()->pluck('value', 'key');
 
