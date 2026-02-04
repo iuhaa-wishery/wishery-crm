@@ -398,6 +398,117 @@ class AttendanceController extends Controller
 
         return back()->with('success', 'Attendance updated successfully.');
     }
+    public function userIndex(Request $request)
+    {
+        $userId = auth()->id();
+        $monthStr = $request->input('month', Carbon::now()->format('Y-m'));
+        try {
+            $month = Carbon::parse($monthStr);
+        } catch (\Exception $e) {
+            $month = Carbon::now();
+        }
+
+        // Get all attendance records for the month
+        $attendances = Attendance::where('user_id', $userId)
+            ->whereYear('date', $month->year)
+            ->whereMonth('date', $month->month)
+            ->get()
+            ->keyBy(function ($item) {
+                return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
+            });
+
+        // Get approved leaves for the month
+        $leaves = \App\Models\Leave::where('user_id', $userId)
+            ->where('status', 'approved')
+            ->where(function ($query) use ($month) {
+                $query->whereBetween('from_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()])
+                    ->orWhereBetween('to_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()]);
+            })
+            ->get();
+
+        $totalMonthlyMinutes = $attendances->sum('total_worked_minutes');
+
+        // Generate all dates for the month
+        $startDate = $month->copy()->startOfMonth();
+        $realEndDate = $month->copy()->endOfMonth();
+        $today = Carbon::today();
+
+        // Don't show future days beyond today
+        $endDate = $realEndDate->gt($today) ? $today : $realEndDate;
+
+        $attendanceData = [];
+
+        for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+            $dateStr = $date->toDateString();
+            $attendance = $attendances->get($dateStr);
+
+            $status = '-';
+            $checkIn = '-';
+            $checkOut = '-';
+            $hours = '-';
+            $breakTime = '-';
+            $attendanceId = null;
+
+            if ($attendance) {
+                $attendanceId = $attendance->id;
+                $checkInTime = Carbon::parse($attendance->punch_in);
+                $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
+                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:00');
+                $sixPM = Carbon::parse($dateString . ' 18:00:00');
+
+                $isLate = $checkInTime->gt($nineThirtyAM);
+                $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+
+                $status = 'Present';
+                if ($isLate && $isEarlyLeave) {
+                    $status = 'Late & Early Leave';
+                } elseif ($isLate) {
+                    $status = 'Late';
+                } elseif ($isEarlyLeave) {
+                    $status = 'Early Leave';
+                }
+
+                $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-';
+                $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-';
+                $hours = floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm';
+                $breakTime = floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm';
+            } else {
+                // Check if it's a Saturday or Sunday
+                if ($date->isSaturday() || $date->isSunday()) {
+                    $status = 'OFF';
+                } else {
+                    // Check for Leaves
+                    $isOnLeave = $leaves->filter(function ($leave) use ($dateStr) {
+                        return $dateStr >= $leave->from_date && $dateStr <= $leave->to_date;
+                    })->first();
+
+                    if ($isOnLeave) {
+                        $status = 'Leave';
+                    } elseif ($date->lt($today)) {
+                        $status = 'Absent';
+                    }
+                }
+            }
+
+            $attendanceData[] = [
+                'id' => $attendanceId ?? $dateStr,
+                'date' => $dateStr,
+                'check_in' => $checkIn,
+                'check_out' => $checkOut,
+                'status' => $status,
+                'hours' => $hours,
+                'break_time' => $breakTime,
+            ];
+        }
+
+        return Inertia::render('User/Attendance/Index', [
+            'attendanceData' => $attendanceData,
+            'totalMonthlyMinutes' => $totalMonthlyMinutes,
+            'filters' => [
+                'month' => $monthStr,
+            ],
+        ]);
+    }
     public function report(Request $request)
     {
         $userId = $request->input('user_id');

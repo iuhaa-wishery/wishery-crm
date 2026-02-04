@@ -82,6 +82,7 @@ Route::middleware(['auth'])->group(function () {
     // -------------------------
     // ✅ ATTENDANCE ROUTES
     // -------------------------
+    Route::get('/attendance', [App\Http\Controllers\AttendanceController::class, 'userIndex'])->name('attendance.index');
     Route::get('/attendance/status', [App\Http\Controllers\AttendanceController::class, 'status'])->name('attendance.status');
     Route::post('/attendance/punch-in', [App\Http\Controllers\AttendanceController::class, 'punchIn'])->name('attendance.punchIn');
     Route::post('/attendance/punch-out', [App\Http\Controllers\AttendanceController::class, 'punchOut'])->name('attendance.punchOut');

@@ -7,6 +7,7 @@ import {
     FaHome,
     FaTasks,
     FaFolder,
+    FaClock,
 } from "react-icons/fa";
 import AttendanceWidget from "@/Components/AttendanceWidget";
 import toast, { Toaster } from "react-hot-toast";
@@ -70,6 +71,14 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaHome className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Dashboard</span>
+                    </Link>
+
+                    <Link
+                        href={route("attendance.index")}
+                        className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
+                    >
+                        <FaClock className="min-w-[20px]" />
+                        <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Attendance</span>
                     </Link>
 
                     <Link
