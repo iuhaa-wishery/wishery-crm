@@ -9,7 +9,7 @@ import {
     FaFolder,
     FaClock,
 } from "react-icons/fa";
-import AttendanceWidget from "@/Components/AttendanceWidget";
+
 import toast, { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 

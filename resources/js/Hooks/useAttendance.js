@@ -62,6 +62,16 @@ export default function useAttendance() {
         return () => clearTimeout(timeout);
     }, [fetchStatus]);
 
+    // Background Sync & Keep-alive (Every 1 minute)
+    useEffect(() => {
+        const syncInterval = setInterval(() => {
+            if (status !== 'loading') {
+                fetchStatus();
+            }
+        }, 60000);
+        return () => clearInterval(syncInterval);
+    }, [fetchStatus, status]);
+
     useEffect(() => {
         const interval = setInterval(() => {
             if (status === 'punched_in') {
@@ -88,8 +98,22 @@ export default function useAttendance() {
             router.post(url, data, {
                 preserveScroll: true,
                 onSuccess: () => fetchStatus(),
+                onError: (errors) => {
+                    console.error("Action failed", errors);
+                },
                 onFinish: () => setProcessing(false),
             });
+        };
+
+        const handlePageExpired = (error) => {
+            if (error.response?.status === 419) {
+                if (confirm("Your session has expired or the page is out of date. Would you like to refresh?")) {
+                    window.location.reload();
+                }
+            } else {
+                alert("Something went wrong. Please try again.");
+            }
+            setProcessing(false);
         };
 
         if (action === 'punch-in' || action === 'punch-out') {
@@ -104,7 +128,7 @@ export default function useAttendance() {
                     (pos) => executeRequest({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
                     (err) => {
                         console.error("Geo error", err);
-                        alert("Location error. Please ensure location services are enabled.");
+                        alert("Location error. Please ensure location services are enabled (System Settings > Privacy).");
                         setProcessing(false);
                     },
                     { enableHighAccuracy: true, timeout: 15000 }
@@ -114,6 +138,9 @@ export default function useAttendance() {
                 setProcessing(false);
             }
         } else {
+            // For simple actions (break), use axios first to check session if needed, 
+            // but router.post is standard for Inertia.
+            // If it fails with 419, Inertia usually handles it, but we can be explicit.
             executeRequest();
         }
     };
