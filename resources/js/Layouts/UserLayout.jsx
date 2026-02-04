@@ -126,9 +126,6 @@ export default function UserLayout({ children, title }) {
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-4">
-                        <div className="hidden sm:block">
-                            <AttendanceWidget />
-                        </div>
                         <div className="relative">
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
@@ -177,8 +174,8 @@ export default function UserLayout({ children, title }) {
                 <main className="p-6 overflow-y-auto flex-1">
                     {children}
                 </main>
-            </div>
+            </div >
             <Toaster position="top-right" />
-        </div>
+        </div >
     );
 }
