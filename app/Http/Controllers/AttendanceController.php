@@ -162,8 +162,8 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
-        $users = \App\Models\User::where('role', '!=', 'admin')->orderBy('name')->get();
-        $filters = $request->only(['date', 'month', 'user_id']);
+        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->orderBy('name')->get();
+        $filters = $request->only(['date', 'month', 'user_id', 'display']);
 
         // Mode 1: Monthly View (Month selected OR no date selected)
         if ($request->filled('month') || !$request->filled('date')) {
