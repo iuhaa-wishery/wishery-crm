@@ -11,6 +11,7 @@ import {
   FaClock,
   FaFileAlt,
   FaCog,
+  FaComments,
 } from "react-icons/fa";
 
 import { Toaster, toast } from "react-hot-toast";
@@ -129,6 +130,14 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             >
               <FaProjectDiagram className="min-w-[20px]" />
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Drive</span>
+            </Link>
+
+            <Link
+              href={route("chat.index")}
+              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+            >
+              <FaComments className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
             </Link>
 
             {auth.user.role === 'admin' && (

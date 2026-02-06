@@ -8,6 +8,7 @@ import {
     FaTasks,
     FaFolder,
     FaClock,
+    FaComments,
 } from "react-icons/fa";
 
 import toast, { Toaster } from "react-hot-toast";
@@ -103,6 +104,13 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaFolder className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Drive</span>
+                    </Link>
+                    <Link
+                        href={route("chat.index")}
+                        className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
+                    >
+                        <FaComments className="min-w-[20px]" />
+                        <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
                     </Link>
                 </nav>
             </aside>
