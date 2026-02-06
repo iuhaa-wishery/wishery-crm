@@ -90,6 +90,11 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Projects</span>
             </Link>
 
+            <Link href={route("admin.tasks.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
+              <FaTasks className="min-w-[20px]" />
+              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Tasks</span>
+            </Link>
+
             {auth.user.role === 'admin' && (
               <>
                 <Link href={route("admin.users.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
@@ -101,7 +106,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
                   href={route("admin.leaves.index")}
                   className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
                 >
-                  <FaTasks className="min-w-[20px]" />
+                  <FaFileAlt className="min-w-[20px]" />
                   <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
                 </Link>
 

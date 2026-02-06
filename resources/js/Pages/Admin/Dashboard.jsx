@@ -1,6 +1,6 @@
 import React from "react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
 import {
   BarChart3,
   Briefcase,
@@ -20,7 +20,10 @@ export default function Dashboard({
   recentProjects,
   recentTasks
 }) {
-  const statCards = [
+  const { auth } = usePage().props;
+  const isManager = auth.user?.role === 'manager';
+
+  const allStatCards = [
     {
       label: "Total Projects",
       value: stats.total_projects,
@@ -43,7 +46,8 @@ export default function Dashboard({
       icon: Users,
       color: "bg-green-500",
       textColor: "text-green-600",
-      bgColor: "bg-green-50"
+      bgColor: "bg-green-50",
+      adminOnly: true
     },
     {
       label: "Pending Leaves",
@@ -51,9 +55,14 @@ export default function Dashboard({
       icon: Clock,
       color: "bg-orange-500",
       textColor: "text-orange-600",
-      bgColor: "bg-orange-50"
+      bgColor: "bg-orange-50",
+      adminOnly: true
     },
   ];
+
+  const statCards = isManager
+    ? allStatCards.filter(card => !card.adminOnly)
+    : allStatCards;
 
   const getStatusColor = (status) => {
     const s = status?.toLowerCase();
@@ -87,7 +96,7 @@ export default function Dashboard({
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isManager ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} gap-6`}>
         {statCards.map((card, index) => (
           <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
             <div className="flex items-center justify-between">

@@ -17,8 +17,8 @@ class DashboardController extends Controller
         $stats = [
             'total_projects' => Project::count(),
             'total_tasks' => Task::count(),
-            'total_users' => User::where('role', 'user')->count(),
-            'pending_leaves' => Leave::where('status', 'pending')->count(),
+            'total_users' => auth()->user()->role === 'admin' ? User::where('role', 'user')->count() : 0,
+            'pending_leaves' => auth()->user()->role === 'admin' ? Leave::where('status', 'pending')->count() : 0,
         ];
 
         $projectStatusStats = Project::selectRaw('status, count(*) as count')
