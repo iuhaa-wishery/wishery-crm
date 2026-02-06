@@ -90,14 +90,6 @@ export default function UserLayout({ children, title }) {
                     </Link>
 
                     <Link
-                        href={route("tasks.index")}
-                        className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
-                    >
-                        <FaTasks className="min-w-[20px]" />
-                        <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Tasks</span>
-                    </Link>
-
-                    <Link
                         href={route("leave.index")}
                         className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
                     >
