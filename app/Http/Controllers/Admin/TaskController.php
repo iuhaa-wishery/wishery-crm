@@ -93,7 +93,8 @@ class TaskController extends Controller
             ->with('assignees') // Eager load the assignees
             ->get();
 
-        return Inertia::location(route('admin.projects.show', $validated['project_id'], [
+        return Inertia::location(route('admin.projects.show', [
+            'project' => $validated['project_id'],
             'tasks' => $updatedTasks,
         ]));
 
@@ -148,7 +149,8 @@ class TaskController extends Controller
             ->get();
 
         // Send the updated tasks back to the frontend to refresh the Kanban board
-        return Inertia::location(route('admin.projects.show', $validated['project_id'], [
+        return Inertia::location(route('admin.projects.show', [
+            'project' => $validated['project_id'],
             'tasks' => $updatedTasks,
         ]));
 
@@ -263,7 +265,7 @@ class TaskController extends Controller
         $comment = Comment::findOrFail($id);
 
         // Authorization check (already inside admin middleware group, but good to be explicit)
-        if (auth()->user()->role !== 'admin') {
+        if (!in_array(auth()->user()->role, ['admin', 'manager'])) {
             abort(403, 'Unauthorized.');
         }
 

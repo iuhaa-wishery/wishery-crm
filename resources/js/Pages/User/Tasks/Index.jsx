@@ -205,9 +205,15 @@ export default function UserTasks() {
   };
 
   const grouped = statusOrder.reduce((acc, key) => {
+    const priorityMap = { high: 1, medium: 2, low: 3 };
     acc[key] = taskList
       .filter((t) => (t.status || "").toLowerCase() === key)
-      .sort((a, b) => Number(a.id) - Number(b.id));
+      .sort((a, b) => {
+        const pA = priorityMap[a.priority?.toLowerCase()] || 4;
+        const pB = priorityMap[b.priority?.toLowerCase()] || 4;
+        if (pA !== pB) return pA - pB;
+        return Number(b.id) - Number(a.id); // Secondary sort by latest ID
+      });
     return acc;
   }, {});
 
