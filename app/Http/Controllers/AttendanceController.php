@@ -385,7 +385,7 @@ class AttendanceController extends Controller
                 'punch_out_lng' => $attendance ? $attendance->punch_out_lng : null,
                 'device_type' => $attendance ? $attendance->device_type : null,
             ];
-        });
+        })->values();
 
         return Inertia::render('Admin/Attendance/Index', [
             'attendanceData' => $attendanceData,
