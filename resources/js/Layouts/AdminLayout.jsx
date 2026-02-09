@@ -13,6 +13,7 @@ import {
   FaCog,
   FaComments,
 } from "react-icons/fa";
+import NotificationDropdown from "@/Components/NotificationDropdown";
 
 import { Toaster, toast } from "react-hot-toast";
 
@@ -177,6 +178,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
+              <NotificationDropdown />
               <Link href={route('profile.edit')} className="flex items-center gap-2 hover:bg-gray-50 p-1 px-2 rounded-lg transition shrink-0 max-w-[150px] md:max-w-none">
                 {auth.user.image_url ? (
                   <img
