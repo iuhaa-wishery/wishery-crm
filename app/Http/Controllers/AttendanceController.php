@@ -165,8 +165,8 @@ class AttendanceController extends Controller
         $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->orderBy('name')->get();
         $filters = $request->only(['date', 'month', 'user_id', 'display']);
 
-        // Mode 1: Monthly View (Month selected OR no date selected)
-        if ($request->filled('month') || !$request->filled('date')) {
+        // Mode 1: Monthly View (Month selected OR no date selected OR Calendar Display forced)
+        if ($request->filled('month') || !$request->filled('date') || $request->input('display') === 'calendar') {
             $monthStr = $request->input('month', Carbon::now()->format('Y-m'));
             $month = Carbon::parse($monthStr);
 
