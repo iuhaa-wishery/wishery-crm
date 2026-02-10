@@ -16,6 +16,20 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
     const [editingAttendance, setEditingAttendance] = useState(null);
     const [viewingBreaks, setViewingBreaks] = useState(null); // For break history modal
 
+    // Auto-refresh every 60 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // Only reload if we are in daily view for today, or just general reload
+            // router.reload preserves state like viewingBreaks modal open
+            router.reload({
+                preserveScroll: true,
+                preserveState: true,
+                only: ['attendanceData'],
+            });
+        }, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
     // Update displayMode when filters.display changes from server
     useEffect(() => {
         if (filters.display) {
