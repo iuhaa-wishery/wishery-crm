@@ -154,6 +154,11 @@ Route::middleware(['auth', 'is_admin'])
         // -------------------------
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+
+        // -------------------------
+        // ✅ CONTENT CALENDAR ROUTES
+        // -------------------------
+        Route::resource('content-calendar', \App\Http\Controllers\ContentCalendarController::class);
     });
 
 

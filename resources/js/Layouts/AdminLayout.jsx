@@ -141,6 +141,16 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
             </Link>
 
+            {(auth.user.role === 'admin' || auth.user.role === 'manager') && (
+              <Link
+                href={route("admin.content-calendar.index")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              >
+                <FaTasks className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Content Calendar</span>
+              </Link>
+            )}
+
             {auth.user.role === 'admin' && (
               <Link
                 href={route("admin.settings.index")}

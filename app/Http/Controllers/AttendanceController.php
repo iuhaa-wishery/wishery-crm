@@ -18,6 +18,7 @@ class AttendanceController extends Controller
 
         $attendances = Attendance::where('user_id', $user_id)
             ->where('date', $today)
+            ->with('breaks')
             ->get();
 
         $latestAttendance = $attendances->last();
@@ -128,8 +129,13 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance) {
+            // Create a new break record
+            \App\Models\AttendanceBreak::create([
+                'attendance_id' => $attendance->id,
+                'start_time' => Carbon::now(),
+            ]);
+
             $attendance->update([
-                'break_start' => Carbon::now(),
                 'status' => 'on_break',
             ]);
         }
@@ -145,16 +151,38 @@ class AttendanceController extends Controller
             ->latest()
             ->first();
 
-        if ($attendance && $attendance->break_start) {
-            $breakStart = Carbon::parse($attendance->break_start);
-            $breakDuration = $breakStart->diffInMinutes(Carbon::now());
+        if ($attendance) {
+            // Find the active break
+            $activeBreak = \App\Models\AttendanceBreak::where('attendance_id', $attendance->id)
+                ->whereNull('end_time')
+                ->latest()
+                ->first();
 
-            $attendance->update([
-                'break_start' => null, // Clear break start for next break
-                'break_end' => Carbon::now(), // Optional: keep last break end
-                'total_break_minutes' => $attendance->total_break_minutes + $breakDuration,
-                'status' => 'punched_in',
-            ]);
+            if ($activeBreak) {
+                $now = Carbon::now();
+                $breakStart = Carbon::parse($activeBreak->start_time);
+                $duration = $breakStart->diffInMinutes($now);
+
+                $activeBreak->update([
+                    'end_time' => $now,
+                    'total_minutes' => $duration,
+                ]);
+
+                // Update total break minutes on the parent attendance
+                $totalBreak = \App\Models\AttendanceBreak::where('attendance_id', $attendance->id)
+                    ->sum('total_minutes');
+
+                $attendance->update([
+                    'total_break_minutes' => $totalBreak,
+                    'status' => 'punched_in',
+                    // 'break_start' is no longer really needed on the parent, but we can keep it null for compatibility if needed
+                    // or just ignore it. The original code set it to null.
+                    'break_start' => null,
+                ]);
+            } else {
+                // Fallback if no break record found but status is on_break (legacy/error state)
+                $attendance->update(['status' => 'punched_in']);
+            }
         }
 
         return back();
@@ -187,6 +215,7 @@ class AttendanceController extends Controller
                 $attendances = Attendance::where('user_id', $userId)
                     ->whereYear('date', $month->year)
                     ->whereMonth('date', $month->month)
+                    ->with('breaks')
                     ->get()
                     ->keyBy(function ($item) {
                         return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
@@ -240,6 +269,28 @@ class AttendanceController extends Controller
                         $punchOutLat = $attendance->punch_out_lat;
                         $punchOutLng = $attendance->punch_out_lng;
                         $deviceType = $attendance->device_type;
+                        $dbStatus = $attendance->status;
+                        $breaks = $attendance->breaks;
+
+                        // Calculate Current Status
+                        $currentStatus = '-';
+                        if ($attendance->date instanceof \Carbon\Carbon ? $attendance->date->isToday() : $attendance->date === Carbon::today()->toDateString()) {
+                            if ($dbStatus === 'punched_in')
+                                $currentStatus = 'Working';
+                            elseif ($dbStatus === 'on_break')
+                                $currentStatus = 'Break';
+                            elseif ($dbStatus === 'punched_out')
+                                $currentStatus = 'Punched Out';
+                        } else {
+                            $currentStatus = $attendance->punch_out ? 'Punched Out' : '-';
+                        }
+
+                        // Calculate real-time break minutes including ongoing breaks
+                        $totalBreakMinutes = $attendance->total_break_minutes ?? 0;
+                        $activeBreak = $breaks->whereNull('end_time')->first();
+                        if ($activeBreak) {
+                            $totalBreakMinutes += Carbon::parse($activeBreak->start_time)->diffInMinutes(Carbon::now());
+                        }
 
                         $checkInTime = Carbon::parse($attendance->punch_in);
                         $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
@@ -261,7 +312,7 @@ class AttendanceController extends Controller
                         $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-';
                         $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-';
                         $hours = floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm';
-                        $breakTime = floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm';
+                        $breakTime = floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm';
                     } else {
                         // Check if it's a Saturday or Sunday
                         if ($date->isSaturday() || $date->isSunday()) {
@@ -296,6 +347,9 @@ class AttendanceController extends Controller
                         'punch_out_lat' => $punchOutLat,
                         'punch_out_lng' => $punchOutLng,
                         'device_type' => $deviceType,
+                        'db_status' => $dbStatus ?? null,
+                        'current_status' => $currentStatus,
+                        'breaks' => $breaks ?? [],
                     ];
                 }
 
@@ -327,15 +381,38 @@ class AttendanceController extends Controller
         }
 
         // Fetch attendances for the selected date
-        $attendances = Attendance::where('date', $date)->get()->keyBy('user_id');
+        $attendances = Attendance::where('date', $date)->with('breaks')->get()->keyBy('user_id');
 
         // Map users to their attendance and calculate status
-        $attendanceData = $filteredUsers->map(function ($user) use ($attendances) {
+        $attendanceData = $filteredUsers->map(function ($user) use ($attendances, $date) {
             $attendance = $attendances->get($user->id);
             $status = 'Absent';
             $checkIn = '-';
             $checkOut = '-';
             $hours = '-';
+
+            $dbStatus = $attendance ? $attendance->status : null;
+            $breaks = $attendance ? $attendance->breaks : collect([]);
+
+            // Calculate Current Status
+            $currentStatus = '-';
+            if ($attendance && $date === Carbon::today()->toDateString()) {
+                if ($dbStatus === 'punched_in')
+                    $currentStatus = 'Working';
+                elseif ($dbStatus === 'on_break')
+                    $currentStatus = 'Break';
+                elseif ($dbStatus === 'punched_out')
+                    $currentStatus = 'Punched Out';
+            } elseif ($attendance) {
+                $currentStatus = $attendance->punch_out ? 'Punched Out' : '-';
+            }
+
+            // Real-time break calculation
+            $totalBreakMinutes = $attendance ? ($attendance->total_break_minutes ?? 0) : 0;
+            $activeBreak = $breaks->whereNull('end_time')->first();
+            if ($activeBreak) {
+                $totalBreakMinutes += Carbon::parse($activeBreak->start_time)->diffInMinutes(Carbon::now());
+            }
 
             if ($attendance) {
                 $checkInTime = Carbon::parse($attendance->punch_in);
@@ -375,7 +452,7 @@ class AttendanceController extends Controller
                 'check_out' => $checkOut,
                 'status' => $status,
                 'hours' => $hours,
-                'break_time' => $attendance ? floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm' : '-',
+                'break_time' => floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm',
                 'attendance_id' => $attendance ? $attendance->id : null,
                 'punch_in_raw' => $attendance ? $attendance->punch_in : null,
                 'punch_out_raw' => $attendance ? $attendance->punch_out : null,
@@ -384,6 +461,9 @@ class AttendanceController extends Controller
                 'punch_out_lat' => $attendance ? $attendance->punch_out_lat : null,
                 'punch_out_lng' => $attendance ? $attendance->punch_out_lng : null,
                 'device_type' => $attendance ? $attendance->device_type : null,
+                'db_status' => $dbStatus,
+                'current_status' => $currentStatus,
+                'breaks' => $breaks,
             ];
         })->values();
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor } from 'lucide-react';
+import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor, Info, X } from 'lucide-react';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -14,6 +14,7 @@ import CalendarView from '@/Components/CalendarView';
 export default function Index({ attendanceData, filters, users, viewType, totalMonthlyMinutes, selectedUser, leaves, settings }) {
     const [displayMode, setDisplayMode] = useState(filters.display || 'table');
     const [editingAttendance, setEditingAttendance] = useState(null);
+    const [viewingBreaks, setViewingBreaks] = useState(null); // For break history modal
 
     // Update displayMode when filters.display changes from server
     useEffect(() => {
@@ -246,6 +247,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check In</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check Out</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Current Status</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hours</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Break</th>
                                                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
@@ -276,11 +278,39 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                                 {record?.status}
                                                             </span>
                                                         </td>
+                                                        <td className="px-4 py-3 whitespace-nowrap">
+                                                            {record?.current_status === 'Working' ? (
+                                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                                                                    Working
+                                                                </span>
+                                                            ) : record?.current_status === 'Break' ? (
+                                                                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                                                                    Break
+                                                                </span>
+                                                            ) : record?.current_status === 'Punched Out' ? (
+                                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-wide">
+                                                                    Punched Out
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-gray-400 text-xs">-</span>
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             {record?.hours === '0h 0m' ? '--' : record?.hours}
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record?.break_time === '0h 0m' ? '--' : record?.break_time}
+                                                            <div className="flex items-center gap-2">
+                                                                {record?.break_time === '0h 0m' ? '--' : record?.break_time}
+                                                                {record?.breaks && record.breaks.length > 0 && (
+                                                                    <button
+                                                                        onClick={() => setViewingBreaks(record)}
+                                                                        className="text-blue-500 hover:text-blue-700 transition-colors"
+                                                                        title="View Break History"
+                                                                    >
+                                                                        <Info className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                                                             <div className="flex items-center gap-3">
@@ -334,7 +364,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={viewType === 'daily' ? 10 : 9} className="px-6 py-4 text-center text-gray-500">
+                                                    <td colSpan={viewType === 'daily' ? 11 : 10} className="px-6 py-4 text-center text-gray-500">
                                                         No records found.
                                                     </td>
                                                 </tr>
@@ -398,6 +428,63 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                     </div>
                 </form>
             </Modal>
-        </AdminLayout>
+
+            {/* Break History Modal */}
+            <Modal show={!!viewingBreaks} onClose={() => setViewingBreaks(null)} maxWidth="md">
+                <div className="p-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold text-gray-900">
+                            Break History - {viewType === 'daily' ? viewingBreaks?.name : viewingBreaks && formatDate(viewingBreaks.date)}
+                        </h3>
+                        <button onClick={() => setViewingBreaks(null)} className="text-gray-400 hover:text-gray-500">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {viewingBreaks && viewingBreaks.breaks && viewingBreaks.breaks.length > 0 ? (
+                            viewingBreaks.breaks.slice().sort((a, b) => b.id - a.id).map((brk, index) => {
+                                const parseDate = (d) => {
+                                    if (!d) return null;
+                                    // Handle both "YYYY-MM-DD HH:MM:SS" and ISO formats
+                                    const s = d.toString().replace(/\s/, 'T');
+                                    return new Date(s);
+                                };
+                                const start = parseDate(brk.start_time);
+                                const end = parseDate(brk.end_time);
+
+                                return (
+                                    <div key={brk.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-800">
+                                                Break {viewingBreaks.breaks.length - index}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {start ? start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '??'} -
+                                                {end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ' Ongoing'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="px-2 py-1 bg-white text-gray-600 rounded-lg text-xs font-bold shadow-sm border border-gray-100">
+                                                {brk.total_minutes} min
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <p className="text-center text-gray-500 py-4">No breaks recorded.</p>
+                        )}
+
+                        {viewingBreaks && (
+                            <div className="flex justify-between items-center pt-4 border-t border-gray-100 mt-4">
+                                <span className="font-bold text-gray-900">Total Break Time</span>
+                                <span className="font-bold text-blue-600">{viewingBreaks.break_time}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </Modal>
+        </AdminLayout >
     );
 }

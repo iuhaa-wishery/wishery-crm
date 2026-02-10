@@ -28,12 +28,18 @@ export default function useAttendance() {
         if (attendanceData.status === 'punched_in') {
             const currentSession = now - punchIn;
             setTimer(Math.floor((totalWorkedMs + currentSession) / 1000));
+            const totalBreakMs = (attendanceData.total_break_minutes || 0) * 60 * 1000;
+            setBreakTimer(Math.floor(totalBreakMs / 1000));
         } else if (attendanceData.status === 'on_break') {
-            const breakStart = new Date(attendanceData.break_start.replace(/\s/, 'T')).getTime();
+            const activeBreak = (attendanceData.breaks || []).find(b => !b.end_time);
+            const breakStart = activeBreak ? parseSafariDate(activeBreak.start_time).getTime() : now;
+
             const currentSessionBeforeBreak = breakStart - punchIn;
             setTimer(Math.floor((totalWorkedMs + currentSessionBeforeBreak) / 1000));
+
             const currentBreakDuration = now - breakStart;
-            setBreakTimer(Math.floor(currentBreakDuration / 1000));
+            const previousBreaksMs = (attendanceData.total_break_minutes || 0) * 60 * 1000;
+            setBreakTimer(Math.floor((previousBreaksMs + currentBreakDuration) / 1000));
         } else if (attendanceData.status === 'punched_out') {
             setTimer(Math.floor(totalWorkedMs / 1000));
             const totalBreakMs = (attendanceData.total_break_minutes || 0) * 60 * 1000;
