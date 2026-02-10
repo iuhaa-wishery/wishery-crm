@@ -259,6 +259,9 @@ class AttendanceController extends Controller
                     $punchOutLat = null;
                     $punchOutLng = null;
                     $deviceType = null;
+                    $currentStatus = '-';
+                    $dbStatus = null;
+                    $breaks = [];
 
                     if ($attendance) {
                         $attendanceId = $attendance->id;
