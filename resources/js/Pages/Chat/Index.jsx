@@ -221,7 +221,7 @@ export default function ChatIndex() {
                                             </h4>
                                             <div className="flex flex-col items-end gap-1">
                                                 <span className="text-[10px] text-gray-400">
-                                                    {user.last_message ? moment(user.last_message.created_at).format('h:mm A') : ''}
+                                                    {user.last_message ? moment(user.last_message.created_at).format('MMM D, h:mm A') : ''}
                                                 </span>
                                                 {user.unread_count > 0 && (
                                                     <span className="flex items-center justify-center w-5 h-5 bg-primary-600 text-white text-[10px] rounded-full font-bold">
@@ -316,7 +316,7 @@ export default function ChatIndex() {
                                                     </a>
                                                 )}
                                                 <div className={`text-[9px] mt-1 ${msg.sender_id === currentUser.id ? 'text-primary-100' : 'text-gray-400'}`}>
-                                                    {moment(msg.created_at).format('h:mm A')}
+                                                    {moment(msg.created_at).format('MMM D, h:mm A')}
                                                 </div>
                                             </div>
                                         </div>
