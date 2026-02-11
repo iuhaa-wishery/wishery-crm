@@ -16,7 +16,7 @@ class CalendarController extends Controller
         $query = Task::with(['project', 'assignees']);
 
         // If not admin/manager, only show assigned tasks
-        if (!in_array($user->role, ['admin', 'manager'])) {
+        if (!in_array($user->role, ['admin', 'manager', 'editor'])) {
             $query->whereHas('assignees', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });

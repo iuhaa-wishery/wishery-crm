@@ -15,7 +15,7 @@ class IsAdmin
    */
   public function handle($request, Closure $next)
   {
-    if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'manager'])) {
+    if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'manager', 'editor'])) {
       abort(403);
     }
     return $next($request);

@@ -21,7 +21,7 @@ export default function Dashboard({
   recentTasks
 }) {
   const { auth } = usePage().props;
-  const isManager = auth.user?.role === 'manager';
+  const isManager = auth.user?.role === 'manager' || auth.user?.role === 'editor';
 
   const allStatCards = [
     {

@@ -22,7 +22,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::whereIn('role', ['user', 'manager'])->get();
+        $users = User::whereIn('role', ['user', 'manager', 'editor'])->get();
 
         return inertia('Admin/Users/Index', [
             'users' => $users
@@ -35,7 +35,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:user,manager',
+            'role' => 'required|in:user,manager,editor',
             'desktop_only' => 'boolean',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
@@ -66,7 +66,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:user,manager',
+            'role' => 'required|in:user,manager,editor',
             'desktop_only' => 'boolean',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);

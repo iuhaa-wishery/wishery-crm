@@ -108,7 +108,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Projects</span>
             </Link>
 
-            {auth.user.role === 'admin' && (
+            {(auth.user.role === 'admin' || auth.user.role === 'manager') && (
               <>
                 <Link href={route("admin.users.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
                   <FaUserCircle className="min-w-[20px]" />
@@ -171,7 +171,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               )}
             </Link>
 
-            {(auth.user.role === 'admin' || auth.user.role === 'manager') && (
+            {(auth.user.role === 'admin' || auth.user.role === 'manager' || auth.user.role === 'editor') && (
               <Link
                 href={route("admin.content-calendar.index")}
                 className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"

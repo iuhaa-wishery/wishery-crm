@@ -265,7 +265,7 @@ class TaskController extends Controller
         $comment = Comment::findOrFail($id);
 
         // Authorization check (already inside admin middleware group, but good to be explicit)
-        if (!in_array(auth()->user()->role, ['admin', 'manager'])) {
+        if (!in_array(auth()->user()->role, ['admin', 'manager', 'editor'])) {
             abort(403, 'Unauthorized.');
         }
 

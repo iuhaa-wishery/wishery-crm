@@ -346,6 +346,7 @@ export default function Index() {
                   >
                     <option value="user">User</option>
                     <option value="manager">Manager</option>
+                    <option value="editor">Editor</option>
                   </select>
                 </div>
 

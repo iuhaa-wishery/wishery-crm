@@ -13,7 +13,7 @@ class ContentCalendarController extends Controller
     public function index()
     {
         $user = auth()->user();
-        if (!in_array($user->role, ['admin', 'manager'])) {
+        if (!in_array($user->role, ['admin', 'manager', 'editor'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -24,14 +24,14 @@ class ContentCalendarController extends Controller
         return Inertia::render('Admin/ContentCalendar/Index', [
             'items' => $items,
             'projects' => Project::select('id', 'name')->get(),
-            'users' => User::whereNotIn('role', ['admin', 'manager'])->select('id', 'name', 'image')->get(),
+            'users' => User::whereNotIn('role', ['admin', 'manager', 'editor'])->select('id', 'name', 'image')->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        if (!in_array($user->role, ['admin', 'manager'])) {
+        if (!in_array($user->role, ['admin', 'manager', 'editor'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -64,7 +64,7 @@ class ContentCalendarController extends Controller
     public function update(Request $request, ContentCalendar $contentCalendar)
     {
         $user = auth()->user();
-        if (!in_array($user->role, ['admin', 'manager'])) {
+        if (!in_array($user->role, ['admin', 'manager', 'editor'])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -92,7 +92,7 @@ class ContentCalendarController extends Controller
     public function destroy(ContentCalendar $contentCalendar)
     {
         $user = auth()->user();
-        if (!in_array($user->role, ['admin', 'manager'])) {
+        if (!in_array($user->role, ['admin', 'manager', 'editor'])) {
             abort(403, 'Unauthorized action.');
         }
 
