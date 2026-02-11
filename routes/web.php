@@ -98,6 +98,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/chat/send', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
 
     Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications');
+    Route::get('/notifications/counts', [App\Http\Controllers\NotificationController::class, 'getCounts'])->name('notifications.counts');
+    Route::post('/notifications/mark-as-read/{id}', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
 });
 
 

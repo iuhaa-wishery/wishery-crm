@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Models\Leave;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
@@ -17,6 +18,12 @@ class NotificationController extends Controller
 
         $notifications = [];
 
+        // Get IDs of notifications this user has already "seen"
+        $seenIds = DB::table('notification_reads')
+            ->where('user_id', $user->id)
+            ->pluck('notification_id')
+            ->toArray();
+
         // 1. Unread Chat Messages
         $unreadMessages = Message::with('sender')
             ->where('receiver_id', $user->id)
@@ -25,8 +32,12 @@ class NotificationController extends Controller
             ->get();
 
         foreach ($unreadMessages as $msg) {
+            $notifId = 'msg_' . $msg->id;
+            if (in_array($notifId, $seenIds))
+                continue;
+
             $notifications[] = [
-                'id' => 'msg_' . $msg->id,
+                'id' => $notifId,
                 'type' => 'chat',
                 'title' => 'New message from ' . $msg->sender->name,
                 'message' => $msg->message,
@@ -45,8 +56,12 @@ class NotificationController extends Controller
                 ->get();
 
             foreach ($pendingLeaves as $leave) {
+                $notifId = 'leave_' . $leave->id;
+                if (in_array($notifId, $seenIds))
+                    continue;
+
                 $notifications[] = [
-                    'id' => 'leave_' . $leave->id,
+                    'id' => $notifId,
                     'type' => 'leave',
                     'title' => 'Leave Request: ' . $leave->user->name,
                     'message' => $leave->leave_type . ' from ' . $leave->from_date . ' to ' . $leave->to_date,
@@ -64,8 +79,12 @@ class NotificationController extends Controller
                 ->get();
 
             foreach ($updatedLeaves as $leave) {
+                $notifId = 'leave_' . $leave->id;
+                if (in_array($notifId, $seenIds))
+                    continue;
+
                 $notifications[] = [
-                    'id' => 'leave_' . $leave->id,
+                    'id' => $notifId,
                     'type' => 'leave_update',
                     'title' => 'Leave ' . ucfirst($leave->status),
                     'message' => 'Your ' . $leave->leave_type . ' request was ' . $leave->status,
@@ -83,5 +102,70 @@ class NotificationController extends Controller
             'notifications' => $notifications,
             'unread_count' => count($notifications)
         ]);
+    }
+
+    public function getCounts()
+    {
+        $user = Auth::user();
+        if (!$user)
+            return response()->json([], 401);
+
+        $unreadChats = Message::where('receiver_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        $pendingLeaves = 0;
+        $seenIds = DB::table('notification_reads')
+            ->where('user_id', $user->id)
+            ->pluck('notification_id')
+            ->toArray();
+
+        if (in_array($user->role, ['admin', 'manager'])) {
+            $leaves = Leave::where('status', 'pending')->get();
+            foreach ($leaves as $leave) {
+                if (!in_array('leave_' . $leave->id, $seenIds)) {
+                    $pendingLeaves++;
+                }
+            }
+        } else {
+            // For regular users, show count of recently updated leaves (approved/rejected)
+            $leaves = Leave::where('user_id', $user->id)
+                ->whereIn('status', ['approved', 'rejected'])
+                ->where('updated_at', '>', now()->subDays(3))
+                ->get();
+
+            foreach ($leaves as $leave) {
+                if (!in_array('leave_' . $leave->id, $seenIds)) {
+                    $pendingLeaves++;
+                }
+            }
+        }
+
+        return response()->json([
+            'unread_chats' => $unreadChats,
+            'pending_leaves' => $pendingLeaves,
+        ]);
+    }
+
+    public function markAsRead($id)
+    {
+        $user = Auth::user();
+        if (!$user)
+            return response()->json([], 401);
+
+        if (strpos($id, 'msg_') === 0) {
+            $msgId = str_replace('msg_', '', $id);
+            Message::where('id', $msgId)
+                ->where('receiver_id', $user->id)
+                ->update(['is_read' => true]);
+        }
+
+        // Track that this user has "read" this notification in the bell
+        DB::table('notification_reads')->updateOrInsert(
+            ['user_id' => $user->id, 'notification_id' => $id],
+            ['created_at' => now(), 'updated_at' => now()]
+        );
+
+        return response()->json(['status' => 'success']);
     }
 }

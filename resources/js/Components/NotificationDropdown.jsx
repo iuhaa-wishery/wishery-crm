@@ -21,7 +21,7 @@ export default function NotificationDropdown() {
 
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 10000); // Poll every 10s
+        const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
         return () => clearInterval(interval);
     }, []);
 
@@ -78,7 +78,16 @@ export default function NotificationDropdown() {
                                 <Link
                                     key={notif.id}
                                     href={notif.link}
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={async () => {
+                                        setIsOpen(false);
+                                        try {
+                                            await axios.post(route('notifications.markAsRead', notif.id));
+                                            setNotifications(prev => prev.filter(n => n.id !== notif.id));
+                                            setUnreadCount(prev => Math.max(0, prev - 1));
+                                        } catch (e) {
+                                            console.error("Error marking as read:", e);
+                                        }
+                                    }}
                                     className="flex items-start gap-3 p-4 hover:bg-blue-50/50 border-b border-gray-50 transition-colors group"
                                 >
                                     <div className="mt-1 w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-white transition-colors">

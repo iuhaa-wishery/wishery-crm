@@ -22,6 +22,22 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [sidebarCounts, setSidebarCounts] = useState({ unread_chats: 0, pending_leaves: 0 });
+
+  const fetchSidebarCounts = async () => {
+    try {
+      const response = await axios.get(route('notifications.counts'));
+      setSidebarCounts(response.data);
+    } catch (error) {
+      console.error("Error fetching sidebar counts:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSidebarCounts();
+    const interval = setInterval(fetchSidebarCounts, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-collapsed");
@@ -101,10 +117,17 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
 
                 <Link
                   href={route("admin.leaves.index")}
-                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                  className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
                 >
-                  <FaFileAlt className="min-w-[20px]" />
-                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
+                  <div className="flex items-center gap-3">
+                    <FaFileAlt className="min-w-[20px]" />
+                    <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
+                  </div>
+                  {sidebarCounts.pending_leaves > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                      {sidebarCounts.pending_leaves}
+                    </span>
+                  )}
                 </Link>
 
                 <Link
@@ -135,10 +158,17 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
 
             <Link
               href={route("chat.index")}
-              className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
             >
-              <FaComments className="min-w-[20px]" />
-              <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
+              <div className="flex items-center gap-3">
+                <FaComments className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
+              </div>
+              {sidebarCounts.unread_chats > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {sidebarCounts.unread_chats}
+                </span>
+              )}
             </Link>
 
             {(auth.user.role === 'admin' || auth.user.role === 'manager') && (
