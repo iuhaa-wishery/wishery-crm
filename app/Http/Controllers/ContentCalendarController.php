@@ -58,7 +58,7 @@ class ContentCalendarController extends Controller
         return Inertia::render('Admin/ContentCalendar/Index', [
             'items_data' => $items,
             'projects' => Project::select('id', 'name')->get(),
-            'users' => User::whereNotIn('role', ['admin', 'manager', 'editor'])->select('id', 'name', 'image')->get(),
+            'users' => User::whereNotIn('role', ['admin', 'manager'])->select('id', 'name', 'image')->get(),
             'filters' => $request->only(['project_id', 'month', 'year', 'user_id', 'date']),
             'is_month_generated' => $isMonthGenerated
         ]);
