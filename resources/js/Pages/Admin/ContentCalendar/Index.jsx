@@ -320,8 +320,8 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
             </div>
 
             {/* Courses List Style Table - High Visibility Edition */}
-            <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden font-sans ring-1 ring-gray-50">
-                <div className="overflow-x-auto w-full">
+            <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 font-sans ring-1 ring-gray-100">
+                <div className="overflow-x-auto overflow-y-hidden w-full custom-scrollbar-h">
                     <table className="w-full text-left border-collapse min-w-[1400px]">
                         <thead className="bg-[#fcfcfd] border-b border-gray-100">
                             <tr>
@@ -583,6 +583,12 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #eef2f6; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #dde5ed; }
+
+                .custom-scrollbar-h { overflow-y: hidden !important; }
+                .custom-scrollbar-h::-webkit-scrollbar { height: 6px; }
+                .custom-scrollbar-h::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
                 input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: opacity(0.2); }
                 textarea::-webkit-scrollbar { display: none; }
                 textarea { scrollbar-width: none; }
