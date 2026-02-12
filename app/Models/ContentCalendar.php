@@ -15,10 +15,11 @@ class ContentCalendar extends Model
         'creative_uid',
         'date',
         'creative_type',
-        'status',
+        'updation',
         'drive_link',
         'thumbnail_link',
-        'caption',
+        'creative_caption',
+        'is_additional',
     ];
 
     public function project()

@@ -160,6 +160,10 @@ Route::middleware(['auth', 'is_admin'])
         // -------------------------
         // ✅ CONTENT CALENDAR ROUTES
         // -------------------------
+        Route::post('content-calendar/add-row', [\App\Http\Controllers\ContentCalendarController::class, 'addRow'])->name('content-calendar.add-row');
+        Route::post('content-calendar/clear-row/{contentCalendar}', [\App\Http\Controllers\ContentCalendarController::class, 'clearRow'])->name('content-calendar.clear-row');
+        Route::post('content-calendar/generate-month', [\App\Http\Controllers\ContentCalendarController::class, 'generateMonth'])->name('content-calendar.generate-month');
+        Route::patch('content-calendar/update-cell/{contentCalendar}', [\App\Http\Controllers\ContentCalendarController::class, 'updateCell'])->name('content-calendar.update-cell');
         Route::resource('content-calendar', \App\Http\Controllers\ContentCalendarController::class);
     });
 

@@ -40,10 +40,10 @@ export default function MonthPicker({ value, onChange, className = "" }) {
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full flex items-center justify-between gap-3 px-4 h-11 bg-gray-50/50 border border-gray-200 rounded-xl shadow-sm text-[14px] font-semibold text-gray-800 hover:bg-white hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-sans"
             >
-                <span className={value ? 'text-gray-900' : 'text-gray-500'}>{displayValue}</span>
-                <Calendar className="w-4 h-4 text-gray-400" />
+                <span className={value ? 'text-gray-900' : 'text-gray-400'}>{displayValue}</span>
+                <Calendar className="w-4 h-4 text-blue-500" />
             </button>
 
             {isOpen && (
@@ -75,8 +75,8 @@ export default function MonthPicker({ value, onChange, className = "" }) {
                                     type="button"
                                     onClick={() => handleMonthClick(index)}
                                     className={`py-3 text-sm font-medium rounded-lg transition-all ${isSelected
-                                            ? 'bg-blue-600 text-white shadow-md'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                         }`}
                                 >
                                     {month}
