@@ -117,7 +117,7 @@ export default function UserLayout({ children, title }) {
                             <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
                         </div>
                         {sidebarCounts.pending_leaves > 0 && (
-                            <span className={`${user.role === 'admin' || user.role === 'manager' ? 'bg-red-500' : 'bg-green-500'} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
+                            <span className={`${user.role === 'admin' ? 'bg-red-500' : 'bg-green-500'} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
                                 {sidebarCounts.pending_leaves}
                             </span>
                         )}

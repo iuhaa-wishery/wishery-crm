@@ -115,11 +115,35 @@ Route::middleware(['auth', 'is_admin'])
             return Inertia::render('Admin/Drive/Index');
         })->name('drive.index');
 
-        Route::patch('users/toggle/{user}', [AdminUserController::class, 'toggle'])
-            ->name('users.toggle');
-        Route::patch('users/toggle-desktop/{user}', [AdminUserController::class, 'toggleDesktop'])
-            ->name('users.toggle.desktop');
-        Route::resource('users', AdminUserController::class);
+        Route::middleware(['is_super_admin'])->group(function () {
+            Route::patch('users/toggle/{user}', [AdminUserController::class, 'toggle'])
+                ->name('users.toggle');
+            Route::patch('users/toggle-desktop/{user}', [AdminUserController::class, 'toggleDesktop'])
+                ->name('users.toggle.desktop');
+            Route::resource('users', AdminUserController::class);
+
+            // -------------------------
+            // ✅ ADMIN LEAVE ROUTES
+            // -------------------------
+            Route::get('leaves', [AdminLeaveController::class, 'index'])->name('leaves.index');
+            Route::get('leaves/{id}', [AdminLeaveController::class, 'show'])->name('leaves.show');
+            Route::post('leaves/{id}/approve', [AdminLeaveController::class, 'approve'])->name('leaves.approve');
+            Route::post('leaves/{id}/reject', [AdminLeaveController::class, 'reject'])->name('leaves.reject');
+
+            // -------------------------
+            // ✅ ATTENDANCE ROUTES
+            // -------------------------
+            Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+            Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+            Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
+            Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+
+            // -------------------------
+            // ✅ SETTINGS ROUTES
+            // -------------------------
+            Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+            Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+        });
 
         Route::resource('projects', AdminProjectController::class);
         Route::post('projects/{project}/tasks/reorder', [AdminProjectController::class, 'reorder'])
@@ -134,28 +158,6 @@ Route::middleware(['auth', 'is_admin'])
         // Temporary Google Auth Routes
         Route::get('/google-auth', [GoogleDriveController::class, 'generateAuthUrl'])->name('google.auth');
         Route::get('/google-callback', [GoogleDriveController::class, 'handleCallback'])->name('google.callback');
-
-        // -------------------------
-        // ✅ ADMIN LEAVE ROUTES
-        // -------------------------
-        Route::get('leaves', [AdminLeaveController::class, 'index'])->name('leaves.index');
-        Route::get('leaves/{id}', [AdminLeaveController::class, 'show'])->name('leaves.show');
-        Route::post('leaves/{id}/approve', [AdminLeaveController::class, 'approve'])->name('leaves.approve');
-        Route::post('leaves/{id}/reject', [AdminLeaveController::class, 'reject'])->name('leaves.reject');
-
-        // -------------------------
-        // ✅ ATTENDANCE ROUTES
-        // -------------------------
-        Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
-        Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
-        Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
-        Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
-
-        // -------------------------
-        // ✅ SETTINGS ROUTES
-        // -------------------------
-        Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
-        Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
         // -------------------------
         // ✅ CONTENT CALENDAR ROUTES
