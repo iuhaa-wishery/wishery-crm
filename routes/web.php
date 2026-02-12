@@ -100,6 +100,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications');
     Route::get('/notifications/counts', [App\Http\Controllers\NotificationController::class, 'getCounts'])->name('notifications.counts');
     Route::post('/notifications/mark-as-read/{id}', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+
+    // -------------------------
+    // ✅ USER CONTENT CALENDAR ROUTES
+    // -------------------------
+    Route::get('/content-calendar', [\App\Http\Controllers\User\ContentCalendarController::class, 'index'])->name('content-calendar.index');
+    Route::patch('/content-calendar/update-cell/{contentCalendar}', [\App\Http\Controllers\User\ContentCalendarController::class, 'updateCell'])->name('content-calendar.update-cell');
 });
 
 
