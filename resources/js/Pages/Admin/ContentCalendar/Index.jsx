@@ -368,16 +368,22 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                         </td>
 
                                         <td className="py-5 px-4">
-                                            <select
-                                                value={item.project_id || ''}
-                                                onChange={(e) => onCellChange(item.id, 'project_id', e.target.value)}
-                                                className="text-[14px] font-bold text-gray-800 bg-transparent border-0 p-1 focus:ring-2 focus:ring-blue-500/20 rounded-xl w-full cursor-pointer hover:bg-gray-50 transition-colors"
-                                            >
-                                                <option value="">Select Project</option>
-                                                {projects.map(p => (
-                                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                                ))}
-                                            </select>
+                                            {selectedProject ? (
+                                                <div className="text-[14px] font-bold text-gray-800 px-1">
+                                                    {projects.find(p => String(p.id) === String(selectedProject))?.name || 'Unknown Project'}
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={item.project_id || ''}
+                                                    onChange={(e) => onCellChange(item.id, 'project_id', e.target.value)}
+                                                    className="text-[14px] font-bold text-gray-800 bg-transparent border-0 p-1 focus:ring-2 focus:ring-blue-500/20 rounded-xl w-full cursor-pointer hover:bg-gray-50 transition-colors"
+                                                >
+                                                    <option value="">Select Project</option>
+                                                    {projects.map(p => (
+                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                    ))}
+                                                </select>
+                                            )}
                                         </td>
 
                                         <td className="py-5 px-4">
