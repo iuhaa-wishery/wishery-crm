@@ -343,7 +343,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                 const isSun = isSunday(item.date);
                                 return (
                                     <tr key={item.id} className="group hover:bg-gray-50/30 transition-all relative">
-                                        <td className="py-8 px-4 pl-10 text-[14px] font-bold text-gray-300 relative">
+                                        <td className="py-5 px-4 pl-10 text-[14px] font-bold text-gray-300 relative">
                                             {String(idx + 1).padStart(2, '0')}
                                             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all z-10">
                                                 <button onClick={() => handleAddRowContextual(item.date)} className="w-8 h-8 bg-blue-600 text-white rounded-full shadow-xl hover:scale-110 active:scale-90 transition-all flex items-center justify-center">
@@ -352,13 +352,13 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                             </div>
                                         </td>
 
-                                        <td className="py-8 px-4">
+                                        <td className="py-5 px-4">
                                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-[13px] shadow-sm ring-1 ring-inset ${isSun ? 'bg-red-50 text-red-600 ring-red-100' : 'bg-gray-50 text-gray-600 ring-gray-200/50'}`}>
                                                 {item.creative_uid.split('-')[1]}
                                             </div>
                                         </td>
 
-                                        <td className="py-8 px-4">
+                                        <td className="py-5 px-4">
                                             <div className={`inline-flex flex-col gap-0.5`}>
                                                 <span className={`text-[15px] font-bold tracking-tight ${isSun ? 'text-red-600' : 'text-gray-900'}`}>
                                                     {new Date(item.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
@@ -367,7 +367,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                             </div>
                                         </td>
 
-                                        <td className="py-8 px-4">
+                                        <td className="py-5 px-4">
                                             <select
                                                 value={item.project_id || ''}
                                                 onChange={(e) => onCellChange(item.id, 'project_id', e.target.value)}
@@ -380,7 +380,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                             </select>
                                         </td>
 
-                                        <td className="py-8 px-4">
+                                        <td className="py-5 px-4">
                                             <div className="flex flex-col gap-1 w-full">
                                                 <textarea
                                                     className="w-full text-[14px] font-bold text-gray-900 bg-transparent border-0 p-1 focus:ring-2 focus:ring-blue-500/20 rounded-xl resize-none overflow-hidden min-h-[44px] leading-tight placeholder:text-gray-300 placeholder:font-medium"
@@ -392,7 +392,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                             </div>
                                         </td>
 
-                                        <td className="py-8 px-4">
+                                        <td className="py-5 px-4">
                                             <div className="flex -space-x-3 overflow-hidden items-center group/assignees" onClick={() => setOpenAssigneeId(item.id)}>
                                                 {item.assignees?.length > 0 ? (
                                                     item.assignees.slice(0, 3).map(u => (

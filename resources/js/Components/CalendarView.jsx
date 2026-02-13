@@ -58,7 +58,27 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
             const isFuture = dateObj > today;
 
             let status = 'Absent';
+            let isLate = false;
+            let lateMinutes = 0;
+            let lateHours = 0;
+
             if (attendance) {
+                // Check if user was late
+                if (attendance.status === 'Late' || attendance.status === 'Late & Early Leave') {
+                    isLate = true;
+                    // Calculate late minutes if punch_in_raw is available
+                    if (attendance.punch_in_raw) {
+                        const punchInTime = new Date(attendance.punch_in_raw);
+                        const scheduledTime = new Date(attendance.punch_in_raw);
+                        scheduledTime.setHours(9, 30, 0, 0); // 9:30 AM
+                        if (punchInTime > scheduledTime) {
+                            const totalLateMinutes = Math.floor((punchInTime - scheduledTime) / (1000 * 60));
+                            lateHours = Math.floor(totalLateMinutes / 60);
+                            lateMinutes = totalLateMinutes % 60;
+                        }
+                    }
+                }
+
                 // User requested: "when anybody punched in show present"
                 // We'll map 'Late' and other active statuses to 'Present' for the calendar view
                 if (attendance.status === 'Late' || attendance.status === 'Early Leave' || attendance.status === 'Late & Early Leave') {
@@ -84,7 +104,10 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                 date: dateStr,
                 attendance,
                 leave,
-                status
+                status,
+                isLate,
+                lateHours,
+                lateMinutes
             });
         }
 
@@ -128,6 +151,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
         let absent = 0;
         let halfDay = 0;
         let onLeave = 0;
+        let lateDays = 0;
         let totalMinutes = 0;
 
         calendarDays.forEach(day => {
@@ -143,6 +167,8 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
             else if (day.status === 'Half Day') halfDay++;
             else if (day.status === 'On Leave') onLeave++;
 
+            if (day.isLate) lateDays++;
+
             if (day.attendance) {
                 totalMinutes += day.attendance.total_worked_minutes || 0;
             }
@@ -156,6 +182,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
             absent,
             halfDay,
             onLeave,
+            lateDays,
             totalWorked: `${hours}h ${minutes}m`
         };
     }, [calendarDays]);
@@ -202,8 +229,15 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                             </span>
 
                             {item.currentMonth && item.status !== '-' && (
-                                <div className={`mt-auto px-1 py-1 rounded-lg text-[10px] font-black text-center uppercase tracking-tighter ${getStatusStyles(item.status)}`}>
-                                    {item.status}
+                                <div className="mt-auto space-y-1">
+                                    <div className={`px-1 py-1 rounded-lg text-[10px] font-black text-center uppercase tracking-tighter ${getStatusStyles(item.status)}`}>
+                                        {item.status}
+                                    </div>
+                                    {item.isLate && (item.lateHours > 0 || item.lateMinutes > 0) && (
+                                        <div className="px-1 py-0.5 rounded-md text-[9px] font-bold text-center bg-orange-100 text-orange-700 border border-orange-200">
+                                            {item.lateHours > 0 ? `+${item.lateHours}h ${item.lateMinutes}m` : `+${item.lateMinutes}m`}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -281,6 +315,20 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                                 <div>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">On Leave</p>
                                     <p className="text-lg font-black text-[#2d3436]">{stats.onLeave}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-50">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
+                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Late Days</p>
+                                        <p className="text-xl font-black text-orange-600">{stats.lateDays}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

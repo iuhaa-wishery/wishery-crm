@@ -152,251 +152,263 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
         <AdminLayout>
             <Head title="Attendance Monitoring" />
 
-            <div className="py-12">
+            <div className="py-12 font-sans">
                 <div className="w-full">
-                    <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900">
-                            <div className="flex justify-between items-center mb-6">
-                                <div className="flex items-center gap-4">
-                                    <h2 className="text-2xl font-semibold">Attendance Monitoring</h2>
-                                    <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium border border-gray-200">
-                                        Office Hours: 9 AM - 6 PM IST
-                                    </div>
+                    {/* Header Card */}
+                    <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-6">
+                        <div className="flex items-center gap-8 flex-wrap">
+                            <div className="flex flex-col gap-1.5">
+                                <h2 className="text-[28px] font-black text-gray-900 tracking-tight">Attendance Monitoring</h2>
+                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 text-indigo-700 px-4 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-widest border border-indigo-100">
+                                    Office Hours: 9 AM - 6 PM IST
                                 </div>
-                                {viewType === 'monthly' && (
-                                    <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-medium border border-indigo-100">
-                                        Monthly Total: {formatDuration(totalMonthlyMinutes)}
-                                    </div>
-                                )}
                             </div>
+                        </div>
+                        {viewType === 'monthly' && (
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 px-6 py-3 rounded-xl font-bold border border-indigo-100 shadow-sm">
+                                Monthly Total: {formatDuration(totalMonthlyMinutes)}
+                            </div>
+                        )}
+                    </div>
 
-                            {/* Tab Switcher */}
-                            <div className="flex border-b border-gray-200 mb-6">
-                                <button
-                                    onClick={() => {
-                                        setDisplayMode('table');
-                                        router.get(route('admin.attendance.index'), { ...filters, display: 'table' }, { preserveState: true });
-                                    }}
-                                    className={`px-6 py-2 text-sm font-medium transition-colors border-b-2 ${displayMode === 'table'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        }`}
+                    {/* Tab Switcher */}
+                    <div className="flex border-b border-gray-100 mb-6 bg-white rounded-t-[24px] px-6 pt-6">
+                        <button
+                            onClick={() => {
+                                setDisplayMode('table');
+                                router.get(route('admin.attendance.index'), { ...filters, display: 'table' }, { preserveState: true });
+                            }}
+                            className={`px-8 py-3 text-[13px] font-bold uppercase tracking-widest transition-all border-b-2 ${displayMode === 'table'
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-200'
+                                }`}
+                        >
+                            Table View
+                        </button>
+                        <button
+                            onClick={() => {
+                                setDisplayMode('calendar');
+                                const newParams = { ...filters, display: 'calendar' };
+                                if (!filters.user_id && users.length > 0) {
+                                    newParams.user_id = users[0].id;
+                                }
+                                router.get(route('admin.attendance.index'), newParams, { preserveState: true });
+                            }}
+                            className={`px-8 py-3 text-[13px] font-bold uppercase tracking-widest transition-all border-b-2 ${displayMode === 'calendar'
+                                ? 'border-blue-600 text-blue-600'
+                                : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-200'
+                                }`}
+                        >
+                            Calendar View
+                        </button>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="bg-white p-6 rounded-b-[24px] shadow-sm border border-gray-100 mb-6">
+                        <div className="flex flex-wrap gap-6 items-end">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.05em]">User</label>
+                                <select
+                                    value={filters.user_id || ''}
+                                    onChange={(e) => handleFilterChange('user_id', e.target.value)}
+                                    className="text-[14px] border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold text-gray-800 bg-gray-50/50 min-w-[200px] h-11 transition-all hover:bg-white hover:border-gray-300"
                                 >
-                                    Table View
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setDisplayMode('calendar');
-                                        const newParams = { ...filters, display: 'calendar' };
-                                        if (!filters.user_id && users.length > 0) {
-                                            newParams.user_id = users[0].id;
-                                        }
-                                        router.get(route('admin.attendance.index'), newParams, { preserveState: true });
-                                    }}
-                                    className={`px-6 py-2 text-sm font-medium transition-colors border-b-2 ${displayMode === 'calendar'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        }`}
-                                >
-                                    Calendar View
-                                </button>
+                                    {displayMode !== 'calendar' && <option value="">All Users</option>}
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-
-                            {/* Filters */}
-                            <div className="flex flex-wrap gap-4 mb-6 bg-gray-50 p-4 rounded-lg items-end">
-                                <div className="flex flex-col">
-                                    <label className="text-sm font-medium text-gray-700 mb-1">User</label>
-                                    <select
-                                        value={filters.user_id || ''}
-                                        onChange={(e) => handleFilterChange('user_id', e.target.value)}
-                                        className="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm min-w-[150px]"
-                                    >
-                                        {displayMode !== 'calendar' && <option value="">All Users</option>}
-                                        {users.map((user) => (
-                                            <option key={user.id} value={user.id}>
-                                                {user.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex flex-col">
-                                    <label className="text-sm font-medium text-gray-700 mb-1">Date (Daily View)</label>
-                                    <input
-                                        type="date"
-                                        value={filters.date || ''}
-                                        onChange={(e) => handleFilterChange('date', e.target.value)}
-                                        className="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-                                    />
-                                </div>
-                                <div className="flex flex-col">
-                                    <label className="text-sm font-medium text-gray-700 mb-1">Month (Monthly View)</label>
-                                    <MonthPicker
-                                        value={filters.month || ''}
-                                        onChange={(val) => handleFilterChange('month', val)}
-                                        className="min-w-[180px]"
-                                    />
-                                </div>
-                                <div className="flex items-end">
-                                    <button
-                                        onClick={handleReset}
-                                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                                        title="Reset Filters"
-                                    >
-                                        <RotateCcw className="w-4 h-4" />
-                                        Reset
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Table View (Used for both Daily and Monthly) */}
-                            {displayMode === 'table' ? (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full">
-                                        <thead>
-                                            <tr className="border-b border-gray-100">
-                                                {viewType === 'daily' && (
-                                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                                                )}
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check In</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Check Out</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Current Status</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Hours</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Break</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Location</th>
-                                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Device</th>
-                                                <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200">
-                                            {attendanceData && attendanceData.length > 0 ? (
-                                                attendanceData.map((record) => (
-                                                    <tr key={record?.id || Math.random()} className={`hover:bg-gray-50 transition-colors ${getRowStyle(record?.status)}`}>
-                                                        {viewType === 'daily' && (
-                                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                                <div className="text-sm font-semibold text-gray-900">{record?.name}</div>
-                                                            </td>
-                                                        )}
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {formatDate(record?.date || filters?.date)}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record?.check_in === '-' ? '--' : record?.check_in}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record?.check_out === '-' ? '--' : record?.check_out}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap">
-                                                            <span className={`px-4 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${getStatusColor(record?.status)}`}>
-                                                                {record?.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap">
-                                                            {record?.current_status === 'Working' ? (
-                                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                                                                    Working
-                                                                </span>
-                                                            ) : record?.current_status === 'Break' ? (
-                                                                <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                                                                    Break
-                                                                </span>
-                                                            ) : record?.current_status === 'Punched Out' ? (
-                                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-wide">
-                                                                    Punched Out
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-gray-400 text-xs">-</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record?.hours === '0h 0m' ? '--' : record?.hours}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            <div className="flex items-center gap-2">
-                                                                {record?.break_time === '0h 0m' ? '--' : record?.break_time}
-                                                                {record?.breaks && record.breaks.length > 0 && (
-                                                                    <button
-                                                                        onClick={() => setViewingBreaks(record)}
-                                                                        className="text-blue-500 hover:text-blue-700 transition-colors"
-                                                                        title="View Break History"
-                                                                    >
-                                                                        <Info className="w-4 h-4" />
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            <div className="flex items-center gap-3">
-                                                                {record?.punch_in_lat && (
-                                                                    <a
-                                                                        href={`https://www.google.com/maps?q=${record.punch_in_lat},${record.punch_in_lng}`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="text-green-500 hover:text-green-700 transition-colors"
-                                                                        title="Check-in Location"
-                                                                    >
-                                                                        <MapPin className="w-4 h-4" />
-                                                                    </a>
-                                                                )}
-                                                                {record?.punch_out_lat && (
-                                                                    <a
-                                                                        href={`https://www.google.com/maps?q=${record.punch_out_lat},${record.punch_out_lng}`}
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="text-red-500 hover:text-red-700 transition-colors"
-                                                                        title="Check-out Location"
-                                                                    >
-                                                                        <MapPin className="w-4 h-4" />
-                                                                    </a>
-                                                                )}
-                                                                {!record?.punch_in_lat && !record?.punch_out_lat && '--'}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
-                                                            {record?.device_type === 'Mobile' ? (
-                                                                <span className="flex items-center gap-1" title="Mobile">
-                                                                    <Smartphone className="w-4 h-4 text-gray-500" /> Mobile
-                                                                </span>
-                                                            ) : record?.device_type === 'Desktop' ? (
-                                                                <span className="flex items-center gap-1" title="Desktop">
-                                                                    <Monitor className="w-4 h-4 text-gray-500" /> Desktop
-                                                                </span>
-                                                            ) : (
-                                                                '--'
-                                                            )}
-                                                        </td>
-                                                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                                            <button
-                                                                onClick={() => openEditModal(record)}
-                                                                className="text-indigo-600 hover:text-indigo-900"
-                                                            >
-                                                                <Edit className="w-4 h-4" />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
-                                                <tr>
-                                                    <td colSpan={viewType === 'daily' ? 11 : 10} className="px-6 py-4 text-center text-gray-500">
-                                                        No records found.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : displayMode === 'calendar' ? (
-                                <CalendarView
-                                    attendanceData={attendanceData}
-                                    leaves={leaves}
-                                    filters={filters}
-                                    settings={settings}
-                                    onFilterChange={handleFilterChange}
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.05em]">Date (Daily View)</label>
+                                <input
+                                    type="date"
+                                    value={filters.date || ''}
+                                    onChange={(e) => handleFilterChange('date', e.target.value)}
+                                    className="text-[14px] border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400/20 bg-gray-50/50 font-semibold text-gray-700 h-11 transition-all hover:bg-white hover:border-gray-300"
                                 />
-                            ) : null}
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.05em]">Month (Monthly View)</label>
+                                <MonthPicker
+                                    value={filters.month || ''}
+                                    onChange={(val) => handleFilterChange('month', val)}
+                                    className="min-w-[200px]"
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <button
+                                    onClick={handleReset}
+                                    className="flex items-center gap-2 px-6 h-11 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-[12px] uppercase tracking-widest"
+                                    title="Reset Filters"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Reset
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Table View (Used for both Daily and Monthly) */}
+                    {displayMode === 'table' ? (
+                        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 ring-1 ring-gray-100">
+                            <div className="overflow-x-auto overflow-y-hidden w-full custom-scrollbar-h">
+                                <table className="w-full text-left border-collapse min-w-[1400px]">
+                                    <thead className="bg-[#fcfcfd] border-b border-gray-100">
+                                        <tr>
+                                            {viewType === 'daily' && (
+                                                <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest pl-10">Name</th>
+                                            )}
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Check In</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Check Out</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Current Status</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Hours</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Break</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Location</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Device</th>
+                                            <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest text-right pr-10">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {attendanceData && attendanceData.length > 0 ? (
+                                            attendanceData.map((record, idx) => (
+                                                <tr key={record?.id || Math.random()} className={`group hover:bg-gray-50/30 transition-all ${getRowStyle(record?.status)}`}>
+                                                    {viewType === 'daily' && (
+                                                        <td className="py-5 px-4 pl-10">
+                                                            <div className="text-[14px] font-bold text-gray-900">{record?.name}</div>
+                                                        </td>
+                                                    )}
+                                                    <td className="py-5 px-4">
+                                                        <div className="text-[14px] font-bold text-gray-800">{formatDate(record?.date || filters?.date)}</div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <div className="text-[14px] font-semibold text-gray-700">{record?.check_in === '-' ? '--' : record?.check_in}</div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <div className="text-[14px] font-semibold text-gray-700">{record?.check_out === '-' ? '--' : record?.check_out}</div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <span className={`px-4 py-1.5 inline-flex text-[11px] leading-5 font-bold rounded-xl uppercase tracking-wider ${getStatusColor(record?.status)}`}>
+                                                            {record?.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        {record?.current_status === 'Working' ? (
+                                                            <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-xl text-[10px] font-bold uppercase tracking-wide">
+                                                                Working
+                                                            </span>
+                                                        ) : record?.current_status === 'Break' ? (
+                                                            <span className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-xl text-[10px] font-bold uppercase tracking-wide">
+                                                                Break
+                                                            </span>
+                                                        ) : record?.current_status === 'Punched Out' ? (
+                                                            <span className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-xl text-[10px] font-bold uppercase tracking-wide">
+                                                                Punched Out
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400 text-xs">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <div className="text-[14px] font-bold text-gray-800">{record?.hours === '0h 0m' ? '--' : record?.hours}</div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[14px] font-bold text-gray-800">{record?.break_time === '0h 0m' ? '--' : record?.break_time}</span>
+                                                            {record?.breaks && record.breaks.length > 0 && (
+                                                                <button
+                                                                    onClick={() => setViewingBreaks(record)}
+                                                                    className="text-blue-500 hover:text-blue-700 transition-colors p-1 hover:bg-blue-50 rounded-lg"
+                                                                    title="View Break History"
+                                                                >
+                                                                    <Info className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        <div className="flex items-center gap-3">
+                                                            {record?.punch_in_lat && (
+                                                                <a
+                                                                    href={`https://www.google.com/maps?q=${record.punch_in_lat},${record.punch_in_lng}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-green-500 hover:text-green-700 transition-all p-2 hover:bg-green-50 rounded-xl"
+                                                                    title="Check-in Location"
+                                                                >
+                                                                    <MapPin className="w-4 h-4" />
+                                                                </a>
+                                                            )}
+                                                            {record?.punch_out_lat && (
+                                                                <a
+                                                                    href={`https://www.google.com/maps?q=${record.punch_out_lat},${record.punch_out_lng}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-red-500 hover:text-red-700 transition-all p-2 hover:bg-red-50 rounded-xl"
+                                                                    title="Check-out Location"
+                                                                >
+                                                                    <MapPin className="w-4 h-4" />
+                                                                </a>
+                                                            )}
+                                                            {!record?.punch_in_lat && !record?.punch_out_lat && <span className="text-gray-400">--</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-5 px-4">
+                                                        {record?.device_type === 'Mobile' ? (
+                                                            <span className="flex items-center gap-2 text-[13px] font-bold text-gray-700" title="Mobile">
+                                                                <Smartphone className="w-4 h-4 text-gray-500" /> Mobile
+                                                            </span>
+                                                        ) : record?.device_type === 'Desktop' ? (
+                                                            <span className="flex items-center gap-2 text-[13px] font-bold text-gray-700" title="Desktop">
+                                                                <Monitor className="w-4 h-4 text-gray-500" /> Desktop
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-400">--</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-5 px-4 text-right pr-10">
+                                                        <button
+                                                            onClick={() => openEditModal(record)}
+                                                            className="w-10 h-10 bg-white text-blue-500 rounded-xl hover:shadow-xl hover:shadow-blue-100 transition-all active:scale-90 border border-gray-100 flex items-center justify-center"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={viewType === 'daily' ? 11 : 10} className="py-40 text-center">
+                                                    <div className="flex flex-col items-center gap-6">
+                                                        <div className="w-20 h-20 bg-gray-50 rounded-[24px] flex items-center justify-center shadow-sm">
+                                                            <Filter size={32} className="text-gray-200" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <h4 className="text-[16px] font-bold text-gray-900">No records found</h4>
+                                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Try adjusting your filters</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ) : displayMode === 'calendar' ? (
+                        <CalendarView
+                            attendanceData={attendanceData}
+                            leaves={leaves}
+                            filters={filters}
+                            settings={settings}
+                            onFilterChange={handleFilterChange}
+                        />
+                    ) : null}
                 </div>
             </div>
 
@@ -499,6 +511,23 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                     </div>
                 </div>
             </Modal>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+                .font-sans { font-family: 'Plus Jakarta Sans', sans-serif !important; }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #eef2f6; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #dde5ed; }
+
+                .custom-scrollbar-h { overflow-y: hidden !important; }
+                .custom-scrollbar-h::-webkit-scrollbar { height: 6px; }
+                .custom-scrollbar-h::-webkit-scrollbar-track { background: #f8fafc; border-radius: 10px; }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .custom-scrollbar-h::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+                input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: opacity(0.2); }
+            ` }} />
         </AdminLayout >
     );
 }
