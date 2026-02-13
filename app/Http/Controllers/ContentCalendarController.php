@@ -27,10 +27,7 @@ class ContentCalendarController extends Controller
 
         // If project is selected, show that project's items + unassigned items
         if ($projectId) {
-            $query->where(function ($q) use ($projectId) {
-                $q->where('project_id', $projectId)
-                    ->orWhereNull('project_id');
-            });
+            $query->where('project_id', $projectId);
         }
 
         if ($month && $year && !$date) {

@@ -368,22 +368,16 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                         </td>
 
                                         <td className="py-5 px-4">
-                                            {selectedProject ? (
-                                                <div className="text-[14px] font-bold text-gray-800 px-1">
-                                                    {projects.find(p => String(p.id) === String(selectedProject))?.name || 'Unknown Project'}
-                                                </div>
-                                            ) : (
-                                                <select
-                                                    value={item.project_id || ''}
-                                                    onChange={(e) => onCellChange(item.id, 'project_id', e.target.value)}
-                                                    className="text-[14px] font-bold text-gray-800 bg-transparent border-0 p-1 focus:ring-2 focus:ring-blue-500/20 rounded-xl w-full cursor-pointer hover:bg-gray-50 transition-colors"
-                                                >
-                                                    <option value="">Select Project</option>
-                                                    {projects.map(p => (
-                                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                                    ))}
-                                                </select>
-                                            )}
+                                            <select
+                                                value={item.project_id || ''}
+                                                onChange={(e) => onCellChange(item.id, 'project_id', e.target.value)}
+                                                className="text-[14px] font-bold text-gray-800 bg-transparent border-0 p-1 focus:ring-2 focus:ring-blue-500/20 rounded-xl w-full cursor-pointer hover:bg-gray-50 transition-colors"
+                                            >
+                                                <option value="">Select Project</option>
+                                                {projects.map(p => (
+                                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                                ))}
+                                            </select>
                                         </td>
 
                                         <td className="py-5 px-4">
@@ -511,8 +505,12 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                 <FaFilter size={32} className="text-gray-100" />
                             </div>
                             <div className="space-y-2">
-                                <h4 className="text-[18px] font-bold text-gray-900">No items detected</h4>
-                                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest px-4 py-1 bg-gray-50 rounded-full inline-block">Use the filters or generate a month</p>
+                                <h4 className="text-[18px] font-bold text-gray-900">
+                                    {!selectedProject ? "Select Project" : "No items detected"}
+                                </h4>
+                                <p className="text-[12px] font-bold text-gray-400 uppercase tracking-widest px-4 py-1 bg-gray-50 rounded-full inline-block">
+                                    {!selectedProject ? "Please select a project to view its content calendar" : "Use the filters or generate a month"}
+                                </p>
                             </div>
                         </div>
                     </div>
