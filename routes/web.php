@@ -12,6 +12,7 @@ use App\Http\Controllers\User\ProjectController as UserProjectController;
 // NEW
 use App\Http\Controllers\User\LeaveController as UserLeaveController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\Admin\DailyWorksheetController as AdminDailyWorksheetController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\AttendanceController;
 
@@ -106,6 +107,12 @@ Route::middleware(['auth'])->group(function () {
     // -------------------------
     Route::get('/content-calendar', [\App\Http\Controllers\User\ContentCalendarController::class, 'index'])->name('content-calendar.index');
     Route::patch('/content-calendar/update-cell/{contentCalendar}', [\App\Http\Controllers\User\ContentCalendarController::class, 'updateCell'])->name('content-calendar.update-cell');
+
+    // Daily Worksheet
+    Route::get('/daily-worksheet', [\App\Http\Controllers\User\DailyWorksheetController::class, 'index'])->name('daily-worksheet.index');
+    Route::post('/daily-worksheet', [\App\Http\Controllers\User\DailyWorksheetController::class, 'store'])->name('daily-worksheet.store');
+    Route::put('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'update'])->name('daily-worksheet.update');
+    Route::delete('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'destroy'])->name('daily-worksheet.destroy');
 });
 
 
@@ -173,6 +180,11 @@ Route::middleware(['auth', 'is_admin'])
         Route::post('content-calendar/generate-month', [\App\Http\Controllers\ContentCalendarController::class, 'generateMonth'])->name('content-calendar.generate-month');
         Route::patch('content-calendar/update-cell/{contentCalendar}', [\App\Http\Controllers\ContentCalendarController::class, 'updateCell'])->name('content-calendar.update-cell');
         Route::resource('content-calendar', \App\Http\Controllers\ContentCalendarController::class);
+        // Daily Worksheet
+        Route::get('daily-worksheet', [AdminDailyWorksheetController::class, 'index'])->name('daily-worksheet.index');
+        Route::get('daily-worksheet/users', [AdminDailyWorksheetController::class, 'users'])->name('daily-worksheet.users');
+        Route::get('users/{user}/worksheet-settings', [AdminDailyWorksheetController::class, 'settings'])->name('users.worksheet-settings');
+        Route::post('users/{user}/worksheet-settings', [AdminDailyWorksheetController::class, 'updateSettings'])->name('users.worksheet-settings.update');
     });
 
 

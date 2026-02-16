@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { usePage, router } from "@inertiajs/react";
+import { usePage, router, Link } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ClipboardList } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -241,6 +241,15 @@ export default function Index() {
                     >
                       <Edit size={18} />
                     </button>
+
+                    {/* Worksheet Settings */}
+                    <Link
+                      href={route("admin.users.worksheet-settings", user.id)}
+                      className="text-green-600 hover:text-green-800 inline-block"
+                      title="Worksheet Settings"
+                    >
+                      <ClipboardList size={18} />
+                    </Link>
 
                     {/* Delete button */}
                     <button

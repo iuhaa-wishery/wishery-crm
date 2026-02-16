@@ -181,6 +181,34 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               </Link>
             )}
 
+            {auth.user.role === 'admin' ? (
+              <Link
+                href={route("admin.daily-worksheet.index")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              >
+                <FaFileAlt className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Listings</span>
+              </Link>
+            ) : (
+              <Link
+                href={route("daily-worksheet.index")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              >
+                <FaFileAlt className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
+              </Link>
+            )}
+
+            {auth.user.role === 'admin' && (
+              <Link
+                href={route("admin.daily-worksheet.users")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              >
+                <FaCog className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Worksheet Settings</span>
+              </Link>
+            )}
+
             {auth.user.role === 'admin' && (
               <Link
                 href={route("admin.settings.index")}
