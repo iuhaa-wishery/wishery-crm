@@ -32,7 +32,7 @@ export default function UserList({ users }) {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 text-gray-400">
-                                        <span className="text-sm font-medium text-gray-500">Configure</span>
+                                        <span className="text-sm font-medium text-gray-500">Action</span>
                                         <ChevronRight size={18} />
                                     </div>
                                 </Link>

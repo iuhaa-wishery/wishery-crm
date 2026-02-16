@@ -37,7 +37,7 @@ class DailyWorksheetPolicy
      */
     public function update(User $user, DailyWorksheet $dailyWorksheet): bool
     {
-        return $user->id === $dailyWorksheet->user_id;
+        return $user->id === $dailyWorksheet->user_id || $user->role === 'admin';
     }
 
     public function delete(User $user, DailyWorksheet $dailyWorksheet): bool

@@ -96,8 +96,7 @@ class DailyWorksheetController extends Controller
     {
         $this->authorize('update', $dailyWorksheet);
 
-        $user = auth()->user();
-        $settings = DailyWorksheetSetting::where('user_id', $user->id)->first();
+        $settings = DailyWorksheetSetting::where('user_id', $dailyWorksheet->user_id)->first();
 
         $rules = [];
         if ($settings) {

@@ -105,4 +105,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function dailyWorksheetSetting()
+    {
+        return $this->hasOne(DailyWorksheetSetting::class);
+    }
 }

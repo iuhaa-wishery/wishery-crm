@@ -17,7 +17,7 @@ class DailyWorksheetController extends Controller
         $user = auth()->user();
         $date = $request->input('date', Carbon::today()->toDateString());
 
-        $query = DailyWorksheet::with('user')
+        $query = DailyWorksheet::with(['user', 'user.dailyWorksheetSetting'])
             ->whereDate('date', $date);
 
         $users = [];

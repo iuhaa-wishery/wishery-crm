@@ -375,7 +375,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
 
                                             {/* Actions */}
                                             <td className="py-6 px-4 pr-8 text-right">
-                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-2 transition-opacity">
                                                     <button onClick={() => startEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                                                         <Edit2 size={16} />
                                                     </button>
