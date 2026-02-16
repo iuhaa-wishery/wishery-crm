@@ -29,10 +29,12 @@ class SettingController extends Controller
         $data = $request->validate([
             'admin_email' => 'nullable|email',
             'monthly_working_days' => 'nullable|integer|min:0|max:31',
+            'beta_menu_items' => 'nullable|array',
         ]);
 
         foreach ($data as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            $val = is_array($value) ? json_encode($value) : $value;
+            Setting::updateOrCreate(['key' => $key], ['value' => $val]);
         }
 
         return back()->with('success', 'Settings updated successfully.');

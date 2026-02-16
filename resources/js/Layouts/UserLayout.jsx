@@ -17,7 +17,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { useEffect } from "react";
 
 export default function UserLayout({ children, title }) {
-    const { auth, flash } = usePage().props;
+    const { auth, flash, sharedSettings } = usePage().props;
+    const betaMenuItems = Array.isArray(sharedSettings?.beta_menu_items) ? sharedSettings.beta_menu_items : [];
     const user = auth?.user;
     const [collapsed, setCollapsed] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -90,6 +91,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaHome className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Dashboard</span>
+                        {betaMenuItems.includes('dashboard') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
 
                     <Link
@@ -98,6 +100,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaClock className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Attendance</span>
+                        {betaMenuItems.includes('attendance') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
 
                     <Link
@@ -106,6 +109,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaFolder className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Projects</span>
+                        {betaMenuItems.includes('projects') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
 
                     <Link
@@ -115,6 +119,7 @@ export default function UserLayout({ children, title }) {
                         <div className="flex items-center gap-3">
                             <FaTasks className="min-w-[20px]" />
                             <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
+                            {betaMenuItems.includes('leaves') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                         </div>
                         {sidebarCounts.pending_leaves > 0 && (
                             <span className={`${user.role === 'admin' ? 'bg-red-500' : 'bg-green-500'} text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
@@ -129,6 +134,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaFolder className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Drive</span>
+                        {betaMenuItems.includes('drive') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
                     <Link
                         href={route("chat.index")}
@@ -137,6 +143,7 @@ export default function UserLayout({ children, title }) {
                         <div className="flex items-center gap-3">
                             <FaComments className="min-w-[20px]" />
                             <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
+                            {betaMenuItems.includes('chat') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                         </div>
                         {sidebarCounts.unread_chats > 0 && (
                             <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -151,6 +158,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaTasks className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Content Calendar</span>
+                        {betaMenuItems.includes('content-calendar') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
 
                     <Link
@@ -159,6 +167,7 @@ export default function UserLayout({ children, title }) {
                     >
                         <FaTasks className="min-w-[20px]" />
                         <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
+                        {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
                 </nav>
             </aside>

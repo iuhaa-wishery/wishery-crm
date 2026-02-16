@@ -40,6 +40,9 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
                 'timestamp' => ($request->session()->has('success') || $request->session()->has('error')) ? microtime(true) : null,
             ],
+            'sharedSettings' => [
+                'beta_menu_items' => json_decode(\App\Models\Setting::where('key', 'beta_menu_items')->value('value') ?? '[]', true),
+            ],
         ];
     }
 }

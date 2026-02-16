@@ -18,7 +18,8 @@ import NotificationDropdown from "@/Components/NotificationDropdown";
 import { Toaster, toast } from "react-hot-toast";
 
 export default function AdminLayout({ children, title = "Dashboard" }) {
-  const { auth, flash } = usePage().props;
+  const { auth, flash, sharedSettings } = usePage().props;
+  const betaMenuItems = Array.isArray(sharedSettings?.beta_menu_items) ? sharedSettings.beta_menu_items : [];
   const [collapsed, setCollapsed] = useState(false);
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -101,11 +102,13 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             <Link href={route("dashboard")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
               <FaTachometerAlt className="min-w-[20px]" />
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Dashboard</span>
+              {betaMenuItems.includes('dashboard') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
             </Link>
 
             <Link href={route("admin.projects.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
               <FaProjectDiagram className="min-w-[20px]" />
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Projects</span>
+              {betaMenuItems.includes('projects') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
             </Link>
 
             {auth.user.role === 'admin' && (
@@ -113,6 +116,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
                 <Link href={route("admin.users.index")} className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors">
                   <FaUserCircle className="min-w-[20px]" />
                   <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Users</span>
+                  {betaMenuItems.includes('users') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                 </Link>
 
                 <Link
@@ -122,6 +126,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
                   <div className="flex items-center gap-3">
                     <FaFileAlt className="min-w-[20px]" />
                     <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Leaves</span>
+                    {betaMenuItems.includes('leaves') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                   </div>
                   {sidebarCounts.pending_leaves > 0 && (
                     <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -136,6 +141,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
                 >
                   <FaClock className="min-w-[20px]" />
                   <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Attendance</span>
+                  {betaMenuItems.includes('attendance') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                 </Link>
               </>
             )}
@@ -146,6 +152,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             >
               <FaTasks className="min-w-[20px]" />
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Calendar</span>
+              {betaMenuItems.includes('calendar') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
             </Link>
 
             <Link
@@ -154,6 +161,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             >
               <FaProjectDiagram className="min-w-[20px]" />
               <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Drive</span>
+              {betaMenuItems.includes('drive') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
             </Link>
 
             <Link
@@ -163,6 +171,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               <div className="flex items-center gap-3">
                 <FaComments className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Chat</span>
+                {betaMenuItems.includes('chat') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
               </div>
               {sidebarCounts.unread_chats > 0 && (
                 <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -178,6 +187,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               >
                 <FaTasks className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Content Calendar</span>
+                {betaMenuItems.includes('content-calendar') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
               </Link>
             )}
 
@@ -188,6 +198,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               >
                 <FaFileAlt className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Listings</span>
+                {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
               </Link>
             ) : (
               <Link
@@ -196,6 +207,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               >
                 <FaFileAlt className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
+                {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
               </Link>
             )}
 
@@ -206,6 +218,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               >
                 <FaCog className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Worksheet Settings</span>
+                {betaMenuItems.includes('worksheet-settings') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
               </Link>
             )}
 
