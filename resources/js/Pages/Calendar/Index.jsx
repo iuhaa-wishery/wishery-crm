@@ -4,6 +4,7 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import AdminLayout from '@/Layouts/AdminLayout';
+import UserLayout from '@/Layouts/UserLayout';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -536,7 +537,7 @@ export default function Index({ tasks, projects, users }) {
 
 Index.layout = (page) => {
     const { auth } = page.props;
-    const isAdminOrManager = ['admin', 'manager'].includes(auth.user.role);
-    const Layout = isAdminOrManager ? AdminLayout : AuthenticatedLayout;
+    const isAdminOrManager = ['admin', 'manager', 'editor'].includes(auth.user.role);
+    const Layout = isAdminOrManager ? AdminLayout : UserLayout;
     return <Layout title="Task Calendar">{page}</Layout>;
 };

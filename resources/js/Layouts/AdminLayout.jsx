@@ -191,7 +191,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               </Link>
             )}
 
-            {auth.user.role === 'admin' ? (
+            {(auth.user.role === 'admin' || auth.user.role === 'manager') ? (
               <Link
                 href={route("admin.daily-worksheet.index")}
                 className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"

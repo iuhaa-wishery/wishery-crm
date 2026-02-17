@@ -8,14 +8,14 @@ import { Trash2, Edit2, Plus, Calendar as CalendarIcon, Save, X, ExternalLink } 
 import toast from "react-hot-toast";
 
 export default function Index({ worksheets, settings, selectedDate, selectedMonth, auth }) {
-    const Layout = auth.user.role === 'admin' || auth.user.role === 'manager' || auth.user.role === 'editor' ? AdminLayout : UserLayout;
+    const Layout = auth.user.role === 'admin' ? AdminLayout : UserLayout;
 
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [filterMode, setFilterMode] = useState(selectedMonth ? 'monthly' : 'daily');
 
     const { data, setData, post, put, processing, reset, errors } = useForm({
-        date: selectedDate,
+        date: new Date().toISOString().split('T')[0],
         client_name: "",
         task_type: "",
         status: "",
@@ -51,9 +51,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
             put(route("daily-worksheet.update", editingId), {
                 onSuccess: () => {
                     toast.success("Task updated successfully");
-                    reset();
-                    setIsAdding(false);
-                    setEditingId(null);
+                    cancelEdit();
                 },
             });
         } else {
@@ -70,7 +68,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
     const startEdit = (worksheet) => {
         setEditingId(worksheet.id);
         setData({
-            date: worksheet.date,
+            date: worksheet.formatted_date || (worksheet.date ? worksheet.date.split('T')[0] : ""),
             client_name: worksheet.client_name || "",
             task_type: worksheet.task_type || "",
             status: worksheet.status || "",
@@ -155,7 +153,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                     </div>
                 </div>
 
-                <Modal show={isAdding} onClose={() => setIsAdding(false)}>
+                <Modal show={isAdding} onClose={cancelEdit}>
                     <div className="p-8 font-sans">
                         <div className="flex items-center justify-between mb-8">
                             <div>
@@ -167,6 +165,18 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</label>
+                                <div className="relative">
+                                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                                    <input
+                                        type="date"
+                                        value={data.date}
+                                        onChange={e => setData("date", e.target.value)}
+                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                                    />
+                                </div>
+                            </div>
                             {settings.client_name_enabled && (
                                 <div className="space-y-1.5">
                                     <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Client Name</label>
@@ -177,6 +187,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
                                         placeholder="Enter client name"
                                     />
+                                    {errors.client_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.client_name}</p>}
                                 </div>
                             )}
                             {settings.task_type_enabled && (
@@ -202,6 +213,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                             placeholder="Enter task type"
                                         />
                                     )}
+                                    {errors.task_type && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.task_type}</p>}
                                 </div>
                             )}
                             {settings.status_enabled && (
@@ -217,6 +229,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         <option value="NOT DONE">Not Done</option>
                                         <option value="IN PROGRESS">In Progress</option>
                                     </select>
+                                    {errors.status && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.status}</p>}
                                 </div>
                             )}
                             {settings.file_name_enabled && (
@@ -229,6 +242,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
                                         placeholder="Enter file name"
                                     />
+                                    {errors.file_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.file_name}</p>}
                                 </div>
                             )}
                             {settings.drive_link_enabled && (
@@ -241,6 +255,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
                                         placeholder="https://drive.google.com/..."
                                     />
+                                    {errors.drive_link && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.drive_link}</p>}
                                 </div>
                             )}
                             {settings.project_enabled && (
@@ -253,6 +268,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
                                         placeholder="Project name"
                                     />
+                                    {errors.project && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.project}</p>}
                                 </div>
                             )}
                             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">

@@ -29,7 +29,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();
 
-    if (in_array($user->role, ['admin', 'manager', 'editor'])) {
+    if (in_array($user->role, ['admin', 'manager'])) {
         return app(\App\Http\Controllers\Admin\DashboardController::class)->index();
     }
 

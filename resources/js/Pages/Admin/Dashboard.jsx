@@ -12,6 +12,7 @@ import {
   ChevronRight,
   TrendingUp
 } from "lucide-react";
+import AttendanceLargeCard from "@/Components/AttendanceLargeCard";
 
 export default function Dashboard({
   stats,

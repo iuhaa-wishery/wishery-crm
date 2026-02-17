@@ -183,7 +183,7 @@ export default function AttendanceWidget() {
     if (status === 'loading') return <div className="text-sm text-gray-500">Loading...</div>;
 
     return (
-        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-3 sm:space-y-0 bg-white p-3 sm:p-2 rounded-xl sm:rounded-lg shadow-sm border border-gray-200 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-3 sm:space-y-0 bg-white p-3 sm:p-1.5 px-3 rounded-2xl sm:rounded-xl shadow-sm border border-gray-100 w-full sm:w-auto">
             {/* Timer Display */}
             <div className="flex flex-col items-center sm:items-end min-w-[100px] sm:min-w-[80px]">
                 <div className="flex items-center text-gray-800 font-mono font-bold text-xl sm:text-lg">
@@ -203,10 +203,10 @@ export default function AttendanceWidget() {
                     <button
                         onClick={() => handleAction('punch-in')}
                         disabled={processing}
-                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-green-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-green-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
-                        {processing ? 'Processing...' : 'Punch In'}
+                        {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2 fill-current" />}
+                        {processing ? '...' : 'Punch In'}
                     </button>
                 )}
 
@@ -221,17 +221,17 @@ export default function AttendanceWidget() {
                         <button
                             onClick={() => handleAction('break-start')}
                             disabled={processing}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-orange-500 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-orange-600 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Coffee className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                            {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Coffee className="w-4 h-4 mr-2" />}
                             Break
                         </button>
                         <button
                             onClick={() => handleAction('punch-out')}
                             disabled={processing}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-red-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-red-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Square className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                            {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Square className="w-4 h-4 mr-2 fill-current" />}
                             Punch Out
                         </button>
                     </>
@@ -241,9 +241,9 @@ export default function AttendanceWidget() {
                     <button
                         onClick={() => handleAction('break-end')}
                         disabled={processing}
-                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-3 sm:py-1.5 bg-blue-600 text-white text-sm font-bold rounded-lg sm:rounded hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-blue-500 text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {processing ? <Loader2 className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1 animate-spin" /> : <Play className="w-4 h-4 sm:w-3 sm:h-3 mr-2 sm:mr-1" />}
+                        {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2 fill-current" />}
                         Resume
                     </button>
                 )}

@@ -2,17 +2,20 @@ import React, { useState } from "react";
 import { useForm, Head, router, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Modal from "@/Components/Modal";
-import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save } from "lucide-react";
+import MonthPicker from "@/Components/MonthPicker";
+import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function Index({ worksheets, selectedDate, selectedUser, users }) {
+export default function Index({ worksheets, selectedDate, selectedMonth, selectedUser, users }) {
     const { auth } = usePage().props;
 
     const [editingId, setEditingId] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
+    const [filterMode, setFilterMode] = useState(selectedMonth ? 'monthly' : 'daily');
 
     const { data, setData, put, processing, reset, errors } = useForm({
+        date: "",
         client_name: "",
         task_type: "",
         status: "",
@@ -28,9 +31,35 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
         );
     };
 
+    const handleMonthChange = (e) => {
+        router.get(route("admin.daily-worksheet.index"),
+            { month: e.target.value, user_id: selectedUser },
+            { preserveState: true }
+        );
+    };
+
+    const toggleFilterMode = (mode) => {
+        setFilterMode(mode);
+        if (mode === 'daily') {
+            router.get(route("admin.daily-worksheet.index"),
+                { date: new Date().toISOString().split('T')[0], user_id: selectedUser },
+                { preserveState: true }
+            );
+        } else {
+            router.get(route("admin.daily-worksheet.index"),
+                { month: new Date().toISOString().slice(0, 7), user_id: selectedUser },
+                { preserveState: true }
+            );
+        }
+    };
+
     const handleUserChange = (e) => {
         router.get(route("admin.daily-worksheet.index"),
-            { date: selectedDate, user_id: e.target.value },
+            {
+                date: filterMode === 'daily' ? selectedDate : undefined,
+                month: filterMode === 'monthly' ? selectedMonth : undefined,
+                user_id: e.target.value
+            },
             { preserveState: true }
         );
     };
@@ -39,6 +68,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
         setCurrentItem(worksheet);
         setEditingId(worksheet.id);
         setData({
+            date: worksheet.formatted_date || (worksheet.date ? worksheet.date.split('T')[0] : ""),
             client_name: worksheet.client_name || "",
             task_type: worksheet.task_type || "",
             status: worksheet.status || "",
@@ -92,30 +122,58 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {auth.user.role === 'admin' && (
-                            <select
-                                value={selectedUser || ''}
-                                onChange={handleUserChange}
-                                className="w-[200px] bg-gray-50/50 border border-gray-200 rounded-xl px-4 py-2.5 text-[14px] font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all hover:bg-white hover:border-gray-300"
+                        <div className="bg-gray-50 p-1.5 rounded-xl border border-gray-100 flex items-center">
+                            <button
+                                onClick={() => toggleFilterMode('daily')}
+                                className={`px-4 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg transition-all ${filterMode === 'daily' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
                             >
-                                <option value="">All Users</option>
-                                {users.map((user) => (
-                                    <option key={user.id} value={user.id}>
-                                        {user.name}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
+                                Daily
+                            </button>
+                            <button
+                                onClick={() => toggleFilterMode('monthly')}
+                                className={`px-4 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg transition-all ${filterMode === 'monthly' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-gray-100' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Monthly
+                            </button>
+                        </div>
 
                         <div className="relative min-w-[200px]">
-                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={handleDateChange}
-                                className="pl-11 pr-4 py-2.5 w-full bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-[14px] font-semibold text-gray-800 transition-all hover:bg-white hover:border-gray-300"
-                            />
+                            {filterMode === 'daily' ? (
+                                <div className="relative">
+                                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                                    <input
+                                        type="date"
+                                        value={selectedDate}
+                                        onChange={handleDateChange}
+                                        className="pl-11 pr-4 py-2.5 w-full bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-[14px] font-semibold text-gray-800 transition-all hover:bg-white hover:border-gray-300"
+                                    />
+                                </div>
+                            ) : (
+                                <MonthPicker
+                                    value={selectedMonth || ''}
+                                    onChange={handleMonthChange}
+                                    className="w-full"
+                                />
+                            )}
                         </div>
+
+                        {auth.user.role === 'admin' && (
+                            <div className="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 flex items-center gap-3">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">Employee</span>
+                                <select
+                                    value={selectedUser || ''}
+                                    onChange={handleUserChange}
+                                    className="bg-transparent border-none p-0 text-sm font-bold text-gray-800 focus:ring-0 min-w-[150px]"
+                                >
+                                    <option value="">All Users</option>
+                                    {users.map((user) => (
+                                        <option key={user.id} value={user.id}>
+                                            {user.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -131,6 +189,19 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</label>
+                                <div className="relative">
+                                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                                    <input
+                                        type="date"
+                                        value={data.date}
+                                        onChange={e => setData("date", e.target.value)}
+                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                                    />
+                                </div>
+                                {errors.date && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.date}</p>}
+                            </div>
                             {currentItem?.user?.daily_worksheet_setting?.client_name_enabled && (
                                 <div className="space-y-1.5">
                                     <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Client Name</label>
@@ -140,6 +211,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                         onChange={e => setData("client_name", e.target.value)}
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                                     />
+                                    {errors.client_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.client_name}</p>}
                                 </div>
                             )}
                             {currentItem?.user?.daily_worksheet_setting?.task_type_enabled && (
@@ -164,6 +236,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                             className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                                         />
                                     )}
+                                    {errors.task_type && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.task_type}</p>}
                                 </div>
                             )}
                             {currentItem?.user?.daily_worksheet_setting?.status_enabled && (
@@ -179,6 +252,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                         <option value="NOT DONE">Not Done</option>
                                         <option value="IN PROGRESS">In Progress</option>
                                     </select>
+                                    {errors.status && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.status}</p>}
                                 </div>
                             )}
                             {currentItem?.user?.daily_worksheet_setting?.file_name_enabled && (
@@ -190,6 +264,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                         onChange={e => setData("file_name", e.target.value)}
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                                     />
+                                    {errors.file_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.file_name}</p>}
                                 </div>
                             )}
                             {currentItem?.user?.daily_worksheet_setting?.drive_link_enabled && (
@@ -201,6 +276,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                         onChange={e => setData("drive_link", e.target.value)}
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                                     />
+                                    {errors.drive_link && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.drive_link}</p>}
                                 </div>
                             )}
                             {currentItem?.user?.daily_worksheet_setting?.project_enabled && (
@@ -212,6 +288,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                         onChange={e => setData("project", e.target.value)}
                                         className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                                     />
+                                    {errors.project && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.project}</p>}
                                 </div>
                             )}
                             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
@@ -231,8 +308,8 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </Modal>
+                    </div >
+                </Modal >
 
                 <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden ring-1 ring-gray-50">
                     <div className="overflow-x-auto custom-scrollbar">
@@ -315,7 +392,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                         </table>
                     </div>
                 </div>
-            </div>
+            </div >
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -325,7 +402,7 @@ export default function Index({ worksheets, selectedDate, selectedUser, users })
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
             ` }} />
-        </AdminLayout>
+        </AdminLayout >
     );
 }
 

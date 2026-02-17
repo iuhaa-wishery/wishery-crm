@@ -39,10 +39,13 @@ class DailyWorksheetController extends Controller
             $query->whereYear('date', $yearMonth->year)
                 ->whereMonth('date', $yearMonth->month);
         } else {
-            $query->whereDate('date', $date);
+            $query->where('date', $date);
         }
 
-        $worksheets = $query->latest()->get();
+        $worksheets = $query->latest()->get()->map(function ($item) {
+            $item->formatted_date = $item->date ? $item->date->format('Y-m-d') : null;
+            return $item;
+        });
 
         return Inertia::render('User/DailyWorksheet/Index', [
             'worksheets' => $worksheets,
@@ -89,7 +92,12 @@ class DailyWorksheetController extends Controller
 
         DailyWorksheet::create($validated);
 
-        return back()->with('success', 'Daily task added successfully.');
+        $month = Carbon::parse($validated['date'])->format('Y-m');
+        $referer = $request->header('referer');
+        $routeName = (str_contains($referer, '/admin/')) ? 'admin.daily-worksheet.index' : 'daily-worksheet.index';
+
+        return redirect()->route($routeName, ['month' => $month])
+            ->with('success', 'Daily task added successfully.');
     }
 
     public function update(Request $request, DailyWorksheet $dailyWorksheet)
@@ -98,7 +106,9 @@ class DailyWorksheetController extends Controller
 
         $settings = DailyWorksheetSetting::where('user_id', $dailyWorksheet->user_id)->first();
 
-        $rules = [];
+        $rules = [
+            'date' => 'required|date',
+        ];
         if ($settings) {
             if ($settings->client_name_enabled)
                 $rules['client_name'] = 'required|string';
@@ -126,7 +136,12 @@ class DailyWorksheetController extends Controller
 
         $dailyWorksheet->update($validated);
 
-        return back()->with('success', 'Daily task updated successfully.');
+        $month = Carbon::parse($validated['date'])->format('Y-m');
+        $referer = $request->header('referer');
+        $routeName = (str_contains($referer, '/admin/')) ? 'admin.daily-worksheet.index' : 'daily-worksheet.index';
+
+        return redirect()->route($routeName, ['month' => $month])
+            ->with('success', 'Daily task updated successfully.');
     }
 
     public function destroy(DailyWorksheet $dailyWorksheet)

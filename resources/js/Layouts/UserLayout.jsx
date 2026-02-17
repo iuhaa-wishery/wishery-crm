@@ -153,7 +153,7 @@ export default function UserLayout({ children, title }) {
                     </Link>
 
                     <Link
-                        href={route('content-calendar.index')}
+                        href={(user.role === 'admin' || user.role === 'manager' || user.role === 'editor') ? route('admin.content-calendar.index') : route('content-calendar.index')}
                         className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
                     >
                         <FaTasks className="min-w-[20px]" />

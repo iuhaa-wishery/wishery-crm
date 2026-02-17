@@ -16,9 +16,17 @@ class DailyWorksheetController extends Controller
     {
         $user = auth()->user();
         $date = $request->input('date', Carbon::today()->toDateString());
+        $month = $request->input('month');
 
-        $query = DailyWorksheet::with(['user', 'user.dailyWorksheetSetting'])
-            ->whereDate('date', $date);
+        $query = DailyWorksheet::with(['user', 'user.dailyWorksheetSetting']);
+
+        if ($month) {
+            $yearMonth = Carbon::parse($month);
+            $query->whereYear('date', $yearMonth->year)
+                ->whereMonth('date', $yearMonth->month);
+        } else {
+            $query->whereDate('date', $date);
+        }
 
         $users = [];
         $selectedUser = null;
@@ -38,11 +46,15 @@ class DailyWorksheetController extends Controller
             $query->where('user_id', $user->id);
         }
 
-        $worksheets = $query->latest()->get();
+        $worksheets = $query->latest()->get()->map(function ($item) {
+            $item->formatted_date = $item->date ? Carbon::parse($item->date)->format('Y-m-d') : null;
+            return $item;
+        });
 
         return Inertia::render('Admin/DailyWorksheet/Index', [
             'worksheets' => $worksheets,
             'selectedDate' => $date,
+            'selectedMonth' => $month,
             'selectedUser' => $selectedUser,
             'users' => $users,
         ]);
