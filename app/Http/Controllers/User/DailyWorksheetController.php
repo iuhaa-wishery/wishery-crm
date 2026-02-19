@@ -29,6 +29,7 @@ class DailyWorksheetController extends Controller
                 'drive_link_enabled' => false,
                 'project_enabled' => false,
                 'task_type_options' => 'DONE,NOT DONE,IN PROGRESS',
+                'task_type_freetext' => false,
             ];
         }
 
@@ -74,7 +75,7 @@ class DailyWorksheetController extends Controller
             if ($settings->file_name_enabled)
                 $rules['file_name'] = 'required|string';
             if ($settings->drive_link_enabled)
-                $rules['drive_link'] = 'required|url';
+                $rules['drive_link'] = 'nullable|url';
             if ($settings->project_enabled)
                 $rules['project'] = 'required|string';
         }
@@ -119,7 +120,7 @@ class DailyWorksheetController extends Controller
             if ($settings->file_name_enabled)
                 $rules['file_name'] = 'required|string';
             if ($settings->drive_link_enabled)
-                $rules['drive_link'] = 'required|url';
+                $rules['drive_link'] = 'nullable|url';
             if ($settings->project_enabled)
                 $rules['project'] = 'required|string';
         }

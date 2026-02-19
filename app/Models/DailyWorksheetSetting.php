@@ -15,6 +15,7 @@ class DailyWorksheetSetting extends Model
         'drive_link_enabled',
         'project_enabled',
         'task_type_options',
+        'task_type_freetext',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class DailyWorksheetSetting extends Model
         'file_name_enabled' => 'boolean',
         'drive_link_enabled' => 'boolean',
         'project_enabled' => 'boolean',
+        'task_type_freetext' => 'boolean',
     ];
 
     public function user()

@@ -193,7 +193,15 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                             {settings.task_type_enabled && (
                                 <div className="space-y-1.5">
                                     <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Task Type</label>
-                                    {taskTypeOptions.length > 0 ? (
+                                    {settings.task_type_freetext ? (
+                                        <input
+                                            type="text"
+                                            value={data.task_type}
+                                            onChange={e => setData("task_type", e.target.value)}
+                                            className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
+                                            placeholder="Enter task type"
+                                        />
+                                    ) : taskTypeOptions.length > 0 ? (
                                         <select
                                             value={data.task_type}
                                             onChange={e => setData("task_type", e.target.value)}
@@ -228,6 +236,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         <option value="DONE">Done</option>
                                         <option value="NOT DONE">Not Done</option>
                                         <option value="IN PROGRESS">In Progress</option>
+                                        <option value="APPROVED">Approved</option>
                                     </select>
                                     {errors.status && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.status}</p>}
                                 </div>
@@ -426,6 +435,7 @@ const getStatusBadgeClass = (status) => {
         case 'DONE': return 'bg-green-50 text-green-700 ring-1 ring-green-100';
         case 'IN PROGRESS': return 'bg-blue-50 text-blue-700 ring-1 ring-blue-100';
         case 'NOT DONE': return 'bg-red-50 text-red-700 ring-1 ring-red-100';
+        case 'APPROVED': return 'bg-purple-50 text-purple-700 ring-1 ring-purple-100';
         default: return 'bg-gray-50 text-gray-600 ring-1 ring-gray-200';
     }
 };

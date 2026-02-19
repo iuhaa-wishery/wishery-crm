@@ -25,6 +25,10 @@ Route::get('/', function () {
     ]);
 });
 
+Route::get('/welcome-new', function () {
+    return Inertia::render('Landing');
+});
+
 // Dashboard (redirects based on role)
 Route::middleware(['auth'])->get('/dashboard', function () {
     $user = auth()->user();

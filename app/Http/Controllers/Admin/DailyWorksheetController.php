@@ -100,6 +100,7 @@ class DailyWorksheetController extends Controller
             'drive_link_enabled' => 'boolean',
             'project_enabled' => 'boolean',
             'task_type_options' => 'nullable|string',
+            'task_type_freetext' => 'boolean',
         ]);
 
         DailyWorksheetSetting::updateOrCreate(

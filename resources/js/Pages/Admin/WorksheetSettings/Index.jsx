@@ -12,6 +12,7 @@ export default function Index({ user, settings }) {
         drive_link_enabled: settings?.drive_link_enabled ?? false,
         project_enabled: settings?.project_enabled ?? false,
         task_type_options: settings?.task_type_options ?? "DONE,NOT DONE,IN PROGRESS",
+        task_type_freetext: settings?.task_type_freetext ?? false,
     });
 
     const handleSubmit = (e) => {
@@ -40,6 +41,7 @@ export default function Index({ user, settings }) {
                             { name: "file_name_enabled", label: "File Name" },
                             { name: "drive_link_enabled", label: "Drive Link" },
                             { name: "project_enabled", label: "Project" },
+                            { name: "task_type_freetext", label: "Task Type Free Text" },
                         ].map((field) => (
                             <div key={field.name} className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setData(field.name, !data[field.name])}>
                                 <input
