@@ -542,6 +542,55 @@ class AttendanceController extends Controller
 
         return back()->with('success', 'Attendance updated successfully.');
     }
+
+    public function updateBreak(Request $request, \App\Models\AttendanceBreak $attendanceBreak)
+    {
+        $request->validate([
+            'start_time' => 'required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+        ]);
+
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = $request->end_time ? Carbon::parse($request->end_time) : null;
+
+        // Calculate duration
+        $duration = 0;
+        if ($endTime) {
+            $duration = $startTime->diffInMinutes($endTime);
+        }
+
+        // Update the break record
+        $attendanceBreak->update([
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'total_minutes' => $duration,
+        ]);
+
+        // Recalculate total break minutes for the parent attendance
+        $attendance = $attendanceBreak->attendance;
+        $totalBreak = $attendance->breaks()->sum('total_minutes');
+
+        // Update the parent attendance record
+        // Note: We might want to recalculate total_worked_minutes too if break times affect it,
+        // but typically break times are just subtracted from total duration if the total duration is calculated from punch_in to punch_out.
+        // In the existing logic (punchOut method), duration = (punchOut - punchIn) - totalBreakMinutes.
+        // So updating total_break_minutes is crucial.
+
+        $updateData = ['total_break_minutes' => $totalBreak];
+
+        // If the attendance is already punched out, we should update the total_worked_minutes as well
+        if ($attendance->status === 'punched_out' && $attendance->punch_out && $attendance->punch_in) {
+            $punchIn = Carbon::parse($attendance->punch_in);
+            $punchOut = Carbon::parse($attendance->punch_out);
+            $totalDuration = $punchIn->diffInMinutes($punchOut);
+            $workedMinutes = max(0, $totalDuration - $totalBreak);
+            $updateData['total_worked_minutes'] = $workedMinutes;
+        }
+
+        $attendance->update($updateData);
+
+        return back()->with('success', 'Break updated successfully.');
+    }
     public function userIndex(Request $request)
     {
         $userId = auth()->id();

@@ -15,6 +15,67 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
     const [displayMode, setDisplayMode] = useState(filters.display || 'table');
     const [editingAttendance, setEditingAttendance] = useState(null);
     const [viewingBreaks, setViewingBreaks] = useState(null); // For break history modal
+    const [editingBreakId, setEditingBreakId] = useState(null);
+
+    // Sub-component for editing a break
+    const BreakEditForm = ({ breakRecord, onCancel, onSuccess }) => {
+        const { data, setData, put, processing, errors } = useForm({
+            start_time: breakRecord.start_time ? new Date(breakRecord.start_time).toISOString().slice(0, 16) : '',
+            end_time: breakRecord.end_time ? new Date(breakRecord.end_time).toISOString().slice(0, 16) : '',
+        });
+
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            put(route('admin.attendance.break.update', breakRecord.id), {
+                onSuccess: () => onSuccess(),
+                preserveScroll: true,
+            });
+        };
+
+        return (
+            <form onSubmit={handleSubmit} className="p-3 bg-blue-50/50 rounded-xl border border-blue-100">
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <InputLabel value="Start Time" className="text-xs mb-1" />
+                        <TextInput
+                            type="datetime-local"
+                            className="w-full text-xs h-8 px-2"
+                            value={data.start_time}
+                            onChange={(e) => setData('start_time', e.target.value)}
+                            required
+                        />
+                        <InputError message={errors.start_time} className="text-xs mt-1" />
+                    </div>
+                    <div>
+                        <InputLabel value="End Time" className="text-xs mb-1" />
+                        <TextInput
+                            type="datetime-local"
+                            className="w-full text-xs h-8 px-2"
+                            value={data.end_time}
+                            onChange={(e) => setData('end_time', e.target.value)}
+                        />
+                        <InputError message={errors.end_time} className="text-xs mt-1" />
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:text-gray-700 bg-white border border-gray-200 rounded-lg hover:shadow-sm"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        className="px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 hover:shadow-md disabled:opacity-50"
+                    >
+                        Save
+                    </button>
+                </div>
+            </form>
+        );
+    };
 
     // Auto-refresh every 60 seconds
     useEffect(() => {
@@ -456,13 +517,13 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
             </Modal>
 
             {/* Break History Modal */}
-            <Modal show={!!viewingBreaks} onClose={() => setViewingBreaks(null)} maxWidth="md">
+            <Modal show={!!viewingBreaks} onClose={() => { setViewingBreaks(null); setEditingBreakId(null); }} maxWidth="md">
                 <div className="p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-lg font-bold text-gray-900">
                             Break History - {viewType === 'daily' ? viewingBreaks?.name : viewingBreaks && formatDate(viewingBreaks.date)}
                         </h3>
-                        <button onClick={() => setViewingBreaks(null)} className="text-gray-400 hover:text-gray-500">
+                        <button onClick={() => { setViewingBreaks(null); setEditingBreakId(null); }} className="text-gray-400 hover:text-gray-500">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -472,15 +533,29 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                             viewingBreaks.breaks.slice().sort((a, b) => b.id - a.id).map((brk, index) => {
                                 const parseDate = (d) => {
                                     if (!d) return null;
-                                    // Handle both "YYYY-MM-DD HH:MM:SS" and ISO formats
                                     const s = d.toString().replace(/\s/, 'T');
                                     return new Date(s);
                                 };
+
+                                const isEditing = editingBreakId === brk.id;
+
+                                if (isEditing) {
+                                    // Edit Mode
+                                    return (
+                                        <BreakEditForm
+                                            key={brk.id}
+                                            breakRecord={brk}
+                                            onCancel={() => setEditingBreakId(null)}
+                                            onSuccess={() => setEditingBreakId(null)}
+                                        />
+                                    );
+                                }
+
                                 const start = parseDate(brk.start_time);
                                 const end = parseDate(brk.end_time);
 
                                 return (
-                                    <div key={brk.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div key={brk.id || index} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 group">
                                         <div>
                                             <p className="text-sm font-bold text-gray-800">
                                                 Break {viewingBreaks.breaks.length - index}
@@ -490,10 +565,17 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                                 {end ? end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ' Ongoing'}
                                             </p>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="flex items-center gap-2">
                                             <span className="px-2 py-1 bg-white text-gray-600 rounded-lg text-xs font-bold shadow-sm border border-gray-100">
                                                 {brk.total_minutes} min
                                             </span>
+                                            <button
+                                                onClick={() => setEditingBreakId(brk.id)}
+                                                className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                                title="Edit Break"
+                                            >
+                                                <Edit className="w-3 h-3" />
+                                            </button>
                                         </div>
                                     </div>
                                 );
