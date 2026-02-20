@@ -19,9 +19,17 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
 
     // Sub-component for editing a break
     const BreakEditForm = ({ breakRecord, onCancel, onSuccess }) => {
+        // Helper to format date for datetime-local input (YYYY-MM-DDTHH:mm) in local time
+        const formatLocalTime = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+        };
+
         const { data, setData, put, processing, errors } = useForm({
-            start_time: breakRecord.start_time ? new Date(breakRecord.start_time).toISOString().slice(0, 16) : '',
-            end_time: breakRecord.end_time ? new Date(breakRecord.end_time).toISOString().slice(0, 16) : '',
+            start_time: formatLocalTime(breakRecord.start_time),
+            end_time: formatLocalTime(breakRecord.end_time),
         });
 
         const handleSubmit = (e) => {
