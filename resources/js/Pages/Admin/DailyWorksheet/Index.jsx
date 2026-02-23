@@ -3,7 +3,7 @@ import { useForm, Head, router, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Modal from "@/Components/Modal";
 import MonthPicker from "@/Components/MonthPicker";
-import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Index({ worksheets, selectedDate, selectedMonth, selectedUser, users }) {
@@ -13,6 +13,14 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
     const [isEditing, setIsEditing] = useState(false);
     const [currentItem, setCurrentItem] = useState(null);
     const [filterMode, setFilterMode] = useState(selectedMonth ? 'monthly' : 'daily');
+    const [expandedUsers, setExpandedUsers] = useState({});
+
+    const toggleUserExpand = (userId) => {
+        setExpandedUsers(prev => ({
+            ...prev,
+            [userId]: !prev[userId]
+        }));
+    };
 
     const { data, setData, put, processing, reset, errors } = useForm({
         date: "",
@@ -321,86 +329,119 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
                     </div >
                 </Modal >
 
-                <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden ring-1 ring-gray-50">
-                    <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
-                            <thead>
-                                <tr className="bg-[#fcfcfd] border-b border-gray-100">
-                                    <th className="py-6 px-4 pl-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[200px]">User</th>
-                                    <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[150px]">Client</th>
-                                    <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[150px]">Task Type</th>
-                                    <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[120px]">Status</th>
-                                    <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[150px]">Project</th>
-                                    {auth.user.role === 'admin' && (
-                                        <th className="py-6 px-4 pr-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest text-right w-[100px]">Action</th>
-                                    )}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {worksheets.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="7" className="px-4 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center">
-                                                    <CalendarIcon className="text-gray-300" size={32} />
-                                                </div>
-                                                <p className="text-gray-400 font-bold text-sm">No tasks logged for this date</p>
+                <div className="space-y-8">
+                    {worksheets.length === 0 ? (
+                        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden ring-1 ring-gray-50 p-20 text-center">
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center">
+                                    <CalendarIcon className="text-gray-300" size={32} />
+                                </div>
+                                <p className="text-gray-400 font-bold text-sm">No tasks logged for this {filterMode === 'daily' ? 'date' : 'month'}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        // Group worksheets by user if All Users is selected
+                        (!selectedUser ?
+                            Object.values(worksheets.reduce((acc, item) => {
+                                if (!acc[item.user_id]) acc[item.user_id] = { user: item.user, items: [] };
+                                acc[item.user_id].items.push(item);
+                                return acc;
+                            }, {}))
+                            : [{ user: worksheets[0]?.user, items: worksheets }]
+                        ).map((group) => {
+                            const isExpanded = expandedUsers[group.user?.id] !== false; // Default to expanded
+                            return (
+                                <div key={group.user?.id} className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden ring-1 ring-gray-50 flex flex-col">
+                                    <div
+                                        onClick={() => toggleUserExpand(group.user?.id)}
+                                        className="px-8 py-5 border-b border-gray-100 bg-gray-50/30 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-blue-600 border-2 border-white flex items-center justify-center text-white font-bold text-sm uppercase shadow-md">
+                                                {group.user?.name?.charAt(0)}
                                             </div>
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    worksheets.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
-                                            <td className="py-6 px-4 pl-8">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs uppercase shadow-sm">
-                                                        {item.user?.name?.charAt(0)}
-                                                    </div>
-                                                    <span className="font-bold text-gray-900 text-sm">{item.user?.name}</span>
-                                                </div>
-                                            </td>
-                                            <td className="py-6 px-4">
-                                                <span className="text-[13px] font-bold text-gray-700">{item.client_name || '-'}</span>
-                                            </td>
-                                            <td className="py-6 px-4">
-                                                <span className="px-3 py-1.5 bg-gray-100 rounded-lg text-[12px] font-bold text-gray-600 border border-gray-200/50 uppercase tracking-wide">
-                                                    {item.task_type || '-'}
-                                                </span>
-                                            </td>
-                                            <td className="py-6 px-4">
-                                                <span className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest ${getStatusBadgeClass(item.status)}`}>
-                                                    {item.status || 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td className="py-6 px-4">
-                                                <span className="text-[13px] font-bold text-gray-600 uppercase">{item.project || '-'}</span>
-                                            </td>
-                                            {auth.user.role === 'admin' && (
-                                                <td className="py-6 px-4 pr-8 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button
-                                                            onClick={() => startEdit(item)}
-                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Edit Task"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(item.id)}
-                                                            className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Delete Task"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            )}
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                            <div>
+                                                <h3 className="font-bold text-gray-900 text-base">{group.user?.name}</h3>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                                                    {group.items.length} Task{group.items.length > 1 ? 's' : ''} Logged
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-gray-400">
+                                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="overflow-x-auto custom-scrollbar max-h-[400px] overflow-y-auto">
+                                            <table className="w-full text-left border-collapse min-w-[1000px]">
+                                                <thead className="sticky top-0 z-10">
+                                                    <tr className="bg-[#fcfcfd] border-b border-gray-100">
+                                                        <th className="py-4 px-4 pl-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Date</th>
+                                                        <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[150px]">Client</th>
+                                                        <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[180px]">Task Type</th>
+                                                        <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Status</th>
+                                                        <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[200px]">Project</th>
+                                                        {auth.user.role === 'admin' && (
+                                                            <th className="py-4 px-4 pr-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right w-[100px]">Action</th>
+                                                        )}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-50">
+                                                    {group.items.map((item) => (
+                                                        <tr key={item.id} className="hover:bg-gray-50/30 transition-all group">
+                                                            <td className="py-5 px-4 pl-8">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[13px] font-bold text-gray-900">{new Date(item.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}</span>
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <span className="text-[13px] font-bold text-gray-700">{item.client_name || '-'}</span>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <span className="px-3 py-1.5 bg-gray-100/50 rounded-lg text-[11px] font-bold text-gray-600 border border-gray-200/30 uppercase tracking-wide">
+                                                                    {item.task_type || '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <span className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest ${getStatusBadgeClass(item.status)}`}>
+                                                                    {item.status || 'N/A'}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <span className="text-[13px] font-bold text-gray-600 uppercase tracking-tight">{item.project || '-'}</span>
+                                                            </td>
+                                                            {auth.user.role === 'admin' && (
+                                                                <td className="py-5 px-4 pr-8 text-right">
+                                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <button
+                                                                            onClick={() => startEdit(item)}
+                                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                            title="Edit Task"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDelete(item.id)}
+                                                                            className="p-2 text-red-400 hover:bg-red-50 rounded-lg transition-colors"
+                                                                            title="Delete Task"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div >
             <style dangerouslySetInnerHTML={{
