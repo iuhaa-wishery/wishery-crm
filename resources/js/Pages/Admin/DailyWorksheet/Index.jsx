@@ -374,7 +374,7 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
 
                                     {isExpanded && (
                                         <div className="overflow-x-auto custom-scrollbar max-h-[400px] overflow-y-auto">
-                                            <table className="w-full text-left border-collapse min-w-[1000px]">
+                                            <table className="w-full text-left border-collapse min-w-[1100px]">
                                                 <thead className="sticky top-0 z-10">
                                                     <tr className="bg-[#fcfcfd] border-b border-gray-100">
                                                         <th className="py-4 px-4 pl-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Date</th>
@@ -382,6 +382,7 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
                                                         <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[180px]">Task Type</th>
                                                         <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Status</th>
                                                         <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[200px]">Project</th>
+                                                        <th className="py-4 px-4 text-[11px] font-bold text-gray-400 uppercase tracking-widest w-[120px]">Added On</th>
                                                         {auth.user.role === 'admin' && (
                                                             <th className="py-4 px-4 pr-8 text-[11px] font-bold text-gray-400 uppercase tracking-widest text-right w-[100px]">Action</th>
                                                         )}
@@ -412,9 +413,12 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
                                                             <td className="py-5 px-4">
                                                                 <span className="text-[13px] font-bold text-gray-600 uppercase tracking-tight">{item.project || '-'}</span>
                                                             </td>
+                                                            <td className="py-5 px-4">
+                                                                <span className="text-[12px] font-bold text-gray-600">{new Date(item.created_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                                            </td>
                                                             {auth.user.role === 'admin' && (
                                                                 <td className="py-5 px-4 pr-8 text-right">
-                                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="flex items-center justify-end gap-1">
                                                                         <button
                                                                             onClick={() => startEdit(item)}
                                                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
