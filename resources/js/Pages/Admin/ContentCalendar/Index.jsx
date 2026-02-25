@@ -41,6 +41,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
     const [selectedUser, setSelectedUser] = useState(filters?.user_id || '');
     const [selectedDate, setSelectedDate] = useState(filters?.date || '');
     const [showDetailId, setShowDetailId] = useState(null);
+    const [updationFilter, setUpdationFilter] = useState('');
 
     const selectedTask = localItems.find(item => item.id === showDetailId);
 
@@ -129,6 +130,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
         setSelectedYear(y);
         setSelectedUser('');
         setSelectedDate('');
+        setUpdationFilter('');
 
         router.get(route('admin.content-calendar.index'), {
             project_id: '',
@@ -295,12 +297,19 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                                 onChange={(e) => onDateFilterChange(e.target.value)}
                                 className="text-[14px] border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400/20 bg-gray-50/50 font-semibold text-gray-700 h-11 transition-all hover:bg-white hover:border-gray-300"
                             />
+                            <input
+                                type="text"
+                                value={updationFilter}
+                                onChange={(e) => setUpdationFilter(e.target.value)}
+                                placeholder="Filter Updation..."
+                                className="text-[14px] border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400/20 bg-gray-50/50 font-semibold text-gray-700 h-11 px-4 min-w-[160px] transition-all hover:bg-white hover:border-gray-300"
+                            />
                         </div>
                     </div>
                 </div>
 
                 <div className="flex gap-3 items-end">
-                    {(selectedProject || selectedUser || selectedDate) && (
+                    {(selectedProject || selectedUser || selectedDate || updationFilter) && (
                         <button
                             onClick={handleReset}
                             className="text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-red-500 px-4 h-11 transition-colors flex items-center gap-2"
@@ -338,7 +347,7 @@ export default function Index({ auth, items_data, projects, users, filters, is_m
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {localItems.map((item, idx) => {
+                            {localItems.filter(item => !updationFilter || (item.updation && item.updation.toLowerCase().includes(updationFilter.toLowerCase()))).map((item, idx) => {
                                 const isSun = isSunday(item.date);
                                 return (
                                     <tr key={item.id} className="group hover:bg-gray-50/30 transition-all relative">
