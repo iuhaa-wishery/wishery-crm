@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Admin\DailyWorksheetController as AdminDailyWorksheetController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AiAssistantController;
 
 
 // Home page
@@ -117,6 +118,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/daily-worksheet', [\App\Http\Controllers\User\DailyWorksheetController::class, 'store'])->name('daily-worksheet.store');
     Route::put('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'update'])->name('daily-worksheet.update');
     Route::delete('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'destroy'])->name('daily-worksheet.destroy');
+
+    // -------------------------
+    // ✅ AI ASSISTANT ROUTES
+    // -------------------------
+    Route::post('/ai/chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
 });
 
 

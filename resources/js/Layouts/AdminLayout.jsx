@@ -14,6 +14,7 @@ import {
   FaComments,
 } from "react-icons/fa";
 import NotificationDropdown from "@/Components/NotificationDropdown";
+import AiChatAssistant from "@/Components/AiChatAssistant";
 
 import { Toaster, toast } from "react-hot-toast";
 
@@ -290,6 +291,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
           <main className="flex-1 overflow-auto p-6">
             {children}
           </main>
+          <AiChatAssistant />
         </div>
       </div>
     </>

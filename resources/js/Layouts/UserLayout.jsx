@@ -11,6 +11,7 @@ import {
     FaComments,
 } from "react-icons/fa";
 import NotificationDropdown from "@/Components/NotificationDropdown";
+import AiChatAssistant from "@/Components/AiChatAssistant";
 import axios from "axios";
 
 import toast, { Toaster } from "react-hot-toast";
@@ -232,6 +233,7 @@ export default function UserLayout({ children, title }) {
                 <main className="p-6 overflow-y-auto flex-1">
                     {children}
                 </main>
+                <AiChatAssistant />
             </div >
             <Toaster position="top-right" />
         </div >

@@ -42,4 +42,8 @@ return [
         'folder_id' => env('GOOGLE_DRIVE_FOLDER_ID'),
     ],
 
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
 ];
