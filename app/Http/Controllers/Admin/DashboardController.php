@@ -7,39 +7,60 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Leave;
+use App\Models\ContentCalendar;
+use App\Models\DailyWorksheet;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        $month = request('month', now()->month);
+        $year = request('year', now()->year);
+        $userId = request('user_id');
+
         $stats = [
-            'total_projects' => Project::count(),
-            'total_tasks' => Task::count(),
             'total_users' => auth()->user()->role === 'admin' ? User::where('role', 'user')->count() : 0,
             'pending_leaves' => auth()->user()->role === 'admin' ? Leave::where('status', 'pending')->count() : 0,
         ];
 
-        $projectStatusStats = Project::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->get()
-            ->pluck('count', 'status');
+        // Fetch users for filtering
+        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
 
-        $taskPriorityStats = Task::selectRaw('priority, count(*) as count')
-            ->groupBy('priority')
-            ->get()
-            ->pluck('count', 'priority');
+        // Filtered counts for Content Calendar
+        $contentCalendarQuery = ContentCalendar::whereYear('date', $year)
+            ->whereMonth('date', $month);
 
-        $recentProjects = Project::latest()->take(5)->get();
-        $recentTasks = Task::with('project')->latest()->take(5)->get();
+        if ($userId) {
+            $contentCalendarQuery->whereHas('assignees', function ($q) use ($userId) {
+                $q->where('users.id', $userId);
+            });
+        }
+        $contentCalendarCount = $contentCalendarQuery->count();
+
+        // Filtered counts for Daily Worksheet
+        $dailyWorksheetQuery = DailyWorksheet::whereYear('date', $year)
+            ->whereMonth('date', $month);
+
+        if ($userId) {
+            $dailyWorksheetQuery->where('user_id', $userId);
+        }
+        $dailyWorksheetCount = $dailyWorksheetQuery->count();
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => $stats,
-            'projectStatusStats' => $projectStatusStats,
-            'taskPriorityStats' => $taskPriorityStats,
-            'recentProjects' => $recentProjects,
-            'recentTasks' => $recentTasks,
+            'users' => $users,
+            'filteredStats' => [
+                'content_calendar_count' => $contentCalendarCount,
+                'daily_worksheet_count' => $dailyWorksheetCount,
+            ],
+            'filters' => [
+                'month' => (int) $month,
+                'year' => (int) $year,
+                'user_id' => $userId ? (int) $userId : null,
+            ],
         ]);
     }
 }
