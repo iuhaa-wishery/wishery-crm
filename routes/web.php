@@ -152,11 +152,14 @@ Route::middleware(['auth', 'is_admin'])
             Route::get('leaves/{id}', [AdminLeaveController::class, 'show'])->name('leaves.show');
             Route::post('leaves/{id}/approve', [AdminLeaveController::class, 'approve'])->name('leaves.approve');
             Route::post('leaves/{id}/reject', [AdminLeaveController::class, 'reject'])->name('leaves.reject');
+            Route::put('leaves/{id}', [AdminLeaveController::class, 'update'])->name('leaves.update');
+            Route::delete('leaves/{id}', [AdminLeaveController::class, 'destroy'])->name('leaves.delete');
 
             // -------------------------
             // ✅ ATTENDANCE ROUTES
             // -------------------------
             Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+            Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
             Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
             Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');

@@ -127,4 +127,50 @@ class LeaveController extends Controller
 
         return back()->with('success', 'Leave rejected successfully');
     }
+
+    public function destroy($id)
+    {
+        $leave = Leave::findOrFail($id);
+        $leave->delete();
+
+        return back()->with('success', 'Leave record deleted successfully');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'leave_type' => 'required|in:SL,CL',
+            'day_type' => 'required|in:full,first_half,second_half',
+            'from_date' => 'required|date',
+            'to_date' => 'required|date|after_or_equal:from_date',
+            'reason' => 'required|string',
+            'status' => 'required|in:pending,approved,rejected',
+        ]);
+
+        $leave = Leave::findOrFail($id);
+
+        $from = \Carbon\Carbon::parse($request->from_date);
+        $to = \Carbon\Carbon::parse($request->to_date);
+
+        // calculate days
+        if ($request->day_type === 'full') {
+            $days = $from->diffInDays($to) + 1;
+        } else {
+            // Half day is always 0.5 days and must be same day
+            $days = 0.5;
+            $to = $from;
+        }
+
+        $leave->update([
+            'leave_type' => $request->leave_type,
+            'day_type' => $request->day_type,
+            'from_date' => $from,
+            'to_date' => $to,
+            'no_of_days' => $days,
+            'reason' => $request->reason,
+            'status' => $request->status,
+        ]);
+
+        return back()->with('success', 'Leave record updated successfully');
+    }
 }

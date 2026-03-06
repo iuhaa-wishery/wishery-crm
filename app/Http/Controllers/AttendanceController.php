@@ -226,8 +226,15 @@ class AttendanceController extends Controller
                 $leaves = Leave::where('user_id', $userId)
                     ->where('status', 'approved')
                     ->where(function ($query) use ($month) {
-                        $query->whereBetween('from_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()])
-                            ->orWhereBetween('to_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()]);
+                        $startOfMonth = $month->copy()->startOfMonth()->toDateString();
+                        $endOfMonth = $month->copy()->endOfMonth()->toDateString();
+
+                        $query->whereBetween('from_date', [$startOfMonth, $endOfMonth])
+                            ->orWhereBetween('to_date', [$startOfMonth, $endOfMonth])
+                            ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
+                                $q->where('from_date', '<', $startOfMonth)
+                                    ->where('to_date', '>', $endOfMonth);
+                            });
                     })
                     ->get();
 
@@ -324,11 +331,13 @@ class AttendanceController extends Controller
                         } else {
                             // Check for Leaves
                             $isOnLeave = $leaves->filter(function ($leave) use ($dateStr) {
-                                return $dateStr >= $leave->from_date && $dateStr <= $leave->to_date;
+                                $from = $leave->from_date instanceof \Carbon\Carbon ? $leave->from_date->toDateString() : $leave->from_date;
+                                $to = $leave->to_date instanceof \Carbon\Carbon ? $leave->to_date->toDateString() : $leave->to_date;
+                                return $dateStr >= $from && $dateStr <= $to;
                             })->first();
 
                             if ($isOnLeave) {
-                                $status = 'Leave';
+                                $status = 'On Leave';
                             } elseif ($date->lt($today)) {
                                 $status = 'Absent';
                             }
@@ -614,8 +623,15 @@ class AttendanceController extends Controller
         $leaves = \App\Models\Leave::where('user_id', $userId)
             ->where('status', 'approved')
             ->where(function ($query) use ($month) {
-                $query->whereBetween('from_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()])
-                    ->orWhereBetween('to_date', [$month->copy()->startOfMonth()->toDateString(), $month->copy()->endOfMonth()->toDateString()]);
+                $startOfMonth = $month->copy()->startOfMonth()->toDateString();
+                $endOfMonth = $month->copy()->endOfMonth()->toDateString();
+
+                $query->whereBetween('from_date', [$startOfMonth, $endOfMonth])
+                    ->orWhereBetween('to_date', [$startOfMonth, $endOfMonth])
+                    ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
+                        $q->where('from_date', '<', $startOfMonth)
+                            ->where('to_date', '>', $endOfMonth);
+                    });
             })
             ->get();
 
@@ -672,11 +688,13 @@ class AttendanceController extends Controller
                 } else {
                     // Check for Leaves
                     $isOnLeave = $leaves->filter(function ($leave) use ($dateStr) {
-                        return $dateStr >= $leave->from_date && $dateStr <= $leave->to_date;
+                        $from = $leave->from_date instanceof \Carbon\Carbon ? $leave->from_date->toDateString() : $leave->from_date;
+                        $to = $leave->to_date instanceof \Carbon\Carbon ? $leave->to_date->toDateString() : $leave->to_date;
+                        return $dateStr >= $from && $dateStr <= $to;
                     })->first();
 
                     if ($isOnLeave) {
-                        $status = 'Leave';
+                        $status = 'On Leave';
                     } elseif ($date->lt($today)) {
                         $status = 'Absent';
                     }
@@ -759,5 +777,130 @@ class AttendanceController extends Controller
                 'month' => $month,
             ],
         ]);
+    }
+
+    public function export(Request $request)
+    {
+        $monthStr = $request->input('month', Carbon::now()->format('Y-m'));
+        $month = Carbon::parse($monthStr);
+        $startDate = $month->copy()->startOfMonth();
+        $endDate = $month->copy()->endOfMonth();
+        $today = Carbon::today();
+
+        // Don't count future days calculation
+        $calculationEndDate = $endDate->gt($today) ? $today : $endDate;
+
+        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->orderBy('name')->get();
+
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=attendance_export_{$monthStr}.csv",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $columns = [
+            'User Name',
+            'Total Present Days',
+            'Total Absent Days',
+            'Total Leaves',
+            'Late Punchin Days',
+            'Total Work Hours',
+            'Total Break Hours'
+        ];
+
+        $callback = function () use ($users, $startDate, $calculationEndDate, $columns, $month, $today) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($users as $user) {
+                // Get all attendances for the month
+                $attendances = Attendance::where('user_id', $user->id)
+                    ->whereYear('date', $month->year)
+                    ->whereMonth('date', $month->month)
+                    ->get()
+                    ->keyBy(function ($item) {
+                        return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
+                    });
+
+                // Get all approved leaves for the month
+                $leaves = Leave::where('user_id', $user->id)
+                    ->where('status', 'approved')
+                    ->where(function ($query) use ($startDate, $month) {
+                        $monthlyEnd = $month->copy()->endOfMonth();
+                        $query->whereBetween('from_date', [$startDate->toDateString(), $monthlyEnd->toDateString()])
+                            ->orWhereBetween('to_date', [$startDate->toDateString(), $monthlyEnd->toDateString()])
+                            ->orWhere(function ($q) use ($startDate, $monthlyEnd) {
+                                $q->where('from_date', '<', $startDate->toDateString())
+                                    ->where('to_date', '>', $monthlyEnd->toDateString());
+                            });
+                    })
+                    ->get();
+
+                $totalPresent = 0;
+                $absentDays = 0;
+                $leaveDays = 0;
+                $lateDays = 0;
+                $totalWorkedMinutes = 0;
+                $totalBreakMinutes = 0;
+
+                // Loop through each day from start of month to calculation end date (typically today)
+                for ($d = $startDate->copy(); $d <= $calculationEndDate; $d->addDay()) {
+                    $dateStr = $d->toDateString();
+                    $isWeekend = $d->isSaturday() || $d->isSunday();
+
+                    $attendance = $attendances->get($dateStr);
+
+                    if ($attendance) {
+                        // Count towards totals regardless of weekend if they worked
+                        $totalPresent++;
+                        $totalWorkedMinutes += $attendance->total_worked_minutes;
+                        $totalBreakMinutes += $attendance->total_break_minutes;
+
+                        // Check if late
+                        $punchIn = Carbon::parse($attendance->punch_in);
+                        $nineThirtyAM = Carbon::parse($dateStr . ' 09:30:59');
+                        if ($punchIn->gt($nineThirtyAM)) {
+                            $lateDays++;
+                        }
+                    } elseif (!$isWeekend) {
+                        // For weekdays, check if on leave or absent
+                        $isOnLeave = false;
+                        foreach ($leaves as $leave) {
+                            $from = $leave->from_date instanceof \Carbon\Carbon ? $leave->from_date->toDateString() : $leave->from_date;
+                            $to = $leave->to_date instanceof \Carbon\Carbon ? $leave->to_date->toDateString() : $leave->to_date;
+                            if ($dateStr >= $from && $dateStr <= $to) {
+                                $isOnLeave = true;
+                                break;
+                            }
+                        }
+
+                        if ($isOnLeave) {
+                            $leaveDays++;
+                        } else {
+                            // Only count as absent if today is passed
+                            if ($d->lt($today)) {
+                                $absentDays++;
+                            }
+                        }
+                    }
+                }
+
+                fputcsv($file, [
+                    $user->name,
+                    $totalPresent,
+                    $absentDays,
+                    $leaveDays,
+                    $lateDays,
+                    floor($totalWorkedMinutes / 60) . 'h ' . ($totalWorkedMinutes % 60) . 'm',
+                    floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm'
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

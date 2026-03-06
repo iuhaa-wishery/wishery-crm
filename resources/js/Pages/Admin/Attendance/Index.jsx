@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor, Info, X } from 'lucide-react';
+import { Filter, Edit, RotateCcw, MapPin, Smartphone, Monitor, Info, X, Download } from 'lucide-react';
 import Modal from '@/Components/Modal';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
@@ -205,6 +205,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
             case 'Late & Early Leave': return 'bg-orange-100 text-orange-600';
             case 'Absent': return 'bg-red-100 text-red-600';
             case 'OFF': return 'bg-blue-100 text-blue-600';
+            case 'On Leave':
             case 'Leave': return 'bg-purple-100 text-purple-600';
             default: return 'bg-gray-50 text-gray-400';
         }
@@ -307,7 +308,7 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                     className="min-w-[200px]"
                                 />
                             </div>
-                            <div className="flex items-end">
+                            <div className="flex items-end gap-3">
                                 <button
                                     onClick={handleReset}
                                     className="flex items-center gap-2 px-6 h-11 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-all font-bold text-[12px] uppercase tracking-widest"
@@ -316,6 +317,13 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
                                     <RotateCcw className="w-4 h-4" />
                                     Reset
                                 </button>
+                                <a
+                                    href={route('admin.attendance.export', { month: filters.month || '' })}
+                                    className="flex items-center gap-2 px-6 h-11 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-bold text-[12px] uppercase tracking-widest"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Export CSV
+                                </a>
                             </div>
                         </div>
                     </div>

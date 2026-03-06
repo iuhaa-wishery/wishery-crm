@@ -89,7 +89,7 @@ class AiAssistantController extends Controller
         10. Only generate SELECT queries. DO NOT generate DELETE, DROP, UPDATE, or INSERT.
         11. Be concise and accurate.";
 
-        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
             'contents' => [
                 ['parts' => [['text' => $prompt]]]
             ]
@@ -139,7 +139,7 @@ class AiAssistantController extends Controller
         If no results were found, say something appropriate.
         Do not mention SQL or technical details unless asked.";
 
-        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$apiKey}", [
+        $response = Http::post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
             'contents' => [
                 ['parts' => [['text' => $prompt]]]
             ]

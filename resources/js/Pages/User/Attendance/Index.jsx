@@ -32,6 +32,7 @@ export default function Index({ attendanceData, filters, totalMonthlyMinutes }) 
             case 'Late & Early Leave': return 'bg-orange-100 text-orange-600';
             case 'Absent': return 'bg-red-100 text-red-600';
             case 'OFF': return 'bg-blue-100 text-blue-600';
+            case 'On Leave':
             case 'Leave': return 'bg-purple-100 text-purple-600';
             default: return 'bg-gray-50 text-gray-400';
         }

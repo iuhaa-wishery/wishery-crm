@@ -1,7 +1,7 @@
 import React from "react";
 import { Head, Link, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Check, X, Calendar, User, FileText, Eye } from "lucide-react";
+import { Check, X, Calendar, User, FileText, Eye, Trash2, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Index({ leaves, users, filters, stats }) {
@@ -11,6 +11,16 @@ export default function Index({ leaves, users, filters, stats }) {
     const [month, setMonth] = React.useState(filters.month || '');
     const [userId, setUserId] = React.useState(filters.user_id || '');
     const [selectedLeave, setSelectedLeave] = React.useState(null);
+    const [deleteId, setDeleteId] = React.useState(null);
+    const [editingLeave, setEditingLeave] = React.useState(null);
+    const [editForm, setEditForm] = React.useState({
+        leave_type: '',
+        day_type: '',
+        from_date: '',
+        to_date: '',
+        reason: '',
+        status: ''
+    });
 
     const handleFilterChange = (key, value) => {
         const newFilters = {
@@ -33,6 +43,43 @@ export default function Index({ leaves, users, filters, stats }) {
         router.post(route(`admin.leaves.${action}`, id), {}, {
             onSuccess: () => toast.success(`Leave ${action}d successfully`),
             onError: () => toast.error("Something went wrong"),
+        });
+    };
+
+    const handleDelete = (id) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = () => {
+        router.delete(route('admin.leaves.delete', deleteId), {
+            onSuccess: () => {
+                toast.success("Leave record deleted successfully");
+                setDeleteId(null);
+            },
+            onError: () => toast.error("Failed to delete leave record"),
+        });
+    };
+
+    const handleEdit = (leave) => {
+        setEditingLeave(leave);
+        setEditForm({
+            leave_type: leave.leave_type,
+            day_type: leave.day_type,
+            from_date: leave.from_date.split('T')[0],
+            to_date: leave.to_date.split('T')[0],
+            reason: leave.reason || '',
+            status: leave.status
+        });
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        router.put(route('admin.leaves.update', editingLeave.id), editForm, {
+            onSuccess: () => {
+                toast.success("Leave record updated successfully");
+                setEditingLeave(null);
+            },
+            onError: () => toast.error("Failed to update leave record"),
         });
     };
 
@@ -270,9 +317,21 @@ export default function Index({ leaves, users, filters, stats }) {
                                                         <X size={16} />
                                                     </button>
                                                 </>
-                                            ) : (
-                                                <span className="text-gray-300">-</span>
-                                            )}
+                                            ) : null}
+                                            <button
+                                                onClick={() => handleEdit(leave)}
+                                                className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition"
+                                                title="Edit"
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(leave.id)}
+                                                className="p-1.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-red-50 hover:text-red-600 transition"
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -367,6 +426,143 @@ export default function Index({ leaves, users, filters, stats }) {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteId && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200 p-6">
+                        <h3 className="text-xl font-bold text-gray-800 mb-4">Are you sure?</h3>
+                        <p className="text-gray-600 mb-8 leading-relaxed">
+                            Do you really want to delete this leave record? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteId(null)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                            >
+                                No, Keep it
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium shadow-md shadow-red-200"
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Leave Modal */}
+            {editingLeave && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-800">Edit Leave Record</h3>
+                            <button
+                                onClick={() => setEditingLeave(null)}
+                                className="text-gray-400 hover:text-gray-600 transition"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Leave Type</label>
+                                    <select
+                                        value={editForm.leave_type}
+                                        onChange={(e) => setEditForm({ ...editForm, leave_type: e.target.value })}
+                                        className="w-full border-gray-300 rounded-lg text-sm"
+                                        required
+                                    >
+                                        <option value="SL">Sick Leave (SL)</option>
+                                        <option value="CL">Casual Leave (CL)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Duration Type</label>
+                                    <select
+                                        value={editForm.day_type}
+                                        onChange={(e) => setEditForm({ ...editForm, day_type: e.target.value })}
+                                        className="w-full border-gray-300 rounded-lg text-sm"
+                                        required
+                                    >
+                                        <option value="full">Full Day</option>
+                                        <option value="first_half">First Half</option>
+                                        <option value="second_half">Second Half</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">From Date</label>
+                                    <input
+                                        type="date"
+                                        value={editForm.from_date}
+                                        onChange={(e) => setEditForm({ ...editForm, from_date: e.target.value })}
+                                        className="w-full border-gray-300 rounded-lg text-sm"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">To Date</label>
+                                    <input
+                                        type="date"
+                                        value={editForm.to_date}
+                                        onChange={(e) => setEditForm({ ...editForm, to_date: e.target.value })}
+                                        className="w-full border-gray-300 rounded-lg text-sm"
+                                        required
+                                        disabled={editForm.day_type !== 'full'}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Status</label>
+                                <select
+                                    value={editForm.status}
+                                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                                    className="w-full border-gray-300 rounded-lg text-sm"
+                                    required
+                                >
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-1">Reason</label>
+                                <textarea
+                                    value={editForm.reason}
+                                    onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
+                                    className="w-full border-gray-300 rounded-lg text-sm"
+                                    rows="3"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingLeave(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-md shadow-blue-200"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

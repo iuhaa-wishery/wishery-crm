@@ -41,10 +41,9 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
 
             // Find leave record
             const leave = leaves?.find(l => {
-                const start = new Date(l.from_date);
-                const end = new Date(l.to_date);
-                const current = new Date(dateStr);
-                return current >= start && current <= end;
+                const start = l.from_date;
+                const end = l.to_date;
+                return dateStr >= start && dateStr <= end;
             });
 
             // Determine if it's a weekend
@@ -165,7 +164,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
             if (day.status === 'Present') present++;
             else if (day.status === 'Absent') absent++;
             else if (day.status === 'Half Day') halfDay++;
-            else if (day.status === 'On Leave') onLeave++;
+            else if (day.status === 'On Leave' || day.status === 'Leave') onLeave++;
 
             if (day.isLate) lateDays++;
 
@@ -230,7 +229,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
 
                             {item.currentMonth && item.status !== '-' && (
                                 <div className="mt-auto space-y-1">
-                                    <div className={`px-1 py-1 rounded-lg text-[10px] font-black text-center uppercase tracking-tighter ${getStatusStyles(item.status)}`}>
+                                    <div className={`px-1 py-1 rounded-lg text-[10px] font-black text-center uppercase tracking-normal ${getStatusStyles(item.status)}`}>
                                         {item.status}
                                     </div>
                                     {item.isLate && (item.lateHours > 0 || item.lateMinutes > 0) && (
@@ -276,7 +275,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Present</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Present</p>
                                     <p className="text-xl font-black text-[#2d3436]">{stats.present}</p>
                                 </div>
                             </div>
@@ -288,7 +287,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Absent</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Absent</p>
                                     <p className="text-xl font-black text-[#2d3436]">{stats.absent}</p>
                                 </div>
                             </div>
@@ -300,7 +299,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Worked Hours</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Worked Hours</p>
                                     <p className="text-xl font-black text-[#2d3436]">{stats.totalWorked}</p>
                                 </div>
                             </div>
@@ -309,11 +308,11 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                         <div className="pt-4 border-t border-gray-50">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Half Days</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-normal">Half Days</p>
                                     <p className="text-lg font-black text-[#2d3436]">{stats.halfDay}</p>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">On Leave</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-normal">On Leave</p>
                                     <p className="text-lg font-black text-[#2d3436]">{stats.onLeave}</p>
                                 </div>
                             </div>
@@ -326,7 +325,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Late Days</p>
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Late Days</p>
                                         <p className="text-xl font-black text-orange-600">{stats.lateDays}</p>
                                     </div>
                                 </div>
@@ -336,7 +335,7 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                         {settings?.monthly_working_days && (
                             <div className="pt-4 border-t border-gray-50">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Target Working Days</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Target Working Days</p>
                                     <p className="text-lg font-black text-[#ff4081]">{settings.monthly_working_days}</p>
                                 </div>
                             </div>
