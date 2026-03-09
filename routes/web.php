@@ -177,10 +177,13 @@ Route::middleware(['auth', 'is_admin'])
             ->name('projects.tasks.reorder');
 
         Route::resource('tasks', AdminTaskController::class);
-        Route::put('/tasks/{id}/status', [AdminTaskController::class, 'updateStatus'])
+        Route::put('/tasks/{id}/status', [AdminTaskController::class, 'status'])
             ->name('tasks.status');
         Route::post('/tasks/{task}/comments', [AdminTaskController::class, 'storeComment'])->name('tasks.comments.store');
         Route::delete('/comments/{comment}', [AdminTaskController::class, 'destroyComment'])->name('tasks.comments.destroy');
+
+        // Domains
+        Route::resource('domains', \App\Http\Controllers\Admin\DomainController::class);
 
         // Temporary Google Auth Routes
         Route::get('/google-auth', [GoogleDriveController::class, 'generateAuthUrl'])->name('google.auth');

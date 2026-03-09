@@ -12,6 +12,7 @@ import {
   FaFileAlt,
   FaCog,
   FaComments,
+  FaGlobe,
 } from "react-icons/fa";
 import NotificationDropdown from "@/Components/NotificationDropdown";
 import AiChatAssistant from "@/Components/AiChatAssistant";
@@ -220,6 +221,16 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
                 <FaCog className="min-w-[20px]" />
                 <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Worksheet Settings</span>
                 {betaMenuItems.includes('worksheet-settings') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
+              </Link>
+            )}
+
+            {auth.user.role === 'admin' && (
+              <Link
+                href={route("admin.domains.index")}
+                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+              >
+                <FaGlobe className="min-w-[20px]" />
+                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Domains</span>
               </Link>
             )}
 
