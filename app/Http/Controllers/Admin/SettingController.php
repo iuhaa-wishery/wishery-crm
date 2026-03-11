@@ -19,8 +19,14 @@ class SettingController extends Controller
             $settings['monthly_working_days'] = $this->calculateWorkingDays(Carbon::now());
         }
 
+        $users = \App\Models\User::where('role', '!=', 'admin')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
         return Inertia::render('Admin/Settings/Index', [
             'settings' => $settings,
+            'users' => $users,
+            'designers_task_types' => $settings['designers_task_types'] ?? '',
         ]);
     }
 
@@ -30,6 +36,7 @@ class SettingController extends Controller
             'admin_email' => 'nullable|email',
             'monthly_working_days' => 'nullable|integer|min:0|max:31',
             'beta_menu_items' => 'nullable|array',
+            'designers_task_types' => 'nullable|string',
         ]);
 
         foreach ($data as $key => $value) {

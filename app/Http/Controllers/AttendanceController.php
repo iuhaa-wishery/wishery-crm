@@ -103,13 +103,34 @@ class AttendanceController extends Controller
                 return back()->with('error', 'You are restricted to punch out from Desktop only.');
             }
 
+            $now = Carbon::now();
             $punchIn = Carbon::parse($attendance->punch_in);
+
+            // Auto-close any active break
+            $activeBreak = \App\Models\AttendanceBreak::where('attendance_id', $attendance->id)
+                ->whereNull('end_time')
+                ->latest()
+                ->first();
+
+            if ($activeBreak) {
+                $breakStart = Carbon::parse($activeBreak->start_time);
+                $breakDuration = $breakStart->diffInMinutes($now);
+                $activeBreak->update([
+                    'end_time' => $now,
+                    'total_minutes' => $breakDuration,
+                ]);
+
+                // Update total break minutes on parent
+                $attendance->total_break_minutes = \App\Models\AttendanceBreak::where('attendance_id', $attendance->id)
+                    ->sum('total_minutes');
+            }
+
             // Subtract break time from this session's duration
             $totalBreakMinutes = $attendance->total_break_minutes ?? 0;
-            $duration = $punchIn->diffInMinutes(Carbon::now()) - $totalBreakMinutes;
+            $duration = $punchIn->diffInMinutes($now) - $totalBreakMinutes;
 
             $attendance->update([
-                'punch_out' => Carbon::now(),
+                'punch_out' => $now,
                 'punch_out_lat' => $request->latitude,
                 'punch_out_lng' => $request->longitude,
                 'total_worked_minutes' => max(0, $duration), // Ensure non-negative

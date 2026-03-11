@@ -194,35 +194,44 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             )}
 
             {(auth.user.role === 'admin' || auth.user.role === 'manager') ? (
-              <Link
-                href={route("admin.daily-worksheet.index")}
-                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
-              >
-                <FaFileAlt className="min-w-[20px]" />
-                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Listings</span>
-                {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
-              </Link>
+              <>
+                <Link
+                  href={route("admin.daily-worksheet.index")}
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                >
+                  <FaFileAlt className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Listings</span>
+                  {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
+                </Link>
+                <Link
+                  href={route("admin.designers-worklist.index")}
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                >
+                  <FaTasks className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Designers Worklist</span>
+                </Link>
+              </>
             ) : (
-              <Link
-                href={route("daily-worksheet.index")}
-                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
-              >
-                <FaFileAlt className="min-w-[20px]" />
-                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
-                {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
-              </Link>
+              <>
+                <Link
+                  href={route("daily-worksheet.index")}
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                >
+                  <FaFileAlt className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
+                  {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
+                </Link>
+                <Link
+                  href={route("designers-worklist.index")}
+                  className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                >
+                  <FaTasks className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Designers Worklist</span>
+                </Link>
+              </>
             )}
 
-            {auth.user.role === 'admin' && (
-              <Link
-                href={route("admin.daily-worksheet.users")}
-                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
-              >
-                <FaCog className="min-w-[20px]" />
-                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Worksheet Settings</span>
-                {betaMenuItems.includes('worksheet-settings') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
-              </Link>
-            )}
+
 
             {auth.user.role === 'admin' && (
               <Link

@@ -9,6 +9,7 @@ use App\Models\DailyWorksheetSetting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\Setting;
 
 class DailyWorksheetController extends Controller
 {
@@ -66,8 +67,11 @@ class DailyWorksheetController extends Controller
             ->orderBy('name')
             ->get();
 
+        $designers_task_types = Setting::where('key', 'designers_task_types')->value('value') ?? '';
+
         return Inertia::render('Admin/WorksheetSettings/UserList', [
             'users' => $users,
+            'designers_task_types' => $designers_task_types,
         ]);
     }
 
@@ -109,5 +113,19 @@ class DailyWorksheetController extends Controller
         );
 
         return back()->with('success', 'Worksheet settings updated successfully.');
+    }
+
+    public function updateGlobalSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'designers_task_types' => 'nullable|string',
+        ]);
+
+        Setting::updateOrCreate(
+            ['key' => 'designers_task_types'],
+            ['value' => $validated['designers_task_types']]
+        );
+
+        return back()->with('success', 'Global settings updated successfully.');
     }
 }

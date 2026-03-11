@@ -13,6 +13,8 @@ use App\Http\Controllers\User\ProjectController as UserProjectController;
 use App\Http\Controllers\User\LeaveController as UserLeaveController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Admin\DailyWorksheetController as AdminDailyWorksheetController;
+use App\Http\Controllers\Admin\DesignersWorklistController as AdminDesignersWorklistController;
+use App\Http\Controllers\User\DesignersWorklistController as UserDesignersWorklistController;
 use App\Http\Controllers\GoogleDriveController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AiAssistantController;
@@ -119,6 +121,10 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'update'])->name('daily-worksheet.update');
     Route::delete('/daily-worksheet/{dailyWorksheet}', [\App\Http\Controllers\User\DailyWorksheetController::class, 'destroy'])->name('daily-worksheet.destroy');
 
+    // Designers Worklist
+    Route::get('/designers-worklist', [UserDesignersWorklistController::class, 'index'])->name('designers-worklist.index');
+    Route::patch('/designers-worklist/{designersWorklist}/status', [UserDesignersWorklistController::class, 'updateStatus'])->name('designers-worklist.updateStatus');
+
     // -------------------------
     // ✅ AI ASSISTANT ROUTES
     // -------------------------
@@ -202,6 +208,8 @@ Route::middleware(['auth', 'is_admin'])
         Route::get('daily-worksheet/users', [AdminDailyWorksheetController::class, 'users'])->name('daily-worksheet.users');
         Route::get('users/{user}/worksheet-settings', [AdminDailyWorksheetController::class, 'settings'])->name('users.worksheet-settings');
         Route::post('users/{user}/worksheet-settings', [AdminDailyWorksheetController::class, 'updateSettings'])->name('users.worksheet-settings.update');
+        Route::post('worksheet-settings/global', [AdminDailyWorksheetController::class, 'updateGlobalSettings'])->name('worksheet-settings.global.update');
+        Route::resource('designers-worklist', AdminDesignersWorklistController::class);
     });
 
 
