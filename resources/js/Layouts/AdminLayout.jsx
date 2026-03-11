@@ -193,7 +193,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               </Link>
             )}
 
-            {(auth.user.role === 'admin' || auth.user.role === 'manager') ? (
+            {(auth.user.role === 'admin' || auth.user.role === 'manager' || auth.user.role === 'editor') ? (
               <>
                 <Link
                   href={route("admin.daily-worksheet.index")}

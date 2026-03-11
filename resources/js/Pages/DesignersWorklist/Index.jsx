@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
-import AdminLayout from "@/Layouts/AdminLayout";
+import UserLayout from "@/Layouts/UserLayout";
 import { CheckCircle, AlertCircle, Clock, Eye, Calendar as CalendarIcon, X } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -25,7 +25,7 @@ export default function Index({ worklists, filters }) {
     };
 
     return (
-        <AdminLayout title="Designers Worklist">
+        <UserLayout title="Designers Worklist">
             <Head title="Designers Worklist" />
 
             <div className="font-sans">
@@ -220,7 +220,7 @@ export default function Index({ worklists, filters }) {
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
             ` }} />
-        </AdminLayout>
+        </UserLayout>
     );
 }
 

@@ -32,18 +32,18 @@ class DailyWorksheetController extends Controller
         $users = [];
         $selectedUser = null;
 
-        if ($user->role === 'admin') {
+        if (in_array($user->role, ['admin', 'manager', 'editor'])) {
             $selectedUser = $request->input('user_id');
             if ($selectedUser) {
                 $query->where('user_id', $selectedUser);
             }
-
-            $users = User::where('role', '!=', 'admin')
-                ->orderBy('name')
-                ->select('id', 'name')
-                ->get();
+            $usersQuery = User::orderBy('name')->select('id', 'name');
+            if ($user->role !== 'admin') {
+                $usersQuery->whereNotIn('role', ['admin']);
+            }
+            $users = $usersQuery->get();
         } else {
-            // Editors/Managers/Users only see their own
+            // Users only see their own
             $query->where('user_id', $user->id);
         }
 

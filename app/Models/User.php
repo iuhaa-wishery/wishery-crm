@@ -110,4 +110,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(DailyWorksheetSetting::class);
     }
+
+    public function designersWorklists()
+    {
+        return $this->belongsToMany(DesignersWorklist::class, 'designers_worklist_user', 'user_id', 'designers_worklist_id');
+    }
 }

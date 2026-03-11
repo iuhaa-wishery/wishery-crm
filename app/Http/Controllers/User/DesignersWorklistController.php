@@ -22,8 +22,16 @@ class DesignersWorklistController extends Controller
 
         $worklists = $query->latest('task_date')->paginate(10);
 
+        // Fetch task types from global settings
+        $taskTypes = [];
+        $globalSetting = \App\Models\Setting::where('key', 'designers_task_types')->value('value');
+        if ($globalSetting) {
+            $taskTypes = array_filter(array_map('trim', explode(',', $globalSetting)));
+        }
+
         return Inertia::render('DesignersWorklist/Index', [
             'worklists' => $worklists,
+            'taskTypes' => $taskTypes,
             'filters' => $request->only(['date']),
         ]);
     }
