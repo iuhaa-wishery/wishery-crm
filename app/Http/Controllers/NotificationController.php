@@ -48,7 +48,7 @@ class NotificationController extends Controller
         }
 
         // 2. Leave Requests
-        if (in_array($user->role, ['admin', 'manager'])) {
+        if (in_array($user->role, ['admin', 'manager', 'editor'])) {
             // Admins see pending leaves from others
             $pendingLeaves = Leave::with('user')
                 ->where('status', 'pending')
@@ -120,7 +120,7 @@ class NotificationController extends Controller
             ->pluck('notification_id')
             ->toArray();
 
-        if (in_array($user->role, ['admin', 'manager'])) {
+        if (in_array($user->role, ['admin', 'manager', 'editor'])) {
             $leaves = Leave::where('status', 'pending')->get();
             foreach ($leaves as $leave) {
                 if (!in_array('leave_' . $leave->id, $seenIds)) {

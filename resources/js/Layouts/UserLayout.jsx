@@ -172,7 +172,7 @@ export default function UserLayout({ children, title }) {
                     </Link>
 
                     <Link
-                        href={route('designers-worklist.index')}
+                        href={(user.role === 'admin' || user.role === 'manager' || user.role === 'editor') ? route('admin.designers-worklist.index') : route('designers-worklist.index')}
                         className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
                     >
                         <FaTasks className="min-w-[20px]" />
