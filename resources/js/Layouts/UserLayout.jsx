@@ -162,14 +162,16 @@ export default function UserLayout({ children, title }) {
                         {betaMenuItems.includes('content-calendar') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
                     </Link>
 
-                    <Link
-                        href={route('daily-worksheet.index')}
-                        className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
-                    >
-                        <FaTasks className="min-w-[20px]" />
-                        <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
-                        {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
-                    </Link>
+                    {user.role !== 'manager' && (
+                        <Link
+                            href={route('daily-worksheet.index')}
+                            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-200 transition-colors text-gray-700"
+                        >
+                            <FaTasks className="min-w-[20px]" />
+                            <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Daily Worksheet</span>
+                            {betaMenuItems.includes('daily-worksheet') && <span className={`bg-yellow-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded ml-2 ${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Beta</span>}
+                        </Link>
+                    )}
 
                     <Link
                         href={(user.role === 'admin' || user.role === 'manager' || user.role === 'editor') ? route('admin.designers-worklist.index') : route('designers-worklist.index')}

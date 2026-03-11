@@ -16,6 +16,10 @@ class DailyWorksheetController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        if ($user->role !== 'admin') {
+            abort(403);
+        }
+
         $date = $request->input('date', Carbon::today()->toDateString());
         $month = $request->input('month');
 
@@ -29,23 +33,12 @@ class DailyWorksheetController extends Controller
             $query->whereDate('date', $date);
         }
 
-        $users = [];
-        $selectedUser = null;
-
-        if (in_array($user->role, ['admin', 'manager', 'editor'])) {
-            $selectedUser = $request->input('user_id');
-            if ($selectedUser) {
-                $query->where('user_id', $selectedUser);
-            }
-            $usersQuery = User::orderBy('name')->select('id', 'name');
-            if ($user->role !== 'admin') {
-                $usersQuery->whereNotIn('role', ['admin']);
-            }
-            $users = $usersQuery->get();
-        } else {
-            // Users only see their own
-            $query->where('user_id', $user->id);
+        $selectedUser = $request->input('user_id');
+        if ($selectedUser) {
+            $query->where('user_id', $selectedUser);
         }
+
+        $users = User::orderBy('name')->get(['id', 'name']);
 
         $worksheets = $query->latest()->get()->map(function ($item) {
             $item->formatted_date = $item->date ? Carbon::parse($item->date)->format('Y-m-d') : null;
