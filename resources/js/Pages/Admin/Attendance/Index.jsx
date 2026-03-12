@@ -27,29 +27,36 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
             setLocalError(null);
 
             // Combine attendance date with time
-            const recordDate = attendanceRecord.date;
+            const recordDate = attendanceRecord.date ? attendanceRecord.date.toString().substring(0, 10) : '';
             const fullStart = `${recordDate}T${data.start_time}`;
             const fullEnd = data.end_time ? `${recordDate}T${data.end_time}` : null;
 
-            const start = new Date(fullStart);
-            const punchIn = new Date(attendanceRecord.punch_in_raw);
-            const punchOut = attendanceRecord.punch_out_raw ? new Date(attendanceRecord.punch_out_raw) : null;
+            
+            // Extract HH:MM from a raw ISO/UTC timestamp for timezone-safe comparison
+            const toHHMM = (raw) => {
+                if (!raw) return null;
+                const d = new Date(raw.toString().replace(' ', 'T'));
+                if (isNaN(d)) return null;
+                return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+            };
 
-            // Validation: Start time >= Punch In time
-            if (start.setSeconds(0, 0) < punchIn.setSeconds(0, 0)) {
-                setLocalError(`Break cannot start before punch in time (${punchIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`);
+            const punchInHHMM = toHHMM(attendanceRecord.punch_in_raw);
+            const punchOutHHMM = attendanceRecord.punch_out_raw ? toHHMM(attendanceRecord.punch_out_raw) : null;
+
+            // Validation: Start time >= Punch In time (HH:MM string comparison)
+            if (punchInHHMM && data.start_time < punchInHHMM) {
+                setLocalError(`Break cannot start before punch in time (${punchInHHMM})`);
                 return;
             }
 
-            // Validation: End time <= Punch Out time (if exists)
-            if (fullEnd) {
-                const end = new Date(fullEnd);
-                if (end <= start) {
+            // Validation: End time rules
+            if (data.end_time) {
+                if (data.end_time <= data.start_time) {
                     setLocalError("Break end time must be after start time");
                     return;
                 }
-                if (punchOut && end > punchOut) {
-                    setLocalError(`Break cannot end after punch out time (${punchOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`);
+                if (punchOutHHMM && data.end_time > punchOutHHMM) {
+                    setLocalError(`Break cannot end after punch out time (${punchOutHHMM})`);
                     return;
                 }
             }
@@ -149,29 +156,36 @@ export default function Index({ attendanceData, filters, users, viewType, totalM
             e.preventDefault();
             setLocalError(null);
 
-            const recordDate = attendanceRecord.date;
+            const recordDate = attendanceRecord.date ? attendanceRecord.date.toString().substring(0, 10) : '';
             const fullStart = `${recordDate}T${data.start_time}`;
             const fullEnd = data.end_time ? `${recordDate}T${data.end_time}` : null;
 
-            const start = new Date(fullStart);
-            const punchIn = new Date(attendanceRecord.punch_in_raw);
-            const punchOut = attendanceRecord.punch_out_raw ? new Date(attendanceRecord.punch_out_raw) : null;
+            
+            // Extract HH:MM from a raw ISO/UTC timestamp for timezone-safe comparison
+            const toHHMM = (raw) => {
+                if (!raw) return null;
+                const d = new Date(raw.toString().replace(' ', 'T'));
+                if (isNaN(d)) return null;
+                return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+            };
 
-            // Validation: Start time >= Punch In time
-            if (start.setSeconds(0, 0) < punchIn.setSeconds(0, 0)) {
-                setLocalError(`Break cannot start before punch in time (${punchIn.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`);
+            const punchInHHMM = toHHMM(attendanceRecord.punch_in_raw);
+            const punchOutHHMM = attendanceRecord.punch_out_raw ? toHHMM(attendanceRecord.punch_out_raw) : null;
+
+            // Validation: Start time >= Punch In time (HH:MM string comparison)
+            if (punchInHHMM && data.start_time < punchInHHMM) {
+                setLocalError(`Break cannot start before punch in time (${punchInHHMM})`);
                 return;
             }
 
-            // Validation: End time <= Punch Out time (if exists)
-            if (fullEnd) {
-                const end = new Date(fullEnd);
-                if (end <= start) {
+            // Validation: End time rules
+            if (data.end_time) {
+                if (data.end_time <= data.start_time) {
                     setLocalError("Break end time must be after start time");
                     return;
                 }
-                if (punchOut && end > punchOut) {
-                    setLocalError(`Break cannot end after punch out time (${punchOut.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`);
+                if (punchOutHHMM && data.end_time > punchOutHHMM) {
+                    setLocalError(`Break cannot end after punch out time (${punchOutHHMM})`);
                     return;
                 }
             }

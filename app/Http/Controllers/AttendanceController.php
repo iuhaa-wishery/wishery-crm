@@ -481,7 +481,7 @@ class AttendanceController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->name,
-                'date' => $attendance ? $attendance->date : null,
+                'date' => $attendance ? Carbon::parse($attendance->date)->format('Y-m-d') : null,
                 'check_in' => $checkIn,
                 'check_out' => $checkOut,
                 'status' => $status,
