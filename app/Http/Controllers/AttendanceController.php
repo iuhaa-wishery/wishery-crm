@@ -573,6 +573,64 @@ class AttendanceController extends Controller
         return back()->with('success', 'Attendance updated successfully.');
     }
 
+    public function storeBreak(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'start_time' => 'required|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
+        ]);
+
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = $request->end_time ? Carbon::parse($request->end_time) : null;
+
+        // Validation against Punch In and Punch Out
+        $punchIn = Carbon::parse($attendance->punch_in);
+        $punchOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out) : null;
+
+        if ($startTime->copy()->setSeconds(0)->lt($punchIn->copy()->setSeconds(0))) {
+            return back()->with('error', 'Break cannot start before punch in time (' . $punchIn->format('h:i A') . ').');
+        }
+
+        if ($endTime) {
+            if ($endTime->lte($startTime)) {
+                return back()->with('error', 'Break end time must be after start time.');
+            }
+            if ($punchOut && $endTime->gt($punchOut)) {
+                return back()->with('error', 'Break cannot end after punch out time (' . $punchOut->format('h:i A') . ').');
+            }
+        }
+
+        // Calculate duration
+        $duration = 0;
+        if ($endTime) {
+            $duration = $startTime->diffInMinutes($endTime);
+        }
+
+        \App\Models\AttendanceBreak::create([
+            'attendance_id' => $attendance->id,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'total_minutes' => $duration,
+        ]);
+
+        // Recalculate total break minutes
+        $totalBreak = $attendance->breaks()->sum('total_minutes');
+
+        $updateData = ['total_break_minutes' => $totalBreak];
+
+        // Recalculate working minutes if already punched out
+        if ($attendance->status === 'punched_out' && $attendance->punch_out && $attendance->punch_in) {
+            $punchIn = Carbon::parse($attendance->punch_in);
+            $punchOut = Carbon::parse($attendance->punch_out);
+            $totalDuration = $punchIn->diffInMinutes($punchOut);
+            $updateData['total_worked_minutes'] = max(0, $totalDuration - $totalBreak);
+        }
+
+        $attendance->update($updateData);
+
+        return back()->with('success', 'Break added successfully.');
+    }
+
     public function updateBreak(Request $request, \App\Models\AttendanceBreak $attendanceBreak)
     {
         $request->validate([
@@ -582,6 +640,24 @@ class AttendanceController extends Controller
 
         $startTime = Carbon::parse($request->start_time);
         $endTime = $request->end_time ? Carbon::parse($request->end_time) : null;
+
+        $attendance = $attendanceBreak->attendance;
+        $punchIn = Carbon::parse($attendance->punch_in);
+        $punchOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out) : null;
+
+        // Validation against Punch In and Punch Out
+        if ($startTime->copy()->setSeconds(0)->lt($punchIn->copy()->setSeconds(0))) {
+            return back()->with('error', 'Break cannot start before punch in time (' . $punchIn->format('h:i A') . ').');
+        }
+
+        if ($endTime) {
+            if ($endTime->lte($startTime)) {
+                return back()->with('error', 'Break end time must be after start time.');
+            }
+            if ($punchOut && $endTime->gt($punchOut)) {
+                return back()->with('error', 'Break cannot end after punch out time (' . $punchOut->format('h:i A') . ').');
+            }
+        }
 
         // Calculate duration
         $duration = 0;

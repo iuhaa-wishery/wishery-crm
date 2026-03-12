@@ -169,6 +169,7 @@ Route::middleware(['auth', 'is_admin'])
             Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store');
             Route::get('attendance/report', [AttendanceController::class, 'report'])->name('attendance.report');
             Route::put('attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+            Route::post('attendance/{attendance}/break', [AttendanceController::class, 'storeBreak'])->name('attendance.break.store');
             Route::put('attendance/break/{attendanceBreak}', [AttendanceController::class, 'updateBreak'])->name('attendance.break.update');
 
             // -------------------------
