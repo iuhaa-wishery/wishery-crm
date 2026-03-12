@@ -32,7 +32,10 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? array_merge($request->user()->toArray(), [
+                    'can_view_designers_worklist' => in_array($request->user()->role, ['admin', 'manager', 'editor']) ||
+                        \DB::table('designers_worklist_user')->where('user_id', $request->user()->id)->exists()
+                ]) : null,
             ],
             'appUrl' => config('app.url'),
             'flash' => [

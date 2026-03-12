@@ -20,7 +20,7 @@ class DashboardController extends Controller
     {
         $month = request('month', now()->month);
         $year = request('year', now()->year);
-        $userId = request('user_id');
+        $userId = auth()->user()->role === 'admin' ? request('user_id') : auth()->id();
 
         $stats = [
             'total_users' => auth()->user()->role === 'admin' ? User::where('role', 'user')->count() : 0,

@@ -215,7 +215,7 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
               </Link>
             )}
 
-            {(auth.user.role === 'admin' || auth.user.role === 'manager' || auth.user.role === 'editor') && (
+            {auth.user.can_view_designers_worklist && (
               <Link
                 href={route("admin.designers-worklist.index")}
                 className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"

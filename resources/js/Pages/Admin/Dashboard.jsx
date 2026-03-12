@@ -135,18 +135,18 @@ export default function Dashboard({
     return "bg-gray-400";
   };
 
-  return (
-    <div className="p-6 space-y-8">
-      <Head title="Dashboard" />
+  if (auth.user.role === 'admin') {
+    return (
+      <div className="p-6 space-y-8">
+        <Head title="Admin Dashboard" />
 
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1 text-lg">Welcome back! Here's an overview of your work and team.</p>
-        </div>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-gray-500 mt-1 text-lg">Manage and track team activity metrics.</p>
+          </div>
 
-        {/* Filters - Admin Only */}
-        {auth.user.role === 'admin' && (
+          {/* Filters - Admin Only */}
           <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
             <div className="flex items-center gap-2 px-2">
               <Filter className="w-5 h-5 text-gray-400" />
@@ -184,16 +184,99 @@ export default function Dashboard({
               ))}
             </select>
           </div>
-        )}
+        </div>
+
+        {/* Admin Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {adminStatCards.map((card, index) => (
+            <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center justify-between group">
+              <div>
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{card.label}</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-1">{card.value}</h3>
+              </div>
+              <div className={`${card.bgColor} p-4 rounded-2xl`}>
+                <card.icon className={`w-8 h-8 ${card.textColor}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Team Summaries */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex items-center gap-6 group">
+            <div className="bg-indigo-50 p-6 rounded-3xl">
+              <Calendar className="w-12 h-12 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-1">Posted Content</p>
+              <h3 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                {filteredStats.content_calendar_count}
+                <span className="text-lg font-medium text-gray-400 ml-2 italic">Entries this month</span>
+              </h3>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex items-center gap-6 group">
+            <div className="bg-emerald-50 p-6 rounded-3xl">
+              <FileText className="w-12 h-12 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-1">Daily Work Logs</p>
+              <h3 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                {filteredStats.daily_worksheet_count}
+                <span className="text-lg font-medium text-gray-400 ml-2 italic">Entries this month</span>
+              </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Manager/Editor View
+  return (
+    <div className="p-6 space-y-8">
+      <Head title="My Dashboard" />
+
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Dashboard</h1>
+        <p className="text-gray-500 mt-1 text-lg">Welcome back! Here's an overview of your work.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-8">
+          {/* Activity Analytics Section */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex items-center gap-6 group hover:border-indigo-200 transition-all">
+              <div className="bg-indigo-50 p-6 rounded-3xl group-hover:scale-110 transition-transform">
+                <Calendar className="w-12 h-12 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-1">Posted Content</p>
+                <h3 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                  {filteredStats.content_calendar_count}
+                  <span className="text-lg font-medium text-gray-400 ml-2 italic">this month</span>
+                </h3>
+              </div>
+            </div>
 
-          {/* Personal Stats Section */}
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex items-center gap-6 group hover:border-emerald-200 transition-all">
+              <div className="bg-emerald-50 p-6 rounded-3xl group-hover:scale-110 transition-transform">
+                <FileText className="w-12 h-12 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-emerald-600 uppercase tracking-widest mb-1">Work Logs</p>
+                <h3 className="text-4xl font-extrabold text-gray-900 leading-tight">
+                  {filteredStats.daily_worksheet_count}
+                  <span className="text-lg font-medium text-gray-400 ml-2 italic">this month</span>
+                </h3>
+              </div>
+            </div>
+          </section>
+
+          {/* Task & Leave Stats */}
           <section>
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">My Personal Stats</h2>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Secondary Metrics</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {personalStatCards.map((card, index) => (
                 <div key={index} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-shadow">
@@ -208,125 +291,27 @@ export default function Dashboard({
               ))}
             </div>
           </section>
-
-          {/* Admin Team Metrics Section */}
-          <section className="space-y-6">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Team Performance Summary</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {adminStatCards.filter(c => !c.adminOnly || auth.user.role === 'admin').map((card, index) => (
-                <div key={index} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-shadow">
-                  <div>
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">{card.label}</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-1">{card.value}</h3>
-                  </div>
-                  <div className={`${card.bgColor} p-3 rounded-xl group-hover:scale-110 transition-transform`}>
-                    <card.icon className={`w-6 h-6 ${card.textColor}`} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Content Calendar Summary */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-4 group hover:border-indigo-200 transition-colors">
-                <div className="bg-indigo-50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Calendar className="w-8 h-8 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mb-0.5">Posted Content</p>
-                  <h3 className="text-2xl font-extrabold text-gray-900 leading-tight">
-                    {filteredStats.content_calendar_count}
-                    <span className="text-xs font-medium text-gray-400 ml-1.5 italic">this month</span>
-                  </h3>
-                </div>
-              </div>
-
-              {/* Daily Worksheet Summary */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center gap-4 group hover:border-emerald-200 transition-colors">
-                <div className="bg-emerald-50 p-4 rounded-2xl group-hover:scale-110 transition-transform">
-                  <FileText className="w-8 h-8 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Work Logs</p>
-                  <h3 className="text-2xl font-extrabold text-gray-900 leading-tight">
-                    {filteredStats.daily_worksheet_count}
-                    <span className="text-xs font-medium text-gray-400 ml-1.5 italic">this month</span>
-                  </h3>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* My Recent Tasks Section */}
-          <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
-              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-blue-600" />
-                My Recent Tasks
-              </h3>
-              <Link href={route('tasks.index')} className="text-blue-600 hover:text-blue-700 text-xs font-semibold flex items-center gap-1">
-                View All <ChevronRight className="w-3 h-3" />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {recentTasks && recentTasks.length > 0 ? (
-                recentTasks.map((task) => (
-                  <div key={task.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${getPriorityColor(task.priority)} bg-opacity-10`}>
-                        <Layers className={`w-4 h-4 ${getPriorityColor(task.priority).replace('bg-', 'text-')}`} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-gray-900">{task.name}</h4>
-                        <p className="text-[11px] text-gray-500">Project: {task.project?.name || 'N/A'}</p>
-                      </div>
-                    </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(task.status)} text-white`}>
-                      {task.status}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="p-8 text-center text-xs text-gray-400">No personal tasks assigned yet</p>
-              )}
-            </div>
-          </section>
         </div>
 
-        {/* Sidebar Area */}
         <div className="space-y-8">
           <div className="bg-white p-2 rounded-3xl shadow-sm border border-gray-100">
             <AttendanceLargeCard todayAttendance={todayAttendance} />
           </div>
 
-          {/* Quick Links Section */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <Link
-                href={route('admin.designers-worklist.index')}
-                className="flex items-center justify-between p-3 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors group text-sm"
-              >
-                <span className="font-semibold">Manage Worklist</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href={route('tasks.index')}
-                className="flex items-center justify-between p-3 rounded-xl bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors group text-sm"
-              >
-                <span className="font-semibold">My Task List</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-lg overflow-hidden relative group">
+            <div className="relative z-10">
+              <h3 className="text-xl font-bold mb-2">My Worklinks</h3>
+              <p className="text-indigo-100 text-sm mb-6 leading-relaxed">Quickly jump to your task list or manage ongoing projects.</p>
+              <div className="space-y-3">
+                <Link href={route('tasks.index')} className="w-full flex items-center justify-center gap-2 py-3 bg-white text-indigo-600 text-sm font-bold rounded-2xl hover:bg-indigo-50 transition-colors shadow-sm">
+                  <Layers className="w-4 h-4" /> Go to Task List
+                </Link>
+                <Link href={route('admin.designers-worklist.index')} className="w-full flex items-center justify-center gap-2 py-3 border border-indigo-400/50 text-white text-sm font-bold rounded-2xl hover:bg-white/10 transition-colors">
+                  View Worklist
+                </Link>
+              </div>
             </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-600 to-purple-700 rounded-2xl p-6 text-white shadow-lg">
-            <h3 className="text-lg font-bold mb-1">Administrative Help</h3>
-            <p className="text-blue-100 text-xs mb-4">Manage team metrics and track performance settings efficiently.</p>
-            <button className="w-full py-2.5 bg-white text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm">
-              View Documentation
-            </button>
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
           </div>
         </div>
       </div>

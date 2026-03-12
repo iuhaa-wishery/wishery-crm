@@ -5,6 +5,8 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\Leave;
+use App\Models\ContentCalendar;
+use App\Models\DailyWorksheet;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,10 +38,29 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Activity Analytics for the current month
+        $month = now()->month;
+        $year = now()->year;
+
+        $contentCalendarCount = ContentCalendar::whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->whereHas('assignees', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })->count();
+
+        $dailyWorksheetCount = DailyWorksheet::whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->where('user_id', $user->id)
+            ->count();
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'todayAttendance' => $todayAttendance,
             'recentTasks' => $recentTasks,
+            'filteredStats' => [
+                'content_calendar_count' => $contentCalendarCount,
+                'daily_worksheet_count' => $dailyWorksheetCount,
+            ],
         ]);
     }
 }
