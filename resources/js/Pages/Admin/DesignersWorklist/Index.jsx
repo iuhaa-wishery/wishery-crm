@@ -251,66 +251,69 @@ export default function Index({ worklists, users, taskTypes, filters, success })
                 {showModal && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-                            <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                                <h2 className="text-xl font-bold text-gray-800">
-                                    {editingWorklist ? "Edit Task" : "Assign New Task"}
-                                </h2>
-                                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 transition p-2 hover:bg-gray-200 rounded-full">
-                                    <X className="w-5 h-5" />
+                            <div className="p-8 border-b flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
+                                        {editingWorklist ? "Edit Task" : "Assign New Task"}
+                                    </h2>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Resource allocation interface</p>
+                                </div>
+                                <button onClick={closeModal} className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-full transition-all active:scale-90">
+                                    <X className="w-6 h-6" />
                                 </button>
                             </div>
                             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Row 1 */}
                                     <div>
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Task Date</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 px-0.5">Task Date</label>
                                         <div className="relative">
-                                            <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                                            <CalendarIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                             <input
                                                 required
                                                 type="date"
                                                 value={data.task_date}
                                                 onChange={e => setData("task_date", e.target.value)}
-                                                className={`w-full border-gray-200 bg-gray-50/50 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${errors.task_date ? 'border-red-500' : 'border-gray-200'}`}
+                                                className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all ${errors.task_date ? 'border-red-200 ring-2 ring-red-50/50' : ''}`}
                                             />
                                         </div>
-                                        {errors.task_date && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.task_date}</p>}
+                                        {errors.task_date && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">{errors.task_date}</p>}
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Client Name</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 px-0.5">Task</label>
                                         <input
                                             required
                                             type="text"
                                             value={data.client_name}
                                             onChange={e => setData("client_name", e.target.value)}
-                                            className={`w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${errors.client_name ? 'border-red-500' : 'border-gray-200'}`}
-                                            placeholder="Enter client name"
+                                            className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200 ${errors.client_name ? 'border-red-200 ring-2 ring-red-50/50' : ''}`}
+                                            placeholder="Enter task name"
                                         />
-                                        {errors.client_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.client_name}</p>}
+                                        {errors.client_name && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">{errors.client_name}</p>}
                                     </div>
 
                                     {/* Row 2 */}
                                     <div>
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Assigned To (Multiple)</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 px-0.5">Assignees</label>
                                         <div ref={dropdownRef} className="relative">
                                             <button
                                                 type="button"
                                                 onClick={toggleAssigneeDropdown}
-                                                className={`w-full flex justify-between items-center bg-gray-50/50 px-4 py-3 text-left border rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition ${errors.user_ids ? "border-red-500" : "border-gray-200"}`}
+                                                className={`w-full flex justify-between items-center bg-slate-50/50 px-6 py-4 text-left border border-slate-100 rounded-2xl focus:ring-4 focus:ring-slate-100 focus:border-slate-300 focus:bg-white outline-none transition-all ${errors.user_ids ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
                                             >
-                                                <span className="truncate pr-4 text-gray-800 text-sm font-semibold">
+                                                <span className="truncate pr-4 text-slate-900 text-base font-bold">
                                                     {getSelectedAssigneeNames()}
                                                 </span>
-                                                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                                                <ChevronDown className={`w-5 h-5 text-slate-300 transition-transform duration-200 ${isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                                             </button>
 
                                             {isAssigneeDropdownOpen && (
-                                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                                <div className="absolute z-10 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl max-h-64 overflow-y-auto p-2 space-y-1">
                                                     {users.map((user) => (
                                                         <div
                                                             key={user.id}
-                                                            className="flex items-center p-3 hover:bg-gray-50 transition cursor-pointer"
+                                                            className="flex items-center p-3 hover:bg-slate-50 rounded-xl transition cursor-pointer group"
                                                             onClick={() => {
                                                                 const updated = data.user_ids.includes(user.id)
                                                                     ? data.user_ids.filter(id => id !== user.id)
@@ -318,17 +321,14 @@ export default function Index({ worklists, users, taskTypes, filters, success })
                                                                 setData("user_ids", updated);
                                                             }}
                                                         >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={data.user_ids.includes(user.id)}
-                                                                onChange={() => { }}
-                                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                                            />
-                                                            <label className="ml-2 text-sm font-bold text-gray-700 flex items-center flex-grow cursor-pointer">
+                                                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${data.user_ids.includes(user.id) ? 'bg-slate-900 border-slate-900' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                                                                {data.user_ids.includes(user.id) && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                                                            </div>
+                                                            <label className="ml-3 text-sm font-bold text-slate-700 flex items-center flex-grow cursor-pointer">
                                                                 <img
                                                                     src={getAvatarUrl(user)}
                                                                     alt="avatar"
-                                                                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm mr-2 object-cover"
+                                                                    className="w-8 h-8 rounded-full border-2 border-white shadow-sm mr-3 object-cover"
                                                                 />
                                                                 {user.name}
                                                             </label>
@@ -337,34 +337,34 @@ export default function Index({ worklists, users, taskTypes, filters, success })
                                                 </div>
                                             )}
                                         </div>
-                                        {errors.user_ids && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.user_ids}</p>}
-                                        {errors['user_ids.0'] && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">Please select at least one assignee.</p>}
+                                        {errors.user_ids && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">{errors.user_ids}</p>}
+                                        {errors['user_ids.0'] && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">At least one assignee required.</p>}
                                     </div>
 
                                     <div>
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Task Type</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 px-0.5">Category</label>
                                         <select
                                             required
                                             value={data.task_type}
                                             onChange={e => setData("task_type", e.target.value)}
-                                            className={`w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${errors.task_type ? 'border-red-500' : 'border-gray-200'}`}
+                                            className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer ${errors.task_type ? 'border-red-200 ring-2 ring-red-50/50' : ''}`}
                                         >
-                                            <option value="">Select Type</option>
+                                            <option value="">Select Category</option>
                                             {taskTypes.map(t => (
                                                 <option key={t} value={t}>{t}</option>
                                             ))}
                                         </select>
-                                        {errors.task_type && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.task_type}</p>}
+                                        {errors.task_type && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">{errors.task_type}</p>}
                                     </div>
 
                                     {/* Row 3 */}
                                     <div>
-                                        <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Status</label>
+                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 px-0.5">Status</label>
                                         <select
                                             required
                                             value={data.status}
                                             onChange={e => setData("status", e.target.value)}
-                                            className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer"
                                         >
                                             <option value="Not Done">Not Done</option>
                                             <option value="In Progress">In Progress</option>
@@ -375,32 +375,32 @@ export default function Index({ worklists, users, taskTypes, filters, success })
                                 </div>
 
                                 {/* Full Width Row 4 */}
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Description</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Operational Brief</label>
                                     <textarea
                                         required
                                         value={data.description}
                                         onChange={e => setData("description", e.target.value)}
-                                        className={`w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all min-h-[120px] ${errors.description ? 'border-red-500' : 'border-gray-200'}`}
+                                        className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all min-h-[120px] placeholder:text-slate-200 resize-none ${errors.description ? 'border-red-200 ring-2 ring-red-50/50' : ''}`}
                                         placeholder="Enter task details..."
                                     />
-                                    {errors.description && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.description}</p>}
+                                    {errors.description && <p className="text-red-500 text-[10px] mt-2 px-1 font-bold tracking-tight uppercase">{errors.description}</p>}
                                 </div>
 
-                                <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                                <div className="flex gap-4 mt-6 pt-10 border-t border-slate-50">
                                     <button
                                         type="button"
                                         onClick={closeModal}
-                                        className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-all uppercase tracking-wider"
+                                        className="px-8 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-400 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]"
                                     >
-                                        Cancel
+                                        Discard
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="bg-gray-900 text-white px-8 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-lg shadow-gray-200 hover:shadow-blue-200 active:scale-95 disabled:opacity-50"
+                                        className="flex-1 py-4 px-10 text-sm font-black uppercase tracking-[0.2em] text-white bg-slate-900 hover:bg-black rounded-2xl shadow-[0_10px_20px_-10px_rgba(15,23,42,0.4)] transition-all active:scale-[0.98] disabled:opacity-50"
                                     >
-                                        {processing ? "Saving..." : (editingWorklist ? 'Update Task' : 'Save Task')}
+                                        {processing ? "Saving..." : "Save Changes"}
                                     </button>
                                 </div>
                             </form>

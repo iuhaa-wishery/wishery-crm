@@ -217,7 +217,7 @@ class TaskController extends Controller
         // This prevents Inertia from making a DELETE request to the redirect URL
         return \Inertia\Inertia::location(route('admin.projects.show', $projectId));
     }
-    public function updateStatus(Request $request, $id)
+    public function status(Request $request, $id)
     {
         $request->validate([
             'status' => 'required|string|in:not started,in progress,on hold,completed',

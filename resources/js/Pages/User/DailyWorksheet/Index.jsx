@@ -155,82 +155,84 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
 
                 <Modal show={isAdding} onClose={cancelEdit}>
                     <div className="p-8 font-sans">
-                        <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center justify-between mb-10">
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 tracking-tight">{editingId ? 'Edit Task' : 'Log New Task'}</h3>
-                                <p className="text-sm text-gray-500 font-medium mt-1">{editingId ? 'Update the details below' : 'Fill in the details below'}</p>
+                                <h3 className="text-2xl font-black text-slate-900 tracking-tight uppercase">{editingId ? 'Edit Task' : 'Log New Task'}</h3>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">{editingId ? 'Update the details below' : 'Fill in the details below'}</p>
                             </div>
-                            <button onClick={cancelEdit} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-all">
-                                <X size={20} />
+                            <button onClick={cancelEdit} className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-full transition-all active:scale-90">
+                                <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
-                            <div className="space-y-1.5">
-                                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</label>
+                            <div className="space-y-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Date</label>
                                 <div className="relative">
-                                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 w-4 h-4" />
+                                    <CalendarIcon className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="date"
                                         value={data.date}
                                         onChange={e => setData("date", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl pl-11 pr-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all"
                                     />
                                 </div>
                             </div>
                             {settings.client_name_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Client Name</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Client name</label>
                                     <input
                                         type="text"
                                         value={data.client_name}
                                         onChange={e => setData("client_name", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
                                         placeholder="Enter client name"
                                     />
-                                    {errors.client_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.client_name}</p>}
+                                    {errors.client_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.client_name}</p>}
                                 </div>
                             )}
                             {settings.task_type_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Task Type</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Category</label>
                                     {settings.task_type_freetext ? (
                                         <input
                                             type="text"
                                             value={data.task_type}
                                             onChange={e => setData("task_type", e.target.value)}
-                                            className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
-                                            placeholder="Enter task type"
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
+                                            placeholder="Enter category"
                                         />
                                     ) : taskTypeOptions.length > 0 ? (
-                                        <select
-                                            value={data.task_type}
-                                            onChange={e => setData("task_type", e.target.value)}
-                                            className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                                        >
-                                            <option value="">Select Task Type</option>
-                                            {taskTypeOptions.map(opt => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                        <div className="relative">
+                                            <select
+                                                value={data.task_type}
+                                                onChange={e => setData("task_type", e.target.value)}
+                                                className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-sm font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Select Category</option>
+                                                {taskTypeOptions.map(opt => (
+                                                    <option key={opt} value={opt}>{opt}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     ) : (
                                         <input
                                             type="text"
                                             value={data.task_type}
                                             onChange={e => setData("task_type", e.target.value)}
-                                            className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
-                                            placeholder="Enter task type"
+                                            className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
+                                            placeholder="Enter category"
                                         />
                                     )}
-                                    {errors.task_type && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.task_type}</p>}
+                                    {errors.task_type && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.task_type}</p>}
                                 </div>
                             )}
                             {settings.status_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Status</label>
                                     <select
                                         value={data.status}
                                         onChange={e => setData("status", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="">Select Status</option>
                                         <option value="DONE">Done</option>
@@ -238,62 +240,62 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                         <option value="IN PROGRESS">In Progress</option>
                                         <option value="APPROVED">Approved</option>
                                     </select>
-                                    {errors.status && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.status}</p>}
+                                    {errors.status && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.status}</p>}
                                 </div>
                             )}
                             {settings.file_name_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">File Name</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">File Name</label>
                                     <input
                                         type="text"
                                         value={data.file_name}
                                         onChange={e => setData("file_name", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
                                         placeholder="Enter file name"
                                     />
-                                    {errors.file_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.file_name}</p>}
+                                    {errors.file_name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.file_name}</p>}
                                 </div>
                             )}
                             {settings.drive_link_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Drive Link</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Drive Link</label>
                                     <input
                                         type="url"
                                         value={data.drive_link}
                                         onChange={e => setData("drive_link", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
                                         placeholder="https://drive.google.com/..."
                                     />
-                                    {errors.drive_link && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.drive_link}</p>}
+                                    {errors.drive_link && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.drive_link}</p>}
                                 </div>
                             )}
                             {settings.project_enabled && (
-                                <div className="space-y-1.5">
-                                    <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Project</label>
+                                <div className="space-y-2">
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Project</label>
                                     <input
                                         type="text"
                                         value={data.project}
                                         onChange={e => setData("project", e.target.value)}
-                                        className="w-full border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-300"
+                                        className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
                                         placeholder="Project name"
                                     />
-                                    {errors.project && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tighter mt-1">{errors.project}</p>}
+                                    {errors.project && <p className="text-[10px] font-bold text-red-500 uppercase tracking-tight mt-2 px-1">{errors.project}</p>}
                                 </div>
                             )}
-                            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+                            <div className="flex gap-4 mt-6 pt-10 border-t border-slate-50">
                                 <button
                                     type="button"
                                     onClick={cancelEdit}
-                                    className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-all uppercase tracking-wider"
+                                    className="px-8 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-400 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]"
                                 >
-                                    Cancel
+                                    Discard
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="bg-gray-900 text-white px-8 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-blue-600 transition-all shadow-lg shadow-gray-200 hover:shadow-blue-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 py-4 px-10 text-sm font-black uppercase tracking-[0.2em] text-white bg-slate-900 hover:bg-black rounded-2xl shadow-[0_10px_20px_-10px_rgba(15,23,42,0.4)] transition-all active:scale-[0.98] disabled:opacity-50"
                                 >
-                                    {processing ? "Saving..." : (editingId ? "Update Task" : "Save Task")}
+                                    {processing ? "Saving..." : "Save Changes"}
                                 </button>
                             </div>
                         </form>

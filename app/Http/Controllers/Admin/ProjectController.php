@@ -28,11 +28,51 @@ class ProjectController extends Controller
             $sort = 'name';
         }
 
+        // We also need project status counts for the tabs
+        $statusCounts = [
+            'All' => Project::count(),
+            'Ongoing' => Project::where('status', 'in progress')->count(),
+            'Completed' => Project::where('status', 'completed')->count(),
+            'Inactive' => Project::where('status', 'on hold')->count(),
+            'Cancelled' => Project::where('status', 'cancelled')->count(),
+            'Critical' => Project::where('status', 'critical')->count(),
+        ];
+
+        // Fetch projects with their relation aggregates
         $perPage = (int) $request->input('perPage', 10);
-        $projects = $query->orderBy($sort, $direction)->paginate($perPage)->withQueryString();
+
+        $projects = $query->with(['tasks', 'tasks.assignees']) // Eager load to process progress and unique user avatars
+            ->withCount('tasks')
+            ->orderBy($sort, $direction)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        // Calculate progress and gather unique assignees for each project before sending to the frontend
+        $projects->getCollection()->transform(function ($project) {
+            $totalTasks = $project->tasks->count();
+            $completedTasks = $project->tasks->where('status', 'completed')->count();
+
+            $project->progress = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+
+            // Collect unique assignees across all tasks in this project
+            $assignees = $project->tasks->pluck('assignees')->flatten()->unique('id')->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'image' => $user->image ? asset('storage/' . $user->image) : null,
+                ];
+            })->values();
+
+            $project->team = $assignees;
+
+            // We can hide the raw tasks relationship to save payload size
+            $project->makeHidden('tasks');
+            return $project;
+        });
 
         return Inertia::render('Admin/Projects/Index', [
             'projects' => $projects,
+            'statusCounts' => $statusCounts,
             'filters' => $request->only(['search', 'perPage', 'sort', 'direction']),
             'success' => session('success'),
         ]);
@@ -46,11 +86,13 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|string',
+            'name' => 'required',
+            'client_name' => 'nullable|string|max:255',
+            'budget' => 'nullable|numeric',
+            'description' => 'nullable',
+            'status' => 'required',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date',
         ]);
 
         Project::create($request->all());
@@ -69,15 +111,19 @@ class ProjectController extends Controller
     public function update(Request $request, Project $project)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|string',
+            'name' => 'required',
+            'client_name' => 'nullable|string|max:255',
+            'budget' => 'nullable|numeric',
+            'description' => 'nullable',
+            'status' => 'required',
             'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'end_date' => 'required|date',
         ]);
 
         $project->update($request->only([
             'name',
+            'client_name',
+            'budget',
             'description',
             'status',
             'start_date',

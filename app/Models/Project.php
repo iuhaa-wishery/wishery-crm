@@ -9,7 +9,7 @@ class Project extends Model
 {
   use SoftDeletes;
 
-  protected $fillable = ['name', 'description', 'status', 'start_date', 'end_date'];
+  protected $fillable = ['name', 'client_name', 'budget', 'description', 'status', 'start_date', 'end_date'];
   public function tasks()
   {
     return $this->hasMany(Task::class);

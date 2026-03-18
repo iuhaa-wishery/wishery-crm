@@ -466,127 +466,116 @@ export default function Show() {
 
         {/* ✅ Add/Edit Modal */}
         {isOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-8 z-50 overflow-y-auto">
-            <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl mt-10">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {editingTask ? "Edit Task" : "Add Task"}
-                </h2>
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-start justify-center p-8 z-50 overflow-y-auto">
+            <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-2xl mt-10 overflow-hidden border border-slate-100 ring-1 ring-slate-900/5 transition-all">
+              <div className="p-8 border-b flex justify-between items-center bg-slate-50/50">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">
+                    {editingTask ? "Edit Task" : "Add Task"}
+                  </h2>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Project task coordination</p>
+                </div>
                 <button
                   onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-800"
+                  className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-slate-50 rounded-full transition-all active:scale-90"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
                 <div>
-                  <label className="block font-medium mb-1 text-gray-700">Task Name</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Task</label>
                   <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.name ? "border-red-500" : "border-gray-300"
-                      }`}
-                    placeholder="e.g. Implement user authentication"
+                    className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200 ${errors.name ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
+                    placeholder="Enter task name"
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-1 text-gray-700">Caption (optional)</label>
-                  <input
-                    type="text"
-                    name="caption"
-                    value={form.caption}
-                    onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                    placeholder="Brief caption"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-1 text-gray-700">Thumb Text (optional)</label>
-                  <input
-                    type="text"
-                    name="thumb_text"
-                    value={form.thumb_text}
-                    onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                    placeholder="Short thumb text"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-1 text-gray-700">Description</label>
-                  <textarea
-                    name="description"
-                    value={form.description || ""}
-                    onChange={handleChange}
-                    className={`w-full border px-3 py-2 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.description
-                      ? "border-red-500"
-                      : "border-gray-300"
-                      }`}
-                    rows="4"
-                    placeholder="Enter detailed task description..."
-                  />
-                  {errors.description && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.description}
-                    </p>
+                    <p className="text-red-500 text-[10px] font-bold tracking-tight uppercase mt-2 px-1">{errors.name}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-medium mb-1 text-gray-700">Assignees</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Caption (optional)</label>
+                    <input
+                      type="text"
+                      name="caption"
+                      value={form.caption}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
+                      placeholder="Brief caption"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Thumb Text (optional)</label>
+                    <input
+                      type="text"
+                      name="thumb_text"
+                      value={form.thumb_text}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all placeholder:text-slate-200"
+                      placeholder="Short thumb text"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-0.5">Operational Brief</label>
+                  <textarea
+                    name="description"
+                    value={form.description || ""}
+                    onChange={handleChange}
+                    className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all min-h-[120px] placeholder:text-slate-200 resize-none ${errors.description ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
+                    rows="4"
+                    placeholder="Enter detailed task description..."
+                  />
+                  {errors.description && (
+                    <p className="text-red-500 text-[10px] font-bold tracking-tight uppercase mt-2 px-1">{errors.description}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Assignees</label>
                     <div ref={dropdownRef} className="relative">
                       <button
                         type="button"
                         onClick={toggleAssigneeDropdown}
-                        className={`w-full flex justify-between items-center bg-white px-3 py-2 text-left border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.assignee_ids ? "border-red-500" : "border-gray-300"
-                          }`}
+                        className={`w-full flex justify-between items-center bg-slate-50/50 px-6 py-4 text-left border border-slate-100 rounded-2xl focus:ring-4 focus:ring-slate-100 focus:border-slate-300 focus:bg-white outline-none transition-all ${errors.assignee_ids ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
                       >
-                        <span className="truncate pr-4 text-gray-700">
+                        <span className="truncate pr-4 text-slate-900 text-base font-bold">
                           {getSelectedAssigneeNames()}
                         </span>
-                        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'
-                          }`} />
+                        <ChevronDown className={`w-5 h-5 text-slate-300 transition-transform duration-200 ${isAssigneeDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                       </button>
 
                       {isAssigneeDropdownOpen && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        <div className="absolute z-10 w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl max-h-64 overflow-y-auto p-2 space-y-1">
                           {users?.map((user) => (
                             <div
                               key={user.id}
-                              className="flex items-center p-2 hover:bg-gray-50 transition cursor-pointer"
+                              className="flex items-center p-3 hover:bg-slate-50 rounded-xl transition cursor-pointer group"
                               onClick={() => {
                                 const syntheticEvent = { target: { value: String(user.id), checked: !form.assignee_ids.includes(String(user.id)) } };
                                 handleAssigneeChange(syntheticEvent);
                               }}
                             >
-                              <input
-                                id={`user-dropdown-${user.id}`}
-                                type="checkbox"
-                                name="assignee_ids"
-                                value={String(user.id)}
-                                checked={form.assignee_ids.includes(String(user.id))}
-                                onChange={handleAssigneeChange}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
-                              />
+                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${form.assignee_ids.includes(String(user.id)) ? 'bg-slate-900 border-slate-900' : 'border-slate-200 group-hover:border-slate-300'}`}>
+                                {form.assignee_ids.includes(String(user.id)) && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                              </div>
                               <label
-                                htmlFor={`user-dropdown-${user.id}`}
-                                className="ml-2 text-sm font-medium text-gray-700 flex items-center flex-grow cursor-pointer"
+                                className="ml-3 text-sm font-bold text-slate-700 flex items-center flex-grow cursor-pointer"
                               >
                                 <img
                                   src={getAvatarUrl(user)}
                                   alt="avatar"
-                                  className="w-6 h-6 rounded-full border mr-2 object-cover"
+                                  className="w-8 h-8 rounded-full border-2 border-white shadow-sm mr-3 object-cover"
                                 />
                                 {user.name}
                               </label>
@@ -596,19 +585,17 @@ export default function Show() {
                       )}
                     </div>
                     {errors.assignee_ids && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.assignee_ids}
-                      </p>
+                      <p className="text-red-500 text-[10px] font-bold tracking-tight uppercase mt-2 px-1">{errors.assignee_ids}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block font-medium mb-1 text-gray-700">Status</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Status</label>
                     <select
                       name="status"
                       value={form.status}
                       onChange={handleChange}
-                      className="w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                      className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer"
                     >
                       {statusOrder.map((status) => (
                         <option key={status} value={status}>
@@ -621,47 +608,46 @@ export default function Show() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-medium mb-1 text-gray-700">Start Date</label>
-                    <input
-                      type="date"
-                      name="start_date"
-                      value={form.start_date}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.start_date
-                        ? "border-red-500"
-                        : "border-gray-300"
-                        }`}
-                    />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Start Date</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                      <input
+                        type="date"
+                        name="start_date"
+                        value={form.start_date}
+                        onChange={handleChange}
+                        className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all ${errors.start_date ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
+                      />
+                    </div>
                     {errors.start_date && (
-                      <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
+                      <p className="text-red-500 text-[10px] font-bold tracking-tight uppercase mt-2 px-1">{errors.start_date}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block font-medium mb-1 text-gray-700">End Date</label>
-                    <input
-                      type="date"
-                      name="end_date"
-                      value={form.end_date}
-                      onChange={handleChange}
-                      className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.end_date ? "border-red-500" : "border-gray-300"
-                        }`}
-                    />
-                    {(errors.end_date && errors.end_date !== "End date cannot be before start date.") && (
-                      <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
-                    )}
-                    {(errors.end_date && errors.end_date === "End date cannot be before start date.") && (
-                      <p className="text-red-500 text-sm mt-1">Date must be on or after start date.</p>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">End Date</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                      <input
+                        type="date"
+                        name="end_date"
+                        value={form.end_date}
+                        onChange={handleChange}
+                        className={`w-full bg-slate-50/50 border border-slate-100 rounded-2xl pl-12 pr-6 py-4 text-base font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all ${errors.end_date ? "border-red-200 ring-2 ring-red-50/50" : ""}`}
+                      />
+                    </div>
+                    {errors.end_date && (
+                      <p className="text-red-500 text-[10px] font-bold tracking-tight uppercase mt-2 px-1">{errors.end_date === "End date cannot be before start date." ? "Must be on or after start date" : errors.end_date}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-medium mb-1 text-gray-700">Priority</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-0.5">Priority</label>
                   <select
                     name="priority"
                     value={form.priority}
                     onChange={handleChange}
-                    className="w-full border px-3 py-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                    className="w-full bg-slate-50/50 border border-slate-100 rounded-2xl px-6 py-4 text-xs font-black uppercase tracking-widest text-slate-700 focus:ring-4 focus:ring-slate-100 focus:border-slate-300 transition-all appearance-none cursor-pointer"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -669,19 +655,19 @@ export default function Show() {
                   </select>
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-4">
+                <div className="flex gap-4 mt-6 pt-10 border-t border-slate-50">
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="px-5 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition font-medium"
+                    className="px-8 py-4 text-sm font-black uppercase tracking-[0.2em] text-slate-400 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all active:scale-[0.98]"
                   >
-                    Cancel
+                    Discard
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md font-medium"
+                    className="flex-1 py-4 px-10 text-sm font-black uppercase tracking-[0.2em] text-white bg-slate-900 hover:bg-black rounded-2xl shadow-[0_10px_20px_-10px_rgba(15,23,42,0.4)] transition-all active:scale-[0.98]"
                   >
-                    {editingTask ? "Update Task" : "Save Task"}
+                    {editingTask ? "Save Changes" : "Create Task"}
                   </button>
                 </div>
               </form>
