@@ -31,6 +31,9 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         $user->name = $request->name;
+        $user->email = $request->email;
+        $user->designation = $request->designation;
+        $user->phone = $request->phone;
 
         if ($request->hasFile('thumb')) {
             $path = public_path('uploads/profile');
