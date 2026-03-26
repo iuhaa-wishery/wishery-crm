@@ -20,28 +20,33 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             if [ "${{ github.ref_name }}" = "staging" ]; then
+              echo "🚀 Deploying to STAGING..."
               cd /home/u548741633/domains/erp.wishery.tech/public_html/staging
-              git pull origin staging
+
+              git fetch origin
+              git reset --hard origin/staging
+
             else
+              echo "🚀 Deploying to LIVE..."
               cd /home/u548741633/domains/erp.wishery.tech/public_html
-              git pull origin main
+
+              git fetch origin
+              git reset --hard origin/main
             fi
 
-            echo "🧹 Clearing old build..."
-            rm -rf public/build
-
-            echo "📦 Installing dependencies..."
-            npm install
-
-            echo "⚙️ Building React..."
-            npm run build
-
-            echo "📁 Checking build..."
-            ls -l public/build
-
+            echo "📦 Installing PHP dependencies..."
             composer install --no-dev --optimize-autoloader
 
+            echo "⚙️ Building React..."
+            npm install
+            npm run build
+
+            echo "🧹 Clearing cache..."
             php artisan optimize:clear
+
+            echo "🗄 Running migrations..."
             php artisan migrate --force
 
+            echo "⚡ Caching..."
             php artisan config:cache
+            php artisan route:cache
