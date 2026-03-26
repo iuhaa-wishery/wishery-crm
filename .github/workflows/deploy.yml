@@ -1,4 +1,4 @@
-name: Deploy Laravel + React (Staging & Live)
+name: CI/CD Deploy (Staging & Live)
 
 on:
   push:
@@ -7,11 +7,41 @@ on:
       - staging
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy via SSH
+      # 1️⃣ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup Node
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # 4️⃣ Build React (IMPORTANT)
+      - name: Build project
+        run: npm run build
+
+      # 5️⃣ Upload build folder to server
+      - name: Upload build to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "public/build"
+          target: "/home/u548741633/domains/erp.wishery.tech/public_html/${{ github.ref_name == 'staging' && 'staging' || '' }}/public/"
+
+      # 6️⃣ Deploy backend (Laravel)
+      - name: Deploy backend
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
@@ -22,24 +52,17 @@ jobs:
             if [ "${{ github.ref_name }}" = "staging" ]; then
               echo "🚀 Deploying to STAGING..."
               cd /home/u548741633/domains/erp.wishery.tech/public_html/staging
-
               git fetch origin
               git reset --hard origin/staging
-
             else
               echo "🚀 Deploying to LIVE..."
               cd /home/u548741633/domains/erp.wishery.tech/public_html
-
               git fetch origin
               git reset --hard origin/main
             fi
 
             echo "📦 Installing PHP dependencies..."
             composer install --no-dev --optimize-autoloader
-
-            echo "⚙️ Building React..."
-            npm install
-            npm run build
 
             echo "🧹 Clearing cache..."
             php artisan optimize:clear
@@ -50,3 +73,6 @@ jobs:
             echo "⚡ Caching..."
             php artisan config:cache
             php artisan route:cache
+            php artisan view:cache
+
+            echo "✅ Deployment completed!"
