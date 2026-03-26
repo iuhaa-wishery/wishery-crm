@@ -1,6 +1,6 @@
 import React from 'react';
 import { Loader2, Play, Square, Coffee, Clock } from 'lucide-react';
-import useAttendance from '@/Hooks/useAttendance';
+import useAttendance from '@/hooks/useAttendance';
 
 export default function AttendanceLargeCard() {
     const {
