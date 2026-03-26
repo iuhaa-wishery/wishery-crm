@@ -1,0 +1,47 @@
+name: Deploy Laravel + React (Staging & Live)
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            if [ "${{ github.ref_name }}" = "staging" ]; then
+              echo "Deploying to STAGING..."
+              cd /home/u548741633/public_html/staging
+              git pull origin staging
+            else
+              echo "Deploying to LIVE..."
+              cd /home/u548741633/public_html
+              git pull origin main
+            fi
+
+            echo "Installing PHP dependencies..."
+            composer install --no-dev --optimize-autoloader
+
+            echo "Installing Node modules..."
+            npm install
+
+            echo "Building React..."
+            npm run build
+
+            echo "Running migrations..."
+            php artisan migrate --force
+
+            echo "Clearing & caching..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
