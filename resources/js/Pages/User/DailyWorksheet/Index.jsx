@@ -4,8 +4,9 @@ import UserLayout from "@/Layouts/UserLayout";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Modal from "@/Components/Modal";
 import MonthPicker from "@/Components/MonthPicker";
-import { Trash2, Edit2, Plus, Calendar as CalendarIcon, Save, X, ExternalLink } from "lucide-react";
+import { Trash2, Edit2, Plus, Calendar as CalendarIcon, Save, X, ExternalLink, Download, CheckCircle2, Clock, ListTodo } from "lucide-react";
 import toast from "react-hot-toast";
+import html2canvas from 'html2canvas';
 
 export default function Index({ worksheets, settings, selectedDate, selectedMonth, auth }) {
     const Layout = auth.user.role === 'admin' ? AdminLayout : UserLayout;
@@ -93,12 +94,57 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
         }
     };
 
+    const handleExport = async () => {
+        const element = document.getElementById('worksheet-content');
+        if (!element) return;
+
+        const toastId = toast.loading("Preparing export...");
+
+        // Add a temporary class to hide elements during capture
+        element.classList.add('is-exporting');
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                onclone: (clonedDoc) => {
+                    // Force visibility for things that might be hidden by hover states
+                    const clonedContent = clonedDoc.getElementById('worksheet-content');
+                    if (clonedContent) {
+                        clonedContent.style.padding = '20px';
+                    }
+                }
+            });
+
+            const image = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.download = `Daily-Worksheet-${selectedDate || selectedMonth}.png`;
+            link.href = image;
+            link.click();
+            toast.success("Worksheet exported successfully!", { id: toastId });
+        } catch (error) {
+            console.error("Export failed:", error);
+            toast.error("Failed to export worksheet", { id: toastId });
+        } finally {
+            element.classList.remove('is-exporting');
+        }
+    };
+
+    const stats = {
+        total: worksheets.length,
+        done: worksheets.filter(w => w.status?.toUpperCase() === 'DONE').length,
+        pending: worksheets.filter(w => w.status?.toUpperCase() === 'IN PROGRESS' || w.status?.toUpperCase() === 'NOT DONE').length,
+        approved: worksheets.filter(w => w.status?.toUpperCase() === 'APPROVED').length,
+    };
+
     return (
         <Layout title="Daily Worksheet">
             <Head title="Daily Worksheet" />
 
-            <div className="font-sans">
-                <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-6 font-sans">
+            <div className="font-sans" id="worksheet-content">
+                <div className="header-card bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 flex flex-wrap items-center justify-between gap-6 font-sans">
                     <div>
                         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Daily Worksheet</h1>
                         <p className="text-sm text-gray-500 font-medium">Track your daily activities</p>
@@ -145,11 +191,67 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                 reset();
                                 setIsAdding(true);
                             }}
-                            className="bg-gray-900 hover:bg-blue-600 text-white pl-4 pr-6 py-2.5 rounded-xl font-bold uppercase tracking-widest text-[11px] transition-all flex items-center gap-2 shadow-lg shadow-gray-200 hover:shadow-blue-200 active:scale-95"
+                            className="add-task-button bg-gray-900 hover:bg-blue-600 text-white pl-4 pr-6 py-2.5 rounded-xl font-bold uppercase tracking-widest text-[11px] transition-all flex items-center gap-2 shadow-lg shadow-gray-200 hover:shadow-blue-200 active:scale-95"
                         >
                             <Plus size={16} />
                             Add Task
                         </button>
+                        {filterMode === 'daily' && (
+                            <button
+                                onClick={handleExport}
+                                className="export-button bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2.5 rounded-xl font-bold uppercase tracking-widest text-[11px] transition-all flex items-center gap-2 border border-blue-100 active:scale-95"
+                            >
+                                <Download size={16} />
+                                Export
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="hidden export-only-title text-center mb-10 py-6 border-b border-gray-100">
+                    <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Daily Worklist</h1>
+                    <p className="text-lg font-bold text-blue-600 mt-2">
+                        {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                    </p>
+                </div>
+
+                {/* Summary Section */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+                            <ListTodo size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Tasks</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.total}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-500">
+                            <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completed</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.done}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">In Progress</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.pending}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-500">
+                            <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Approved</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.approved}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -307,7 +409,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                         <table className="w-full text-left border-collapse min-w-[1200px]">
                             <thead>
                                 <tr className="bg-[#fcfcfd] border-b border-gray-100">
-                                    <th className="py-6 px-4 pl-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[120px]">Date</th>
+                                    <th className="py-6 px-4 pl-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[120px] date-column">Date</th>
                                     {settings.client_name_enabled && (
                                         <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[180px]">Client</th>
                                     )}
@@ -326,7 +428,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                     {settings.project_enabled && (
                                         <th className="py-6 px-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-[180px]">Project</th>
                                     )}
-                                    <th className="py-6 px-4 pr-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest text-right w-[100px]">Actions</th>
+                                    <th className="py-6 px-4 pr-8 text-[11px] font-bold text-gray-500 uppercase tracking-widest text-right w-[100px] actions-column">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -344,7 +446,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                 ) : (
                                     worksheets.map((item) => (
                                         <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
-                                            <td className="py-6 px-4 pl-8">
+                                            <td className="py-6 px-4 pl-8 date-column">
                                                 <div className="flex flex-col">
                                                     <span className="text-[14px] font-bold text-gray-900">{new Date(item.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}</span>
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
@@ -401,7 +503,7 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                                             )}
 
                                             {/* Actions */}
-                                            <td className="py-6 px-4 pr-8 text-right">
+                                            <td className="py-6 px-4 pr-8 text-right actions-column">
                                                 <div className="flex items-center justify-end gap-2 transition-opacity">
                                                     <button onClick={() => startEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
                                                         <Edit2 size={16} />
@@ -427,6 +529,18 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+                .is-exporting .actions-column, 
+                .is-exporting .export-button,
+                .is-exporting button:not(.export-button),
+                .is-exporting .bg-gray-900,
+                .is-exporting .add-task-button,
+                .is-exporting .date-column,
+                .is-exporting .header-card { display: none !important; }
+                .is-exporting .export-only-title { display: block !important; }
+                .is-exporting .overflow-x-auto { overflow-x: visible !important; }
+                .is-exporting { width: fit-content !important; min-width: 1200px !important; padding: 60px !important; background: #ffffff !important; }
+                .is-exporting .bg-white { border: none !important; box-shadow: none !important; }
+                .is-exporting table { border: 1px solid #f1f5f9 !important; border-radius: 16px !important; overflow: hidden !important; }
             ` }} />
         </Layout>
     );
