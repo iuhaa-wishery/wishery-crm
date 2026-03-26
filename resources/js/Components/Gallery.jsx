@@ -31,7 +31,12 @@ export default function Gallery() {
             })
             .catch(err => {
                 console.error("Error fetching files:", err);
-                setError("Failed to load gallery.");
+                const status = err.response?.status;
+                if (status === 401) {
+                    setError("Google Drive authentication expired.");
+                } else {
+                    setError("Failed to load gallery. " + (err.response?.data?.error || "Check your connection and .env settings."));
+                }
                 setLoading(false);
             });
     };
@@ -178,8 +183,26 @@ export default function Gallery() {
 
     if (error) {
         return (
-            <div className="text-red-500 text-center p-4">
-                {error}
+            <div className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-lg border border-red-200">
+                <p className="text-red-700 text-center mb-4 font-medium italic">
+                    {error}
+                </p>
+                {error.includes("expired") && auth.user.role === 'admin' && (
+                    <a
+                        href={route('admin.google.auth')}
+                        className="inline-flex items-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm font-semibold"
+                    >
+                        Re-authenticate Google Drive
+                    </a>
+                )}
+                {!error.includes("expired") && (
+                    <button
+                        onClick={() => fetchFiles(currentFolderId)}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                        Retry
+                    </button>
+                )}
             </div>
         );
     }

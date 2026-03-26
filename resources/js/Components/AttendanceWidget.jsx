@@ -3,12 +3,15 @@ import { router } from '@inertiajs/react';
 import axios from 'axios';
 import { Play, Square, Coffee, Clock, Loader2 } from 'lucide-react';
 
+import { getFreshLocation, getGeoErrorMessage } from '@/lib/geo';
+
 export default function AttendanceWidget() {
-    // Version: 1.1 (Multiple Punch-in Support)
+    // Version: 1.2 (Mac Location Fix)
     const [status, setStatus] = useState('loading'); // loading, not_started, punched_in, on_break, punched_out
     const [attendance, setAttendance] = useState(null);
     const [timer, setTimer] = useState(0); // in seconds
     const [breakTimer, setBreakTimer] = useState(0); // in seconds
+    const [sessionTimer, setSessionTimer] = useState(0); // seconds strictly in the current active slice
     const [processing, setProcessing] = useState(false);
 
     useEffect(() => {
@@ -63,6 +66,7 @@ export default function AttendanceWidget() {
             // So we add (Now - PunchIn) to total_worked_minutes.
             const currentSession = now - punchIn;
             setTimer(Math.floor((totalWorkedMs + currentSession) / 1000));
+            setSessionTimer(Math.floor(currentSession / 1000));
         } else if (attendance.status === 'on_break') {
             // Worked time is fixed until break ends
             // But we need to account for the session BEFORE the break started.
@@ -84,6 +88,7 @@ export default function AttendanceWidget() {
     const tick = () => {
         if (status === 'punched_in') {
             setTimer(prev => prev + 1);
+            setSessionTimer(prev => prev + 1);
         } else if (status === 'on_break') {
             setBreakTimer(prev => prev + 1);
         }
@@ -97,7 +102,9 @@ export default function AttendanceWidget() {
         return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     };
 
-    const handleAction = (action) => {
+    const handleAction = async (action) => {
+        if (processing) return;
+
         let url = '';
 
         switch (action) {
@@ -112,64 +119,27 @@ export default function AttendanceWidget() {
         if (action === 'punch-in' || action === 'punch-out') {
             // Geolocation requires HTTPS
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                alert("Location access requires a secure HTTPS connection. Please use https://erp.wishery.tech");
+                alert("Location access requires a secure HTTPS connection.");
+                setProcessing(false);
                 return;
             }
 
-            if ("geolocation" in navigator) {
-                const geoOptions = {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                };
-
-                const success = (position) => {
-                    router.post(url, {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                    }, {
-                        preserveScroll: true,
-                        onSuccess: () => fetchStatus(),
-                        onFinish: () => setProcessing(false),
-                    });
-                };
-
-                const errorCallback = (error) => {
-                    console.error("Geolocation error:", error);
-
-                    // Fallback for some desktops/laptops where high accuracy might fail
-                    if (error.code === error.POSITION_UNAVAILABLE && geoOptions.enableHighAccuracy) {
-                        console.warn("Retrying without high accuracy...");
-                        navigator.geolocation.getCurrentPosition(success, (err2) => {
-                            let msg = `Location Error (Code: 2):\n\n1. Ensure Wi-Fi is TURNED ON (even if using Ethernet).\n2. Ensure 'Location Services' is enabled in Mac System Settings.\n3. Try moving closer to a window.`;
-                            alert(msg);
-                            setProcessing(false);
-                        }, { ...geoOptions, enableHighAccuracy: false });
-                        return;
-                    }
-
-                    let msg = `Location Error (Code: ${error.code}):\n\n`;
-                    setProcessing(false);
-
-                    switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            msg += "Access denied. Please check:\n- System Settings > Privacy & Security > Location Services (MUST be ON).\n- Ensure your browser is allowed in that list.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            msg += "Location unavailable. Please ensure Wi-Fi is ON (Macs need Wi-Fi to find location).";
-                            break;
-                        case error.TIMEOUT:
-                            msg += "Request timed out. Please check your internet and try again.";
-                            break;
-                        default:
-                            msg += "An unknown error occurred.";
-                    }
-                    alert(msg);
-                };
-
-                navigator.geolocation.getCurrentPosition(success, errorCallback, geoOptions);
-            } else {
-                alert("Geolocation is not supported by this browser.");
+            try {
+                const pos = await getFreshLocation();
+                router.post(url, {
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy,
+                    timestamp: pos.timestamp
+                }, {
+                    preserveScroll: true,
+                    onSuccess: () => fetchStatus(),
+                    onFinish: () => setProcessing(false),
+                });
+            } catch (err) {
+                console.error("Geo error", err);
+                alert(getGeoErrorMessage(err));
+                setProcessing(false);
             }
         } else {
             router.post(url, {}, {
@@ -216,26 +186,31 @@ export default function AttendanceWidget() {
                     </div>
                 )}
 
-                {status === 'punched_in' && (
-                    <>
-                        <button
-                            onClick={() => handleAction('break-start')}
-                            disabled={processing}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Coffee className="w-4 h-4 mr-2" />}
-                            Break
-                        </button>
-                        <button
-                            onClick={() => handleAction('punch-out')}
-                            disabled={processing}
-                            className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Square className="w-4 h-4 mr-2 fill-current" />}
-                            Punch Out
-                        </button>
-                    </>
-                )}
+                {status === 'punched_in' && (() => {
+                    const isEarlySession = sessionTimer < 300;
+                    return (
+                        <>
+                            <button
+                                onClick={() => handleAction('break-start')}
+                                disabled={processing || isEarlySession}
+                                title={isEarlySession ? "You must work at least 5 minutes before taking a break" : ""}
+                                className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-orange-500 text-white text-sm font-bold rounded-xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Coffee className="w-4 h-4 mr-2" />}
+                                Break
+                            </button>
+                            <button
+                                onClick={() => handleAction('punch-out')}
+                                disabled={processing || isEarlySession}
+                                title={isEarlySession ? "You must work at least 5 minutes before punching out" : ""}
+                                className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 sm:px-4 sm:py-2 bg-emerald-500 text-white text-sm font-bold rounded-xl hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {processing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Square className="w-4 h-4 mr-2 fill-current" />}
+                                Punch Out
+                            </button>
+                        </>
+                    )
+                })()}
 
                 {status === 'on_break' && (
                     <button

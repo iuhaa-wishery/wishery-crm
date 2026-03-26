@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 
+import { getFreshLocation, getGeoErrorMessage } from '@/lib/geo';
+
 export default function useAttendance() {
     const [status, setStatus] = useState('loading'); // loading, not_started, punched_in, on_break, punched_out
     const [attendance, setAttendance] = useState(null);
     const [timer, setTimer] = useState(0); // in seconds
     const [breakTimer, setBreakTimer] = useState(0); // in seconds
+    const [sessionTimer, setSessionTimer] = useState(0); // seconds strictly in current active slice
     const [processing, setProcessing] = useState(false);
 
     const parseSafariDate = (dateString) => {
@@ -28,6 +31,7 @@ export default function useAttendance() {
         if (attendanceData.status === 'punched_in') {
             const currentSession = now - punchIn;
             setTimer(Math.floor((totalWorkedMs + currentSession) / 1000));
+            setSessionTimer(Math.floor(currentSession / 1000));
             const totalBreakMs = (attendanceData.total_break_minutes || 0) * 60 * 1000;
             setBreakTimer(Math.floor(totalBreakMs / 1000));
         } else if (attendanceData.status === 'on_break') {
@@ -82,6 +86,7 @@ export default function useAttendance() {
         const interval = setInterval(() => {
             if (status === 'punched_in') {
                 setTimer(prev => prev + 1);
+                setSessionTimer(prev => prev + 1);
             } else if (status === 'on_break') {
                 setBreakTimer(prev => prev + 1);
             }
@@ -89,7 +94,9 @@ export default function useAttendance() {
         return () => clearInterval(interval);
     }, [status]);
 
-    const handleAction = (action) => {
+    const handleAction = async (action) => {
+        if (processing) return;
+
         let url = '';
         switch (action) {
             case 'punch-in': url = route('attendance.punchIn'); break;
@@ -129,18 +136,17 @@ export default function useAttendance() {
                 return;
             }
 
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => executeRequest({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-                    (err) => {
-                        console.error("Geo error", err);
-                        alert("Location error. Please ensure location services are enabled (System Settings > Privacy).");
-                        setProcessing(false);
-                    },
-                    { enableHighAccuracy: true, timeout: 15000 }
-                );
-            } else {
-                alert("Geolocation not supported.");
+            try {
+                const pos = await getFreshLocation();
+                executeRequest({
+                    latitude: pos.coords.latitude,
+                    longitude: pos.coords.longitude,
+                    accuracy: pos.coords.accuracy,
+                    timestamp: pos.timestamp
+                });
+            } catch (err) {
+                console.error("Geo error", err);
+                alert(getGeoErrorMessage(err));
                 setProcessing(false);
             }
         } else {
@@ -156,6 +162,7 @@ export default function useAttendance() {
         attendance,
         timer,
         breakTimer,
+        sessionTimer,
         processing,
         handleAction,
         fetchStatus

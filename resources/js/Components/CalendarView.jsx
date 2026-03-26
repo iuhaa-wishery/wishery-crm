@@ -53,8 +53,8 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
 
             // Determine if it's a future date
             const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const isFuture = dateObj > today;
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const isFuture = dateStr > todayStr;
 
             let status = 'Absent';
             let isLate = false;
@@ -152,14 +152,14 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
         let onLeave = 0;
         let lateDays = 0;
         let totalMinutes = 0;
+        let totalBreakMinutes = 0;
 
         calendarDays.forEach(day => {
             if (!day.currentMonth) return;
 
-            const dateObj = new Date(day.date);
-            const todayDate = new Date();
-            todayDate.setHours(0, 0, 0, 0);
-            if (dateObj > todayDate) return;
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            if (day.date > todayStr) return;
 
             if (day.status === 'Present') present++;
             else if (day.status === 'Absent') absent++;
@@ -170,11 +170,20 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
 
             if (day.attendance) {
                 totalMinutes += day.attendance.total_worked_minutes || 0;
+                totalBreakMinutes += day.attendance.total_break_minutes || 0;
             }
         });
 
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
+        let breakHours = Math.floor(totalBreakMinutes / 60);
+        let breakMins = Math.round(totalBreakMinutes % 60);
+
+        // Handle edge case where rounding pushes to 60 minutes
+        if (breakMins === 60) {
+            breakHours += 1;
+            breakMins = 0;
+        }
 
         return {
             present,
@@ -182,7 +191,8 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
             halfDay,
             onLeave,
             lateDays,
-            totalWorked: `${hours}h ${minutes}m`
+            totalWorked: `${hours}h ${minutes}m`,
+            totalBreak: `${breakHours}h ${breakMins}m`
         };
     }, [calendarDays]);
 
@@ -268,79 +278,73 @@ const CalendarView = ({ attendanceData, leaves, filters, onFilterChange, setting
                 <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
                     <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6">Monthly Stats</h4>
 
-                    <div className="space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Present</p>
-                                    <p className="text-xl font-black text-[#2d3436]">{stats.present}</p>
-                                </div>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-100/50">
+                            <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center mb-2">
+                                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                             </div>
+                            <p className="text-[10px] font-bold text-green-800/60 uppercase tracking-wider">Present</p>
+                            <p className="text-2xl font-black text-green-700">{stats.present}</p>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Absent</p>
-                                    <p className="text-xl font-black text-[#2d3436]">{stats.absent}</p>
-                                </div>
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-red-50 to-red-100/50 border border-red-100/50">
+                            <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
+                                <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                             </div>
+                            <p className="text-[10px] font-bold text-red-800/60 uppercase tracking-wider">Absent</p>
+                            <p className="text-2xl font-black text-red-700">{stats.absent}</p>
                         </div>
-
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Worked Hours</p>
-                                    <p className="text-xl font-black text-[#2d3436]">{stats.totalWorked}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-50">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-normal">Half Days</p>
-                                    <p className="text-lg font-black text-[#2d3436]">{stats.halfDay}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-normal">On Leave</p>
-                                    <p className="text-lg font-black text-[#2d3436]">{stats.onLeave}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-gray-50">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
-                                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Late Days</p>
-                                        <p className="text-xl font-black text-orange-600">{stats.lateDays}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {settings?.monthly_working_days && (
-                            <div className="pt-4 border-t border-gray-50">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">Target Working Days</p>
-                                    <p className="text-lg font-black text-[#ff4081]">{settings.monthly_working_days}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
+
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-normal">Worked Hours</p>
+                            </div>
+                            <p className="text-sm font-black text-[#2d3436]">{stats.totalWorked}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 border border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-normal">Break Hours</p>
+                            </div>
+                            <p className="text-sm font-black text-[#2d3436]">{stats.totalBreak}</p>
+                        </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-gray-100">
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="text-center p-2 rounded-xl bg-gray-50">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Half Days</p>
+                                <p className="text-sm font-black text-[#2d3436]">{stats.halfDay}</p>
+                            </div>
+                            <div className="text-center p-2 rounded-xl bg-gray-50">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">On Leave</p>
+                                <p className="text-sm font-black text-[#2d3436]">{stats.onLeave}</p>
+                            </div>
+                            <div className="text-center p-2 rounded-xl bg-orange-50/50">
+                                <p className="text-[10px] font-bold text-orange-400 uppercase mb-1">Late</p>
+                                <p className="text-sm font-black text-orange-600">{stats.lateDays}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {settings?.monthly_working_days && (
+                        <div className="pt-4 mt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between px-2">
+                                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Target Work Days</p>
+                                <div className="px-2 py-1 bg-pink-100 text-pink-600 rounded-md text-xs font-black">
+                                    {settings.monthly_working_days}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Info Card */}

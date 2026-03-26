@@ -37,8 +37,20 @@ class AttendanceController extends Controller
         $today = Carbon::today();
         $userId = Auth::id();
 
+        // Diagnostics Logging
+        \Illuminate\Support\Facades\Log::info("Punch In Attempt", [
+            'user_id' => $userId,
+            'ip' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'lat' => $request->latitude,
+            'lng' => $request->longitude,
+            'accuracy' => $request->accuracy ?? 'not provided',
+            'client_timestamp' => $request->timestamp ?? 'not provided'
+        ]);
+
         // Enforce Location
         if (!$request->latitude || !$request->longitude) {
+            \Illuminate\Support\Facades\Log::warning("Punch In Failed: Missing Location", ['user_id' => $userId]);
             return back()->with('error', 'Location is mandatory to punch in. Please allow location access.');
         }
 
@@ -83,14 +95,34 @@ class AttendanceController extends Controller
 
     public function punchOut(Request $request)
     {
+        $userId = Auth::id();
+
+        // Diagnostics Logging
+        \Illuminate\Support\Facades\Log::info("Punch Out Attempt", [
+            'user_id' => $userId,
+            'ip' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'lat' => $request->latitude,
+            'lng' => $request->longitude,
+            'accuracy' => $request->accuracy ?? 'not provided'
+        ]);
+
         // Find the latest active session
-        $attendance = Attendance::where('user_id', Auth::id())
+        $attendance = Attendance::where('user_id', $userId)
             ->where('date', Carbon::today())
             ->where('status', '!=', 'punched_out')
             ->latest()
             ->first();
 
         if ($attendance && $attendance->punch_in) {
+            $now = Carbon::now();
+            $punchIn = Carbon::parse($attendance->punch_in);
+
+            // Prevent punch out if punch_in was less than 5 minutes ago
+            if (abs($now->diffInSeconds($punchIn)) < 295) {
+                return back()->with('error', 'You must work at least 5 minutes before punching out.');
+            }
+
             // Detect Device Type
             $userAgent = $request->header('User-Agent');
             $deviceType = 'Desktop';
@@ -150,6 +182,11 @@ class AttendanceController extends Controller
             ->first();
 
         if ($attendance) {
+            $punchIn = Carbon::parse($attendance->punch_in);
+            if (abs(Carbon::now()->diffInSeconds($punchIn)) < 295) {
+                return back()->with('error', 'You must work at least 5 minutes before taking a break.');
+            }
+
             // Create a new break record
             \App\Models\AttendanceBreak::create([
                 'attendance_id' => $attendance->id,
@@ -324,13 +361,13 @@ class AttendanceController extends Controller
                             $totalBreakMinutes += Carbon::parse($activeBreak->start_time)->diffInMinutes(Carbon::now());
                         }
 
-                        $checkInTime = Carbon::parse($attendance->punch_in);
+                        $checkInTime = Carbon::parse($attendance->punch_in)->timezone('Asia/Kolkata');
                         $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
-                        $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59');
-                        $sixPM = Carbon::parse($dateString . ' 18:00:00');
+                        $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59', 'Asia/Kolkata');
+                        $sixPM = Carbon::parse($dateString . ' 18:00:00', 'Asia/Kolkata');
 
                         $isLate = $checkInTime->gt($nineThirtyAM);
-                        $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+                        $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->lt($sixPM);
 
                         $status = 'Present';
                         if ($isLate && $isEarlyLeave) {
@@ -341,8 +378,8 @@ class AttendanceController extends Controller
                             $status = 'Early Leave';
                         }
 
-                        $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-';
-                        $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-';
+                        $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->timezone('Asia/Kolkata')->format('h:i A') : '-';
+                        $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->format('h:i A') : '-';
                         $hours = floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm';
                         $breakTime = floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm';
                     } else {
@@ -374,8 +411,8 @@ class AttendanceController extends Controller
                         'hours' => $hours,
                         'break_time' => $breakTime,
                         'attendance_id' => $attendanceId,
-                        'punch_in_raw' => $punchInRaw,
-                        'punch_out_raw' => $punchOutRaw,
+                        'punch_in_raw' => $attendance && $attendance->punch_in ? Carbon::parse($attendance->punch_in, 'Asia/Kolkata')->toIso8601String() : null,
+                        'punch_out_raw' => $attendance && $attendance->punch_out ? Carbon::parse($attendance->punch_out, 'Asia/Kolkata')->toIso8601String() : null,
                         'punch_in_lat' => $punchInLat,
                         'punch_in_lng' => $punchInLng,
                         'punch_out_lat' => $punchOutLat,
@@ -384,6 +421,8 @@ class AttendanceController extends Controller
                         'db_status' => $dbStatus ?? null,
                         'current_status' => $currentStatus,
                         'breaks' => $breaks ?? [],
+                        'total_worked_minutes' => $attendance ? $attendance->total_worked_minutes : 0,
+                        'total_break_minutes' => isset($totalBreakMinutes) ? $totalBreakMinutes : 0,
                     ];
                 }
 
@@ -449,21 +488,21 @@ class AttendanceController extends Controller
             }
 
             if ($attendance) {
-                $checkInTime = Carbon::parse($attendance->punch_in);
+                $checkInTime = Carbon::parse($attendance->punch_in)->timezone('Asia/Kolkata');
                 $checkIn = $checkInTime->format('h:i A');
 
                 if ($attendance->punch_out) {
-                    $checkOut = Carbon::parse($attendance->punch_out)->format('h:i A');
+                    $checkOut = Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->format('h:i A');
                 }
 
                 // Calculate Status
                 $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
-                $nineAM = Carbon::parse($dateString . ' 09:00:00');
-                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59');
-                $sixPM = Carbon::parse($dateString . ' 18:00:00');
+                $nineAM = Carbon::parse($dateString . ' 09:00:00', 'Asia/Kolkata');
+                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59', 'Asia/Kolkata');
+                $sixPM = Carbon::parse($dateString . ' 18:00:00', 'Asia/Kolkata');
 
                 $isLate = $checkInTime->gt($nineThirtyAM);
-                $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+                $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->lt($sixPM);
 
                 $status = 'Present';
                 if ($isLate && $isEarlyLeave) {
@@ -488,8 +527,8 @@ class AttendanceController extends Controller
                 'hours' => $hours,
                 'break_time' => floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm',
                 'attendance_id' => $attendance ? $attendance->id : null,
-                'punch_in_raw' => $attendance ? $attendance->punch_in : null,
-                'punch_out_raw' => $attendance ? $attendance->punch_out : null,
+                'punch_in_raw' => $attendance && $attendance->punch_in ? Carbon::parse($attendance->punch_in, 'Asia/Kolkata')->toIso8601String() : null,
+                'punch_out_raw' => $attendance && $attendance->punch_out ? Carbon::parse($attendance->punch_out, 'Asia/Kolkata')->toIso8601String() : null,
                 'punch_in_lat' => $attendance ? $attendance->punch_in_lat : null,
                 'punch_in_lng' => $attendance ? $attendance->punch_in_lng : null,
                 'punch_out_lat' => $attendance ? $attendance->punch_out_lat : null,
@@ -498,6 +537,8 @@ class AttendanceController extends Controller
                 'db_status' => $dbStatus,
                 'current_status' => $currentStatus,
                 'breaks' => $breaks,
+                'total_worked_minutes' => $attendance ? $attendance->total_worked_minutes : 0,
+                'total_break_minutes' => $totalBreakMinutes,
             ];
         })->values();
 
@@ -757,13 +798,13 @@ class AttendanceController extends Controller
 
             if ($attendance) {
                 $attendanceId = $attendance->id;
-                $checkInTime = Carbon::parse($attendance->punch_in);
+                $checkInTime = Carbon::parse($attendance->punch_in)->timezone('Asia/Kolkata');
                 $dateString = $attendance->date instanceof \Carbon\Carbon ? $attendance->date->format('Y-m-d') : $attendance->date;
-                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59');
-                $sixPM = Carbon::parse($dateString . ' 18:00:00');
+                $nineThirtyAM = Carbon::parse($dateString . ' 09:30:59', 'Asia/Kolkata');
+                $sixPM = Carbon::parse($dateString . ' 18:00:00', 'Asia/Kolkata');
 
                 $isLate = $checkInTime->gt($nineThirtyAM);
-                $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->lt($sixPM);
+                $isEarlyLeave = $attendance->punch_out && Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->lt($sixPM);
 
                 $status = 'Present';
                 if ($isLate && $isEarlyLeave) {
@@ -774,8 +815,8 @@ class AttendanceController extends Controller
                     $status = 'Early Leave';
                 }
 
-                $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->format('h:i A') : '-';
-                $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->format('h:i A') : '-';
+                $checkIn = $attendance->punch_in ? Carbon::parse($attendance->punch_in)->timezone('Asia/Kolkata')->format('h:i A') : '-';
+                $checkOut = $attendance->punch_out ? Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata')->format('h:i A') : '-';
                 $hours = floor($attendance->total_worked_minutes / 60) . 'h ' . ($attendance->total_worked_minutes % 60) . 'm';
                 $breakTime = floor(($attendance->total_break_minutes ?? 0) / 60) . 'h ' . (($attendance->total_break_minutes ?? 0) % 60) . 'm';
             } else {
@@ -806,6 +847,11 @@ class AttendanceController extends Controller
                 'status' => $status,
                 'hours' => $hours,
                 'break_time' => $breakTime,
+                'attendance_id' => $attendanceId,
+                'punch_in_raw' => $attendance && $attendance->punch_in ? Carbon::parse($attendance->punch_in, 'Asia/Kolkata')->toIso8601String() : null,
+                'punch_out_raw' => $attendance && $attendance->punch_out ? Carbon::parse($attendance->punch_out, 'Asia/Kolkata')->toIso8601String() : null,
+                'total_worked_minutes' => $attendance ? $attendance->total_worked_minutes : 0,
+                'total_break_minutes' => $attendance ? ($attendance->total_break_minutes ?? 0) : 0,
             ];
         }
 

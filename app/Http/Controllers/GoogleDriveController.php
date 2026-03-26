@@ -21,7 +21,11 @@ class GoogleDriveController extends Controller
             $files = $this->googleDriveService->listFiles($folderId);
             return response()->json($files);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            $status = 500;
+            if (str_contains($e->getMessage(), 're-authenticate')) {
+                $status = 401;
+            }
+            return response()->json(['error' => $e->getMessage()], $status);
         }
     }
 

@@ -8,14 +8,17 @@ export default function AttendanceLargeCard() {
         attendance,
         timer,
         breakTimer,
+        sessionTimer,
         processing,
         handleAction
     } = useAttendance();
 
+    const isEarlySession = status === 'punched_in' && sessionTimer < 300; // 5 mins
+
     const formatTime = (seconds) => {
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
-        return `${h}.${m.toString().padStart(2, '0')}`;
+        return `${h}h ${m}m`;
     };
 
     const getPercentage = () => {
@@ -96,7 +99,7 @@ export default function AttendanceLargeCard() {
                     />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold text-gray-900">{formatTime(timer)} hrs</span>
+                    <span className="text-3xl font-bold text-gray-900">{formatTime(timer)}</span>
                 </div>
             </div>
 
@@ -106,7 +109,7 @@ export default function AttendanceLargeCard() {
                     <button
                         onClick={() => handleAction('punch-in')}
                         disabled={processing}
-                        className="w-full py-4 bg-emerald-400 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-emerald-400 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
                         Punch In
@@ -118,8 +121,9 @@ export default function AttendanceLargeCard() {
                         {status === 'punched_in' ? (
                             <button
                                 onClick={() => handleAction('break-start')}
-                                disabled={processing}
-                                className="flex-1 py-4 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-orange-100 flex items-center justify-center gap-2"
+                                disabled={processing || isEarlySession}
+                                title={isEarlySession ? "You must work at least 5 minutes before taking a break" : ""}
+                                className="flex-1 py-4 bg-orange-400 hover:bg-orange-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-orange-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Coffee className="w-5 h-5" />}
                                 Break
@@ -128,7 +132,7 @@ export default function AttendanceLargeCard() {
                             <button
                                 onClick={() => handleAction('break-end')}
                                 disabled={processing}
-                                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
+                                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-blue-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
                                 Resume
@@ -136,8 +140,9 @@ export default function AttendanceLargeCard() {
                         )}
                         <button
                             onClick={() => handleAction('punch-out')}
-                            disabled={processing}
-                            className="flex-1 py-4 bg-emerald-400 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                            disabled={processing || isEarlySession}
+                            title={isEarlySession ? "You must work at least 5 minutes before punching out" : ""}
+                            className="flex-1 py-4 bg-emerald-400 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Square className="w-5 h-5 fill-current" />}
                             Punch Out
@@ -156,12 +161,12 @@ export default function AttendanceLargeCard() {
             <div className="w-full grid grid-cols-2 border-t border-gray-100 pt-6">
                 <div className="text-center border-r border-gray-100">
                     <p className="text-xs font-bold text-gray-800 uppercase tracking-widest">Break</p>
-                    <p className="text-lg font-bold text-gray-900 mt-1">{formatTime(breakTimer)} hrs</p>
+                    <p className="text-lg font-bold text-gray-900 mt-1">{formatTime(breakTimer)}</p>
                 </div>
                 <div className="text-center">
                     <p className="text-xs font-bold text-gray-800 uppercase tracking-widest">Overtime</p>
                     <p className="text-lg font-bold text-gray-900 mt-1">
-                        {timer > 9 * 3600 ? formatTime(timer - 9 * 3600) : '0 hr'}
+                        {timer > 9 * 3600 ? formatTime(timer - 9 * 3600) : '0h 0m'}
                     </p>
                 </div>
             </div>

@@ -44,11 +44,17 @@ class GoogleDriveService
                 $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
 
                 if (isset($newToken['error'])) {
+                    $errorMsg = $newToken['error_description'] ?? $newToken['error'] ?? 'Unknown error';
                     \Log::error('Google Drive Token Refresh Failed', [
                         'error' => $newToken['error'],
-                        'error_description' => $newToken['error_description'] ?? 'No description',
+                        'error_description' => $errorMsg,
                         'hint' => 'If error is "invalid_grant", your refresh token might be expired (Testing mode) or revoked.'
                     ]);
+
+                    if ($newToken['error'] === 'invalid_grant') {
+                        throw new \Exception('Google Drive authentication expired. Please re-authenticate in the admin settings.');
+                    }
+
                     $this->client = null;
                     return;
                 }
