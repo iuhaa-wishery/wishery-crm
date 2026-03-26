@@ -27,16 +27,21 @@ jobs:
               git pull origin main
             fi
 
-            composer install --no-dev --optimize-autoloader
+            echo "🧹 Clearing old build..."
+            rm -rf public/build
 
-            # 🔥 IMPORTANT FIXES
-            php artisan optimize:clear
-            php artisan view:clear
-            php artisan cache:clear
-
+            echo "📦 Installing dependencies..."
             npm install
+
+            echo "⚙️ Building React..."
             npm run build
 
+            echo "📁 Checking build..."
+            ls -l public/build
+
+            composer install --no-dev --optimize-autoloader
+
+            php artisan optimize:clear
+            php artisan migrate --force
+
             php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
