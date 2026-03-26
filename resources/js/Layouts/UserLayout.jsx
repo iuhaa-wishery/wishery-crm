@@ -245,7 +245,7 @@ export default function UserLayout({ children, title }) {
                 <main className="p-6 overflow-y-auto flex-1">
                     {children}
                 </main>
-                <AiChatAssistant />
+                {/* <AiChatAssistant /> */}
             </div >
             <Toaster position="top-right" />
         </div >
