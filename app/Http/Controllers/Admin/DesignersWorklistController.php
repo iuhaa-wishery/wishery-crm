@@ -30,7 +30,7 @@ class DesignersWorklistController extends Controller
             });
         }
 
-        $worklists = $query->latest()->paginate(10)->withQueryString();
+        $worklists = $query->latest()->paginate(50)->withQueryString();
 
         $users = User::whereIn('role', ['user', 'editor'])->get(['id', 'name']);
 

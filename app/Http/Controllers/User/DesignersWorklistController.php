@@ -20,7 +20,7 @@ class DesignersWorklistController extends Controller
             $query->whereDate('task_date', $request->date);
         }
 
-        $worklists = $query->latest('task_date')->paginate(10);
+        $worklists = $query->latest()->paginate(50);
 
         // Fetch task types from global settings
         $taskTypes = [];

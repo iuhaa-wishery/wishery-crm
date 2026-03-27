@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Edit, Trash2, Plus, X, CheckCircle, AlertCircle, ChevronDown, Calendar as CalendarIcon, ClipboardList, Edit2, ChevronUp } from "lucide-react";
+import Pagination from "@/Components/Pagination";
 import toast from "react-hot-toast";
 
 export default function Index({ worklists, users, taskTypes, filters, success }) {
@@ -431,6 +432,9 @@ export default function Index({ worklists, users, taskTypes, filters, success })
                         </div>
                     </div>
                 )}
+                <div className="mt-6">
+                    <Pagination links={worklists.links} />
+                </div>
             </div>
             <style dangerouslySetInnerHTML={{
                 __html: `
