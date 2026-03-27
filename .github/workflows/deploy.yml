@@ -3,8 +3,8 @@ name: CI/CD Deploy (Staging & Live)
 on:
   push:
     branches:
-      - main
       - staging
+      - main
 
 jobs:
   build-and-deploy:
@@ -29,19 +29,8 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # 5️⃣ Upload build folder to server
-      - name: Upload build to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          port: ${{ secrets.PORT }}
-          source: "public/build"
-          target: "/home/u548741633/domains/erp.wishery.tech/public_html/${{ github.ref_name == 'staging' && 'staging' || '' }}/public/"
-
-      # 6️⃣ Deploy backend (Laravel)
-      - name: Deploy backend
+      # 5️⃣ Deploy backend FIRST (IMPORTANT ORDER)
+      - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.HOST }}
@@ -70,9 +59,13 @@ jobs:
             echo "🗄 Running migrations..."
             php artisan migrate --force
 
-            echo "⚡ Caching..."
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-
-            echo "✅ Deployment completed!"
+      # 6️⃣ Upload build AFTER (CRITICAL FIX)
+      - name: Upload build files
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "public/build"
+          target: "/home/u548741633/domains/erp.wishery.tech/public_html/${{ github.ref_name == 'staging' && 'staging' || '' }}/public/"
