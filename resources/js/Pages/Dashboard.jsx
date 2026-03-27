@@ -54,7 +54,7 @@ export default function Dashboard({ stats, todayAttendance, filteredStats }) {
             <Head title="User Dashboard" />
 
             <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">newtestMy Dashboard</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Dashboard</h1>
                 <p className="text-gray-500 mt-1 text-lg">Welcome back! Here's an overview of your work.</p>
             </div>
 
