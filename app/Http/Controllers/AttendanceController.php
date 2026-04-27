@@ -949,6 +949,7 @@ class AttendanceController extends Controller
             'Total Absent Days',
             'Total Leaves',
             'Late Punchin Days',
+            'Early Leave Days',
             'Total Work Hours',
             'Total Break Hours'
         ];
@@ -985,6 +986,7 @@ class AttendanceController extends Controller
                 $absentDays = 0;
                 $leaveDays = 0;
                 $lateDays = 0;
+                $earlyLeaveDays = 0;
                 $totalWorkedMinutes = 0;
                 $totalBreakMinutes = 0;
 
@@ -1006,6 +1008,15 @@ class AttendanceController extends Controller
                         $nineThirtyAM = Carbon::parse($dateStr . ' 09:30:59');
                         if ($punchIn->gt($nineThirtyAM)) {
                             $lateDays++;
+                        }
+
+                        // Check if early leave
+                        if ($attendance->punch_out) {
+                            $punchOutLocal = Carbon::parse($attendance->punch_out)->timezone('Asia/Kolkata');
+                            $sixPM = Carbon::parse($dateStr . ' 18:00:00', 'Asia/Kolkata');
+                            if ($punchOutLocal->lt($sixPM)) {
+                                $earlyLeaveDays++;
+                            }
                         }
                     } elseif (!$isWeekend) {
                         // For weekdays, check if on leave or absent
@@ -1036,6 +1047,7 @@ class AttendanceController extends Controller
                     $absentDays,
                     $leaveDays,
                     $lateDays,
+                    $earlyLeaveDays,
                     floor($totalWorkedMinutes / 60) . 'h ' . ($totalWorkedMinutes % 60) . 'm',
                     floor($totalBreakMinutes / 60) . 'h ' . ($totalBreakMinutes % 60) . 'm'
                 ]);
