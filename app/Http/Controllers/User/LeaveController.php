@@ -21,12 +21,23 @@ class LeaveController extends Controller
 		$query = Leave::where('user_id', $userId)
 			->orderBy('from_date', 'desc');
 
-		if ($year) {
+		if ($year && !$month) {
 			$query->whereYear('from_date', $year);
 		}
 
 		if ($month) {
-			$query->whereMonth('from_date', $month);
+			$filterYear = $year ?: Carbon::now()->year;
+			$startDate = Carbon::create($filterYear, $month, 1)->subMonth()->day(25)->toDateString();
+			$endDate = Carbon::create($filterYear, $month, 1)->day(24)->toDateString();
+
+			$query->where(function ($q) use ($startDate, $endDate) {
+				$q->whereBetween('from_date', [$startDate, $endDate])
+				  ->orWhereBetween('to_date', [$startDate, $endDate])
+				  ->orWhere(function ($sub) use ($startDate, $endDate) {
+					  $sub->where('from_date', '<', $startDate)
+						  ->where('to_date', '>', $endDate);
+				  });
+			});
 		}
 
 		$leaves = $query->get();
@@ -105,7 +116,7 @@ class LeaveController extends Controller
 			'status' => 'pending',
 		]);
 
-		return redirect()->route('leave.index')
+		return redirect()->back()
 			->with('success', 'Leave applied successfully!');
 	}
 
@@ -122,7 +133,7 @@ class LeaveController extends Controller
 
 		$leave->delete();
 
-		return redirect()->route('leave.index')
+		return redirect()->back()
 			->with('success', 'Leave application cancelled successfully!');
 	}
 }

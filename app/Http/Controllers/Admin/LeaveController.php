@@ -29,12 +29,23 @@ class LeaveController extends Controller
 
         $query = Leave::with('user')->orderBy('from_date', 'desc');
 
-        if ($year) {
+        if ($year && !$month) {
             $query->whereYear('from_date', $year);
         }
 
         if ($month) {
-            $query->whereMonth('from_date', $month);
+            $filterYear = $year ?: now()->year;
+            $startDate = \Carbon\Carbon::create($filterYear, $month, 1)->subMonth()->day(25)->toDateString();
+            $endDate = \Carbon\Carbon::create($filterYear, $month, 1)->day(24)->toDateString();
+
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('from_date', [$startDate, $endDate])
+                  ->orWhereBetween('to_date', [$startDate, $endDate])
+                  ->orWhere(function ($sub) use ($startDate, $endDate) {
+                      $sub->where('from_date', '<', $startDate)
+                          ->where('to_date', '>', $endDate);
+                  });
+            });
         }
 
         if ($userId) {
@@ -71,8 +82,20 @@ class LeaveController extends Controller
         $stats = [
             'SL' => [
                 'taken' => Leave::query()
-                    ->when($year, fn($q) => $q->whereYear('from_date', $year))
-                    ->when($month, fn($q) => $q->whereMonth('from_date', $month))
+                    ->when($year && !$month, fn($q) => $q->whereYear('from_date', $year))
+                    ->when($month, function($q) use ($year, $month) {
+                        $filterYear = $year ?: now()->year;
+                        $startDate = \Carbon\Carbon::create($filterYear, $month, 1)->subMonth()->day(25)->toDateString();
+                        $endDate = \Carbon\Carbon::create($filterYear, $month, 1)->day(24)->toDateString();
+                        $q->where(function ($sub) use ($startDate, $endDate) {
+                            $sub->whereBetween('from_date', [$startDate, $endDate])
+                                ->orWhereBetween('to_date', [$startDate, $endDate])
+                                ->orWhere(function ($inner) use ($startDate, $endDate) {
+                                    $inner->where('from_date', '<', $startDate)
+                                          ->where('to_date', '>', $endDate);
+                                });
+                        });
+                    })
                     ->when($userId, fn($q) => $q->where('user_id', $userId))
                     ->where('leave_type', 'SL')
                     ->where('status', 'approved')
@@ -81,8 +104,20 @@ class LeaveController extends Controller
             ],
             'CL' => [
                 'taken' => Leave::query()
-                    ->when($year, fn($q) => $q->whereYear('from_date', $year))
-                    ->when($month, fn($q) => $q->whereMonth('from_date', $month))
+                    ->when($year && !$month, fn($q) => $q->whereYear('from_date', $year))
+                    ->when($month, function($q) use ($year, $month) {
+                        $filterYear = $year ?: now()->year;
+                        $startDate = \Carbon\Carbon::create($filterYear, $month, 1)->subMonth()->day(25)->toDateString();
+                        $endDate = \Carbon\Carbon::create($filterYear, $month, 1)->day(24)->toDateString();
+                        $q->where(function ($sub) use ($startDate, $endDate) {
+                            $sub->whereBetween('from_date', [$startDate, $endDate])
+                                ->orWhereBetween('to_date', [$startDate, $endDate])
+                                ->orWhere(function ($inner) use ($startDate, $endDate) {
+                                    $inner->where('from_date', '<', $startDate)
+                                          ->where('to_date', '>', $endDate);
+                                });
+                        });
+                    })
                     ->when($userId, fn($q) => $q->where('user_id', $userId))
                     ->where('leave_type', 'CL')
                     ->where('status', 'approved')
@@ -90,8 +125,20 @@ class LeaveController extends Controller
                 'total' => $userId ? 12 : null,
             ],
             'pending' => Leave::query()
-                ->when($year, fn($q) => $q->whereYear('from_date', $year))
-                ->when($month, fn($q) => $q->whereMonth('from_date', $month))
+                ->when($year && !$month, fn($q) => $q->whereYear('from_date', $year))
+                ->when($month, function($q) use ($year, $month) {
+                    $filterYear = $year ?: now()->year;
+                    $startDate = \Carbon\Carbon::create($filterYear, $month, 1)->subMonth()->day(25)->toDateString();
+                    $endDate = \Carbon\Carbon::create($filterYear, $month, 1)->day(24)->toDateString();
+                    $q->where(function ($sub) use ($startDate, $endDate) {
+                        $sub->whereBetween('from_date', [$startDate, $endDate])
+                            ->orWhereBetween('to_date', [$startDate, $endDate])
+                            ->orWhere(function ($inner) use ($startDate, $endDate) {
+                                $inner->where('from_date', '<', $startDate)
+                                      ->where('to_date', '>', $endDate);
+                            });
+                    });
+                })
                 ->when($userId, fn($q) => $q->where('user_id', $userId))
                 ->where('status', 'pending')
                 ->count(),

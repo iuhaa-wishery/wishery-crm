@@ -38,18 +38,22 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Activity Analytics for the current month
-        $month = now()->month;
-        $year = now()->year;
+        // Activity Analytics for the current billing cycle (25th to 24th)
+        $now = Carbon::now();
+        if ($now->day >= 25) {
+            $startDate = $now->copy()->day(25)->toDateString();
+            $endDate = $now->copy()->addMonth()->day(24)->toDateString();
+        } else {
+            $startDate = $now->copy()->subMonth()->day(25)->toDateString();
+            $endDate = $now->copy()->day(24)->toDateString();
+        }
 
-        $contentCalendarCount = ContentCalendar::whereYear('date', $year)
-            ->whereMonth('date', $month)
+        $contentCalendarCount = ContentCalendar::whereBetween('date', [$startDate, $endDate])
             ->whereHas('assignees', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             })->count();
 
-        $dailyWorksheetCount = DailyWorksheet::whereYear('date', $year)
-            ->whereMonth('date', $month)
+        $dailyWorksheetCount = DailyWorksheet::whereBetween('date', [$startDate, $endDate])
             ->where('user_id', $user->id)
             ->count();
 

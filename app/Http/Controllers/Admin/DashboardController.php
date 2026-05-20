@@ -27,12 +27,14 @@ class DashboardController extends Controller
             'pending_leaves' => auth()->user()->role === 'admin' ? Leave::where('status', 'pending')->count() : 0,
         ];
 
+        $startDate = Carbon::create($year, $month, 1)->subMonth()->day(25)->toDateString();
+        $endDate = Carbon::create($year, $month, 1)->day(24)->toDateString();
+
         // Fetch users for filtering
         $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
 
         // Filtered counts for Content Calendar
-        $contentCalendarQuery = ContentCalendar::whereYear('date', $year)
-            ->whereMonth('date', $month);
+        $contentCalendarQuery = ContentCalendar::whereBetween('date', [$startDate, $endDate]);
 
         if ($userId) {
             $contentCalendarQuery->whereHas('assignees', function ($q) use ($userId) {
@@ -42,8 +44,7 @@ class DashboardController extends Controller
         $contentCalendarCount = $contentCalendarQuery->count();
 
         // Filtered counts for Daily Worksheet
-        $dailyWorksheetQuery = DailyWorksheet::whereYear('date', $year)
-            ->whereMonth('date', $month);
+        $dailyWorksheetQuery = DailyWorksheet::whereBetween('date', [$startDate, $endDate]);
 
         if ($userId) {
             $dailyWorksheetQuery->where('user_id', $userId);

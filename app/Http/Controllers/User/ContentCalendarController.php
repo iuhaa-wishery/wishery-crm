@@ -28,7 +28,9 @@ class ContentCalendarController extends Controller
         }
 
         if ($month && $year && !$date) {
-            $query->whereYear('date', $year)->whereMonth('date', $month);
+            $startDate = \Carbon\Carbon::create($year, $month, 1)->subMonth()->day(25)->toDateString();
+            $endDate = \Carbon\Carbon::create($year, $month, 1)->day(24)->toDateString();
+            $query->whereBetween('date', [$startDate, $endDate]);
         }
 
         if ($date) {

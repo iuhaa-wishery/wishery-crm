@@ -33,8 +33,8 @@ export default function Index({ worksheets, settings, selectedDate, selectedMont
         router.get(route("daily-worksheet.index"), { date: e.target.value }, { preserveState: true });
     };
 
-    const handleMonthChange = (e) => {
-        router.get(route("daily-worksheet.index"), { month: e.target.value }, { preserveState: true });
+    const handleMonthChange = (val) => {
+        router.get(route("daily-worksheet.index"), { month: val }, { preserveState: true });
     };
 
     const toggleFilterMode = (mode) => {

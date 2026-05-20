@@ -23,6 +23,9 @@ class ContentCalendarController extends Controller
         $userId = $request->input('user_id');
         $date = $request->input('date');
 
+        $startDate = \Carbon\Carbon::create($year, $month, 1)->subMonth()->day(25)->toDateString();
+        $endDate = \Carbon\Carbon::create($year, $month, 1)->day(24)->toDateString();
+
         $query = ContentCalendar::with(['project', 'assignees']);
 
         // If project is selected, show that project's items + unassigned items
@@ -31,7 +34,7 @@ class ContentCalendarController extends Controller
         }
 
         if ($month && $year && !$date) {
-            $query->whereYear('date', $year)->whereMonth('date', $month);
+            $query->whereBetween('date', [$startDate, $endDate]);
         }
 
         if ($date) {
@@ -48,8 +51,7 @@ class ContentCalendarController extends Controller
         $items = $query->orderBy('date', 'asc')->get();
 
         // Check if month is already generated (skeleton exists)
-        $isMonthGenerated = ContentCalendar::whereYear('date', $year)
-            ->whereMonth('date', $month)
+        $isMonthGenerated = ContentCalendar::whereBetween('date', [$startDate, $endDate])
             ->exists();
 
         return Inertia::render('Admin/ContentCalendar/Index', [
@@ -80,27 +82,29 @@ class ContentCalendarController extends Controller
         $year = $request->year;
         $requestedDate = $request->date;
 
+        $startDate = \Carbon\Carbon::create($year, $month, 1)->subMonth()->day(25);
+        $endDate = \Carbon\Carbon::create($year, $month, 1)->day(24);
+
         if ($requestedDate) {
-            $nextDate = new \DateTime($requestedDate);
+            $nextDate = \Carbon\Carbon::parse($requestedDate);
         } else {
-            // Find the next available date in this month
+            // Find the next available date in this month cycle
             $lastEntry = ContentCalendar::where('project_id', $projectId)
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->orderBy('date', 'desc')
                 ->first();
 
             if ($lastEntry) {
-                $lastDate = new \DateTime($lastEntry->date);
-                $nextDate = $lastDate->modify('+1 day');
+                $lastDate = \Carbon\Carbon::parse($lastEntry->date);
+                $nextDate = $lastDate->copy()->addDay();
 
-                // Check if still in the same month
-                if ((int) $nextDate->format('m') !== (int) $month) {
+                // Check if still in the same month cycle
+                if ($nextDate->gt($endDate)) {
                     return redirect()->back()->with('error', 'Month is already full.');
                 }
             } else {
-                // Start from the 1st of the month
-                $nextDate = new \DateTime(sprintf('%04d-%02d-01', $year, $month));
+                // Start from the 25th of the previous month
+                $nextDate = $startDate->copy();
             }
         }
 
@@ -193,14 +197,15 @@ class ContentCalendarController extends Controller
         $month = $request->month;
         $year = $request->year;
 
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        $startDate = \Carbon\Carbon::create($year, $month, 1)->subMonth()->day(25);
+        $endDate = \Carbon\Carbon::create($year, $month, 1)->day(24);
 
         $createdCount = 0;
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $date = sprintf('%04d-%02d-%02d', $year, $month, $day);
+        for ($date = $startDate->copy(); $date <= $endDate; $date->addDay()) {
+            $dateStr = $date->toDateString();
 
             // Check if ANY entry exists for this specific day to avoid duplicate skeletons
-            $exists = ContentCalendar::where('date', $date)
+            $exists = ContentCalendar::where('date', $dateStr)
                 ->exists();
 
             if (!$exists) {
@@ -210,7 +215,7 @@ class ContentCalendarController extends Controller
 
                 ContentCalendar::create([
                     'project_id' => $projectId, // may be null
-                    'date' => $date,
+                    'date' => $dateStr,
                     'creative_uid' => $uid,
                     'updation' => '',
                     'is_additional' => false,

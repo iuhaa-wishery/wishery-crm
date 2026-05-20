@@ -37,8 +37,9 @@ class DailyWorksheetController extends Controller
 
         if ($month) {
             $yearMonth = Carbon::parse($month);
-            $query->whereYear('date', $yearMonth->year)
-                ->whereMonth('date', $yearMonth->month);
+            $startDate = $yearMonth->copy()->subMonth()->day(25)->toDateString();
+            $endDate = $yearMonth->copy()->day(24)->toDateString();
+            $query->whereBetween('date', [$startDate, $endDate]);
         } else {
             $query->where('date', $date);
         }
@@ -93,7 +94,8 @@ class DailyWorksheetController extends Controller
 
         DailyWorksheet::create($validated);
 
-        $month = Carbon::parse($validated['date'])->format('Y-m');
+        $carbonDate = Carbon::parse($validated['date']);
+        $month = $carbonDate->day >= 25 ? $carbonDate->copy()->addMonth()->format('Y-m') : $carbonDate->format('Y-m');
         $referer = $request->header('referer');
         $routeName = (str_contains($referer, '/admin/')) ? 'admin.daily-worksheet.index' : 'daily-worksheet.index';
 
@@ -137,7 +139,8 @@ class DailyWorksheetController extends Controller
 
         $dailyWorksheet->update($validated);
 
-        $month = Carbon::parse($validated['date'])->format('Y-m');
+        $carbonDate = Carbon::parse($validated['date']);
+        $month = $carbonDate->day >= 25 ? $carbonDate->copy()->addMonth()->format('Y-m') : $carbonDate->format('Y-m');
         $referer = $request->header('referer');
         $routeName = (str_contains($referer, '/admin/')) ? 'admin.daily-worksheet.index' : 'daily-worksheet.index';
 

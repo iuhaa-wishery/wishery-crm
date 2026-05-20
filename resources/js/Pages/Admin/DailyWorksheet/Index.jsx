@@ -3,10 +3,10 @@ import { useForm, Head, router, usePage } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import Modal from "@/Components/Modal";
 import MonthPicker from "@/Components/MonthPicker";
-import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar as CalendarIcon, ClipboardList, Edit2, Trash2, X, Save, Plus, ChevronDown, ChevronUp, CheckCircle2, Clock, ListTodo } from "lucide-react";
 import toast from "react-hot-toast";
 
-export default function Index({ worksheets, selectedDate, selectedMonth, selectedUser, users }) {
+export default function Index({ worksheets = [], selectedDate, selectedMonth, selectedUser, users }) {
     const { auth } = usePage().props;
 
     const [editingId, setEditingId] = useState(null);
@@ -14,6 +14,13 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
     const [currentItem, setCurrentItem] = useState(null);
     const [filterMode, setFilterMode] = useState(selectedMonth ? 'monthly' : 'daily');
     const [expandedUsers, setExpandedUsers] = useState({});
+
+    const stats = {
+        total: worksheets.length,
+        completed: worksheets.filter(w => w.status?.toUpperCase() === 'DONE' || w.status?.toUpperCase() === 'APPROVED').length,
+        inProgress: worksheets.filter(w => w.status?.toUpperCase() === 'IN PROGRESS').length,
+        pending: worksheets.filter(w => !w.status || w.status?.toUpperCase() === 'NOT DONE' || w.status?.toUpperCase() === '').length,
+    };
 
     const toggleUserExpand = (userId) => {
         setExpandedUsers(prev => ({
@@ -39,9 +46,9 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
         );
     };
 
-    const handleMonthChange = (e) => {
+    const handleMonthChange = (val) => {
         router.get(route("admin.daily-worksheet.index"),
-            { month: e.target.value, user_id: selectedUser },
+            { month: val, user_id: selectedUser },
             { preserveState: true }
         );
     };
@@ -334,6 +341,45 @@ export default function Index({ worksheets, selectedDate, selectedMonth, selecte
                         </form>
                     </div >
                 </Modal >
+                {/* Summary Section */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+                            <ListTodo size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Tasks</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.total}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-500">
+                            <CheckCircle2 size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Completed</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.completed}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                            <Clock size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">In Progress</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.inProgress}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                        <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                            <X size={20} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending / Not Done</p>
+                            <p className="text-xl font-black text-gray-900 leading-none mt-0.5">{stats.pending}</p>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="space-y-8">
                     {worksheets.length === 0 ? (

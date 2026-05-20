@@ -270,37 +270,37 @@ class AttendanceController extends Controller
             }
 
             if ($userId) {
-                // Get all attendance records for the month
+                // Generate all dates for the month (25th of previous month to 24th of current month)
+                $startDate = $month->copy()->subMonth()->day(25);
+                $realEndDate = $month->copy()->day(24);
+
+                // Get all attendance records for the month range
                 $attendances = Attendance::where('user_id', $userId)
-                    ->whereYear('date', $month->year)
-                    ->whereMonth('date', $month->month)
+                    ->whereBetween('date', [$startDate->toDateString(), $realEndDate->toDateString()])
                     ->with('breaks')
                     ->get()
                     ->keyBy(function ($item) {
                         return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
                     });
 
-                // Get approved leaves for the month
+                // Get approved leaves for the month range
                 $leaves = Leave::where('user_id', $userId)
                     ->where('status', 'approved')
-                    ->where(function ($query) use ($month) {
-                        $startOfMonth = $month->copy()->startOfMonth()->toDateString();
-                        $endOfMonth = $month->copy()->endOfMonth()->toDateString();
+                    ->where(function ($query) use ($startDate, $realEndDate) {
+                        $startStr = $startDate->toDateString();
+                        $endStr = $realEndDate->toDateString();
 
-                        $query->whereBetween('from_date', [$startOfMonth, $endOfMonth])
-                            ->orWhereBetween('to_date', [$startOfMonth, $endOfMonth])
-                            ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
-                                $q->where('from_date', '<', $startOfMonth)
-                                    ->where('to_date', '>', $endOfMonth);
+                        $query->whereBetween('from_date', [$startStr, $endStr])
+                            ->orWhereBetween('to_date', [$startStr, $endStr])
+                            ->orWhere(function ($q) use ($startStr, $endStr) {
+                                $q->where('from_date', '<', $startStr)
+                                    ->where('to_date', '>', $endStr);
                             });
                     })
                     ->get();
 
                 $totalMonthlyMinutes = $attendances->sum('total_worked_minutes');
 
-                // Generate all dates for the month
-                $startDate = $month->copy()->startOfMonth();
-                $realEndDate = $month->copy()->endOfMonth();
                 $today = Carbon::today();
 
                 // Don't show future days beyond today
@@ -748,36 +748,36 @@ class AttendanceController extends Controller
             $month = Carbon::now();
         }
 
-        // Get all attendance records for the month
+        // Generate all dates for the month (25th of previous month to 24th of current month)
+        $startDate = $month->copy()->subMonth()->day(25);
+        $realEndDate = $month->copy()->day(24);
+
+        // Get all attendance records for the month range
         $attendances = Attendance::where('user_id', $userId)
-            ->whereYear('date', $month->year)
-            ->whereMonth('date', $month->month)
+            ->whereBetween('date', [$startDate->toDateString(), $realEndDate->toDateString()])
             ->get()
             ->keyBy(function ($item) {
                 return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
             });
 
-        // Get approved leaves for the month
+        // Get approved leaves for the month range
         $leaves = \App\Models\Leave::where('user_id', $userId)
             ->where('status', 'approved')
-            ->where(function ($query) use ($month) {
-                $startOfMonth = $month->copy()->startOfMonth()->toDateString();
-                $endOfMonth = $month->copy()->endOfMonth()->toDateString();
+            ->where(function ($query) use ($startDate, $realEndDate) {
+                $startStr = $startDate->toDateString();
+                $endStr = $realEndDate->toDateString();
 
-                $query->whereBetween('from_date', [$startOfMonth, $endOfMonth])
-                    ->orWhereBetween('to_date', [$startOfMonth, $endOfMonth])
-                    ->orWhere(function ($q) use ($startOfMonth, $endOfMonth) {
-                        $q->where('from_date', '<', $startOfMonth)
-                            ->where('to_date', '>', $endOfMonth);
+                $query->whereBetween('from_date', [$startStr, $endStr])
+                    ->orWhereBetween('to_date', [$startStr, $endStr])
+                    ->orWhere(function ($q) use ($startStr, $endStr) {
+                        $q->where('from_date', '<', $startStr)
+                            ->where('to_date', '>', $endStr);
                     });
             })
             ->get();
 
         $totalMonthlyMinutes = $attendances->sum('total_worked_minutes');
 
-        // Generate all dates for the month
-        $startDate = $month->copy()->startOfMonth();
-        $realEndDate = $month->copy()->endOfMonth();
         $today = Carbon::today();
 
         // Don't show future days beyond today
@@ -881,10 +881,11 @@ class AttendanceController extends Controller
 
         if ($userId) {
             $date = Carbon::parse($month);
+            $startDate = $date->copy()->subMonth()->day(25)->toDateString();
+            $endDate = $date->copy()->day(24)->toDateString();
 
             $query = Attendance::where('user_id', $userId)
-                ->whereYear('date', $date->year)
-                ->whereMonth('date', $date->month)
+                ->whereBetween('date', [$startDate, $endDate])
                 ->orderBy('date', 'desc')
                 ->orderBy('punch_in', 'asc');
 
@@ -926,8 +927,8 @@ class AttendanceController extends Controller
     {
         $monthStr = $request->input('month', Carbon::now()->format('Y-m'));
         $month = Carbon::parse($monthStr);
-        $startDate = $month->copy()->startOfMonth();
-        $endDate = $month->copy()->endOfMonth();
+        $startDate = $month->copy()->subMonth()->day(25);
+        $endDate = $month->copy()->day(24);
         $today = Carbon::today();
 
         // Don't count future days calculation
@@ -954,30 +955,30 @@ class AttendanceController extends Controller
             'Total Break Hours'
         ];
 
-        $callback = function () use ($users, $startDate, $calculationEndDate, $columns, $month, $today) {
+        $callback = function () use ($users, $startDate, $endDate, $calculationEndDate, $columns, $today) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
             foreach ($users as $user) {
-                // Get all attendances for the month
+                // Get all attendances for the month range
                 $attendances = Attendance::where('user_id', $user->id)
-                    ->whereYear('date', $month->year)
-                    ->whereMonth('date', $month->month)
+                    ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                     ->get()
                     ->keyBy(function ($item) {
                         return $item->date instanceof \Carbon\Carbon ? $item->date->format('Y-m-d') : $item->date;
                     });
 
-                // Get all approved leaves for the month
+                // Get all approved leaves for the month range
                 $leaves = Leave::where('user_id', $user->id)
                     ->where('status', 'approved')
-                    ->where(function ($query) use ($startDate, $month) {
-                        $monthlyEnd = $month->copy()->endOfMonth();
-                        $query->whereBetween('from_date', [$startDate->toDateString(), $monthlyEnd->toDateString()])
-                            ->orWhereBetween('to_date', [$startDate->toDateString(), $monthlyEnd->toDateString()])
-                            ->orWhere(function ($q) use ($startDate, $monthlyEnd) {
-                                $q->where('from_date', '<', $startDate->toDateString())
-                                    ->where('to_date', '>', $monthlyEnd->toDateString());
+                    ->where(function ($query) use ($startDate, $endDate) {
+                        $startStr = $startDate->toDateString();
+                        $endStr = $endDate->toDateString();
+                        $query->whereBetween('from_date', [$startStr, $endStr])
+                            ->orWhereBetween('to_date', [$startStr, $endStr])
+                            ->orWhere(function ($q) use ($startStr, $endStr) {
+                                $q->where('from_date', '<', $startStr)
+                                    ->where('to_date', '>', $endStr);
                             });
                     })
                     ->get();

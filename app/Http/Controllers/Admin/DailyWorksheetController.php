@@ -27,8 +27,9 @@ class DailyWorksheetController extends Controller
 
         if ($month) {
             $yearMonth = Carbon::parse($month);
-            $query->whereYear('date', $yearMonth->year)
-                ->whereMonth('date', $yearMonth->month);
+            $startDate = $yearMonth->copy()->subMonth()->day(25)->toDateString();
+            $endDate = $yearMonth->copy()->day(24)->toDateString();
+            $query->whereBetween('date', [$startDate, $endDate]);
         } else {
             $query->whereDate('date', $date);
         }
