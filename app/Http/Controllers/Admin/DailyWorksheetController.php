@@ -39,7 +39,7 @@ class DailyWorksheetController extends Controller
             $query->where('user_id', $selectedUser);
         }
 
-        $users = User::orderBy('name')->get(['id', 'name']);
+        $users = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         $worksheets = $query->latest()->get()->map(function ($item) {
             $item->formatted_date = $item->date ? Carbon::parse($item->date)->format('Y-m-d') : null;
@@ -58,6 +58,7 @@ class DailyWorksheetController extends Controller
     public function users(Request $request)
     {
         $users = User::where('role', '!=', 'admin')
+            ->where('is_active', true)
             ->orderBy('name')
             ->get();
 

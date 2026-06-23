@@ -24,7 +24,7 @@ class TaskController extends Controller
             ->latest()
             ->paginate(10);
         $projects = Project::all();
-        $users = User::all();
+        $users = User::where('is_active', true)->get();
 
         return Inertia::render('Admin/Tasks/Index', [
             'tasks' => $tasks,
@@ -39,7 +39,7 @@ class TaskController extends Controller
     public function create()
     {
         $projects = Project::all();
-        $users = User::all();
+        $users = User::where('is_active', true)->get();
 
         return Inertia::render('Admin/Tasks/Create', [
             'projects' => $projects,
@@ -192,7 +192,7 @@ class TaskController extends Controller
     {
         $task->load(['project', 'assignees']);
         $projects = Project::all();
-        $users = User::all();
+        $users = User::where('is_active', true)->get();
 
         return Inertia::render('Admin/Tasks/Edit', [
             'task' => $task,

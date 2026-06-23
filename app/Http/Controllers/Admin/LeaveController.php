@@ -76,7 +76,7 @@ class LeaveController extends Controller
             return $leave;
         });
 
-        $users = \App\Models\User::where('role', '!=', 'admin')->orderBy('name')->get(['id', 'name']);
+        $users = \App\Models\User::where('role', '!=', 'admin')->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         // Calculate aggregate or user-specific stats
         $stats = [

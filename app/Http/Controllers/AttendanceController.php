@@ -248,7 +248,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
-        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->orderBy('name')->get();
+        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->where('is_active', true)->orderBy('name')->get();
         $filters = $request->only(['date', 'month', 'user_id', 'display']);
 
         // Mode 1: Monthly View (Month selected OR Calendar Display forced)
@@ -868,7 +868,7 @@ class AttendanceController extends Controller
         $userId = $request->input('user_id');
         $month = $request->input('month', Carbon::now()->format('Y-m'));
 
-        $users = \App\Models\User::orderBy('name')->get(['id', 'name']);
+        $users = \App\Models\User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         // Default to the first user if none selected
         if (!$userId && $users->isNotEmpty()) {
@@ -934,7 +934,7 @@ class AttendanceController extends Controller
         // Don't count future days calculation
         $calculationEndDate = $endDate->gt($today) ? $today : $endDate;
 
-        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->orderBy('name')->get();
+        $users = \App\Models\User::whereNotIn('role', ['admin', 'manager'])->where('is_active', true)->orderBy('name')->get();
 
         $headers = [
             "Content-type" => "text/csv",

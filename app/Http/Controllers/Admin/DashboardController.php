@@ -23,7 +23,7 @@ class DashboardController extends Controller
         $userId = auth()->user()->role === 'admin' ? request('user_id') : auth()->id();
 
         $stats = [
-            'total_users' => auth()->user()->role === 'admin' ? User::where('role', 'user')->count() : 0,
+            'total_users' => auth()->user()->role === 'admin' ? User::where('role', 'user')->where('is_active', true)->count() : 0,
             'pending_leaves' => auth()->user()->role === 'admin' ? Leave::where('status', 'pending')->count() : 0,
         ];
 
@@ -31,7 +31,7 @@ class DashboardController extends Controller
         $endDate = Carbon::create($year, $month, 1)->day(24)->toDateString();
 
         // Fetch users for filtering
-        $users = User::where('role', 'user')->orderBy('name')->get(['id', 'name']);
+        $users = User::where('role', 'user')->where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         // Filtered counts for Content Calendar
         $contentCalendarQuery = ContentCalendar::whereBetween('date', [$startDate, $endDate]);

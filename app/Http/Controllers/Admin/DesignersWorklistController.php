@@ -32,7 +32,7 @@ class DesignersWorklistController extends Controller
 
         $worklists = $query->latest()->paginate(50)->withQueryString();
 
-        $users = User::whereIn('role', ['user', 'editor'])->get(['id', 'name']);
+        $users = User::whereIn('role', ['user', 'editor'])->where('is_active', true)->get(['id', 'name']);
 
         // Fetch task types from global settings
         $taskTypes = [];

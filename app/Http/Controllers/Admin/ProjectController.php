@@ -155,7 +155,7 @@ class ProjectController extends Controller
             ->where('project_id', $project->id)
             ->get();
 
-        $users = User::where('role', 'user')->get()->map(function ($user) {
+        $users = User::where('role', 'user')->where('is_active', true)->get()->map(function ($user) {
             $user->image_url = $user->image
                 ? asset('storage/' . $user->image)
                 : null;

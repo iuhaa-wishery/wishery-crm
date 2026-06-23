@@ -22,7 +22,7 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::whereIn('role', ['user', 'manager', 'editor'])->get();
+        $users = User::whereIn('role', ['user', 'manager', 'editor'])->where('is_active', true)->get();
 
         return inertia('Admin/Users/Index', [
             'users' => $users

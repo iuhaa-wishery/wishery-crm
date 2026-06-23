@@ -44,7 +44,7 @@ class CalendarController extends Controller
         return Inertia::render('Calendar/Index', [
             'tasks' => $tasks,
             'projects' => Project::all(), // For the "Add Task" modal
-            'users' => User::all(),       // For the "Add Task" modal
+            'users' => User::where('is_active', true)->get(),       // For the "Add Task" modal
         ]);
     }
 

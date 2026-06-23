@@ -20,6 +20,7 @@ class SettingController extends Controller
         }
 
         $users = \App\Models\User::where('role', '!=', 'admin')
+            ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 

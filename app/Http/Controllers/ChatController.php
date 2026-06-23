@@ -32,6 +32,7 @@ class ChatController extends Controller
         // Get list of users to chat with
         // If admin/manager, show all users. If user, show only admin/managers.
         return User::where('id', '!=', $currentUser->id)
+            ->where('is_active', true)
             ->when(!in_array($currentUser->role, ['admin', 'manager']), function ($query) {
                 return $query->whereIn('role', ['admin', 'manager']);
             })
