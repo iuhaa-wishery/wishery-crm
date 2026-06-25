@@ -20,7 +20,7 @@ import AiChatAssistant from "@/Components/AiChatAssistant";
 import { Toaster, toast } from "react-hot-toast";
 
 export default function AdminLayout({ children, title = "Dashboard" }) {
-  const { auth, flash, sharedSettings } = usePage().props;
+  const { auth, flash, sharedSettings, expiringWebsitesCount } = usePage().props;
   const betaMenuItems = Array.isArray(sharedSettings?.beta_menu_items) ? sharedSettings.beta_menu_items : [];
   const [collapsed, setCollapsed] = useState(false);
 
@@ -226,11 +226,18 @@ export default function AdminLayout({ children, title = "Dashboard" }) {
             )}
             {auth.user.role === 'admin' && (
               <Link
-                href={route("admin.domains.index")}
-                className="flex items-center gap-3 px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
+                href={route("admin.websites.index")}
+                className="flex items-center justify-between px-3 py-2 rounded hover:bg-gray-100 text-gray-700 transition-colors"
               >
-                <FaGlobe className="min-w-[20px]" />
-                <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Domains</span>
+                <div className="flex items-center gap-3">
+                  <FaGlobe className="min-w-[20px]" />
+                  <span className={`${collapsed && !isMobileOpen ? "md:hidden" : ""}`}>Websites</span>
+                </div>
+                {expiringWebsitesCount > 0 && (
+                  <span className={`bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ${collapsed && !isMobileOpen ? "hidden" : ""}`}>
+                    {expiringWebsitesCount}
+                  </span>
+                )}
               </Link>
             )}
 

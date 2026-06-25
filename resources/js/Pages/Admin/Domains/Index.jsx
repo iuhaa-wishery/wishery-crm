@@ -75,11 +75,25 @@ export default function Index({ domains, filters, success }) {
         });
     };
 
+    const isExpired = (dateStr) => {
+        if (!dateStr) return false;
+        const expiry = new Date(dateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        expiry.setHours(0, 0, 0, 0);
+        return expiry < today;
+    };
+
     const isExpiringSoon = (dateStr) => {
         if (!dateStr) return false;
         const expiry = new Date(dateStr);
         const today = new Date();
-        const oneMonthFromNow = new Date();
+        today.setHours(0, 0, 0, 0);
+        expiry.setHours(0, 0, 0, 0);
+        
+        if (expiry < today) return false;
+
+        const oneMonthFromNow = new Date(today);
         oneMonthFromNow.setMonth(today.getMonth() + 1);
         return expiry <= oneMonthFromNow;
     };
@@ -125,6 +139,7 @@ export default function Index({ domains, filters, success }) {
                         <tbody>
                             {rows.length > 0 ? (
                                 rows.map((domain) => {
+                                    const expired = isExpired(domain.expiration_date);
                                     const expiringSoon = isExpiringSoon(domain.expiration_date);
                                     return (
                                         <tr key={domain.id} className="border-t hover:bg-gray-50 transition">
@@ -133,20 +148,21 @@ export default function Index({ domains, filters, success }) {
                                                 {domain.provider && <div className="text-xs text-gray-500">{domain.provider}</div>}
                                             </td>
                                             <td className="p-4">
-                                                <span className={`flex items-center gap-1 w-fit px-2 py-1 rounded-full text-xs font-medium ${domain.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                                                <span className={`flex items-center gap-1 w-fit px-2 py-1 rounded-full text-xs font-medium ${domain.status === 'Active' ? 'bg-green-100 text-green-700' : domain.status === 'Expired' ? 'bg-red-100 text-red-700' : domain.status === 'Transferred' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
                                                     {domain.status === 'Active' ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
                                                     {domain.status}
                                                 </span>
                                             </td>
                                             <td className="p-4">
-                                                <span className={`font-medium ${expiringSoon ? 'text-red-600' : 'text-gray-700'}`}>
+                                                <span className={`font-medium ${expired ? 'text-red-600' : expiringSoon ? 'text-orange-600 font-bold' : 'text-gray-700'}`}>
                                                     {new Date(domain.expiration_date).toLocaleDateString("en-GB", {
                                                         day: "2-digit",
                                                         month: "short",
                                                         year: "numeric",
                                                     })}
                                                 </span>
-                                                {expiringSoon && <div className="text-[10px] text-red-500 font-bold uppercase mt-1">Expiring Soon</div>}
+                                                {expired && <div className="text-[10px] text-red-500 font-bold uppercase mt-1">Expired</div>}
+                                                {expiringSoon && <div className="text-[10px] text-orange-500 font-bold uppercase mt-1">Expiring Soon</div>}
                                             </td>
                                             <td className="p-4">
                                                 {domain.auto_renewal ? (

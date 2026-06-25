@@ -46,6 +46,14 @@ class HandleInertiaRequests extends Middleware
             'sharedSettings' => [
                 'beta_menu_items' => json_decode(\App\Models\Setting::where('key', 'beta_menu_items')->value('value') ?? '[]', true),
             ],
+            'expiringWebsitesCount' => $request->user() && $request->user()->role === 'admin' ? (
+                \App\Models\Domain::where('expiration_date', '<=', \Carbon\Carbon::now()->addDays(30))
+                    ->whereNotIn('status', ['Transferred', 'Inactive'])
+                    ->count() +
+                \App\Models\Hosting::where('expiration_date', '<=', \Carbon\Carbon::now()->addDays(30))
+                    ->whereNotIn('status', ['Transferred', 'Inactive'])
+                    ->count()
+            ) : 0,
         ];
     }
 }

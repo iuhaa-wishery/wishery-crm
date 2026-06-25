@@ -192,6 +192,12 @@ Route::middleware(['auth', 'is_admin'])
         // Domains
         Route::resource('domains', \App\Http\Controllers\Admin\DomainController::class);
 
+        // Hosting
+        Route::resource('hostings', \App\Http\Controllers\Admin\HostingController::class);
+
+        // Websites (combined Domains + Hosting view)
+        Route::get('websites', [\App\Http\Controllers\Admin\WebsiteController::class, 'index'])->name('websites.index');
+
         // Temporary Google Auth Routes
         Route::get('/google-auth', [GoogleDriveController::class, 'generateAuthUrl'])->name('google.auth');
         Route::get('/google-callback', [GoogleDriveController::class, 'handleCallback'])->name('google.callback');
